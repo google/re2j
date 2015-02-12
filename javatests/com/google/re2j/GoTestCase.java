@@ -3,29 +3,11 @@
 package com.google.re2j;
 
 import java.io.UnsupportedEncodingException;
-import junit.framework.TestCase;
 
 // Utilities to make JUnit act a little more like Go's "testing" package.
 // In particular, don't rely on exceptions for error reporting, since they
 // cripple data-driven tests.
-class GoTestCase extends TestCase {
-
-  private int nerrors = 0;
-
-  // Format an error and report it.
-  protected void errorf(String format, Object ... args) {
-    System.err.println(String.format(format, args));
-    nerrors++;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    if (nerrors > 0) {
-      throw new AssertionError("There were " + nerrors + " errors");
-    }
-    super.tearDown();
-  }
-
+class GoTestCase {
   // Other utilities:
 
   protected static int len(Object[] array) {

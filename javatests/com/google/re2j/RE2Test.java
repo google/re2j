@@ -7,113 +7,12 @@
 
 package com.google.re2j;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+
 /** Tests of RE2 API. */
 public class RE2Test extends GoTestCase {
-
-  private static final String[] GOOD_RE = {
-    "",
-    ".",
-    "^.$",
-    "a",
-    "a*",
-    "a+",
-    "a?",
-    "a|b",
-    "a*|b*",
-    "(a*|b)(c*|d)",
-    "[a-z]",
-    "[a-abc-c\\-\\]\\[]",
-    "[a-z]+",
-    "[abc]",
-    "[^1234]",
-    "[^\n]",
-    "\\!\\\\",
-    "abc]",  // Matches the closing bracket literally.
-    "a??"
-  };
-
-  private static final String[][] BAD_RE = {
-    {"*", "missing argument to repetition operator: `*`"},
-    {"+", "missing argument to repetition operator: `+`"},
-    {"?", "missing argument to repetition operator: `?`"},
-    {"(abc", "missing closing ): `(abc`"},
-    {"abc)", "regexp/syntax: internal error: `stack underflow`"},
-    {"x[a-z", "missing closing ]: `[a-z`"},
-    {"[z-a]", "invalid character class range: `z-a`"},
-    {"abc\\", "trailing backslash at end of expression"},
-    {"a**", "invalid nested repetition operator: `**`"},
-    {"a*+", "invalid nested repetition operator: `*+`"},
-    {"\\x", "invalid escape sequence: `\\x`"},
-  };
-
-  private RE2 compileTest(String expr, String expectedError) {
-    RE2 re = null;
-    try {
-      re = RE2.compile(expr);
-      if (expectedError != null) {
-        errorf("RE2.compile(" + expr + ") was successful, expected %s",
-               expectedError);
-      }
-    } catch (PatternSyntaxException e) {
-      if (expectedError == null ||
-          !e.getMessage().equals("error parsing regexp: " + expectedError)) {
-        errorf("compiling `%s`; unexpected error: %s", expr, e.getMessage());
-      }
-    }
-    return null;
-  }
-
-  public void testGoodCompile() {
-    for (String good : GOOD_RE) {
-      compileTest(good, null);
-    }
-  }
-
-  public void testBadCompile() {
-    for (String[] bad : BAD_RE) {
-      compileTest(bad[0], bad[1]);
-    }
-  }
-
-  private void matchTest(FindTest.Test test) throws Exception {
-    RE2 re = compileTest(test.pat, null);
-    if (re == null) {
-      return;
-    }
-    boolean m = re.match(test.text);
-    if (m != (test.matches.length > 0)) {
-      errorf("RE2.match failure on %s: %s should be %s",
-             test, m, test.matches.length > 0);
-    }
-    // now try bytes
-    m = re.matchUTF8(utf8(test.text));
-    if (m != (test.matches.length > 0)) {
-      errorf("RE2.matchUTF8 failure on %s: %s should be %s",
-             test, m, test.matches.length > 0);
-    }
-  }
-
-  public void testMatch() throws Exception {
-    for (FindTest.Test test : FindTest.FIND_TESTS) {
-      matchTest(test);
-    }
-  }
-
-  private void matchFunctionTest(FindTest.Test test)
-      throws PatternSyntaxException {
-    boolean m = RE2.match(test.pat, test.text);
-    if (m != (test.matches.length > 0)) {
-      errorf("RE2.match failure on %s: %s should be %s",
-             test, m, test.matches.length > 0);
-    }
-  }
-
-  public void testMatchFunction() throws Exception {
-    for (FindTest.Test test : FindTest.FIND_TESTS) {
-      matchFunctionTest(test);
-    }
-  }
-
   // (pattern, replacement, input, output)
   private static final String[][] REPLACE_TESTS = {
     // Test empty input and/or replacement,
@@ -408,5 +307,4 @@ public class RE2Test extends GoTestCase {
     assertEquals(false, r.match("yyyabcxxxdefzzz",
                                 3, 11, RE2.UNANCHORED, null, 0));
   }
-
 }

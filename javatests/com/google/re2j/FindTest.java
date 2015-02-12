@@ -11,11 +11,17 @@
 
 package com.google.re2j;
 
+import static org.junit.Assert.fail;
+
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.TestCase;
 
-public class FindTest extends GoTestCase {
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+@RunWith(Parameterized.class)
+public class FindTest {
 
   // For each pattern/text pair, what is the expected output of each
   // function?  We can derive the textual results from the indexed
@@ -31,7 +37,7 @@ public class FindTest extends GoTestCase {
     Test(String pat, String text, int n, int ... x) {
       this.pat = pat;
       this.text = text;
-      this.textUTF8 = utf8(text);
+      this.textUTF8 = GoTestCase.utf8(text);
       this.matches = new int[n][];
       if (n > 0) {
         int runLength =  x.length / n;
@@ -57,7 +63,7 @@ public class FindTest extends GoTestCase {
     }
 
     String submatchString(int i, int j) {
-      return fromUTF8(submatchBytes(i, j));  // yikes
+      return GoTestCase.fromUTF8(submatchBytes(i, j));  // yikes
     }
 
     @Override public String toString() {
@@ -168,140 +174,139 @@ public class FindTest extends GoTestCase {
              35, 36),
   };
 
+  @Parameters
+  public static Test[] testCases() {
+    return FIND_TESTS;
+  }
+
+  private final Test test;
+
+  public FindTest(Test test) {
+    this.test = test;
+  }
+
   // First the simple cases.
 
+  @org.junit.Test
   public void testFindUTF8() {
-    for (Test test : FIND_TESTS) {
-      RE2 re = RE2.compile(test.pat);
-      if (!re.toString().equals(test.pat)) {
-        errorf("RE2.toString() = \"%s\"; should be \"%s\"",
-               re.toString(), test.pat);
-      }
-      byte[] result = re.findUTF8(test.textUTF8);
-      if (test.matches.length == 0 && len(result) == 0) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("findUTF8: expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("findUTF8: expected match; got none: %s", test);
-      } else {
-        byte[] expect = test.submatchBytes(0, 0);
-        if (!Arrays.equals(expect, result)) {
-          errorf("findUTF8: expected %s; got %s: %s",
-                 fromUTF8(expect), fromUTF8(result), test);
-        }
+    RE2 re = RE2.compile(test.pat);
+    if (!re.toString().equals(test.pat)) {
+      fail(String.format("RE2.toString() = \"%s\"; should be \"%s\"", re.toString(), test.pat));
+    }
+    byte[] result = re.findUTF8(test.textUTF8);
+    if (test.matches.length == 0 && GoTestCase.len(result) == 0) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("findUTF8: expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("findUTF8: expected match; got none: %s", test));
+    } else {
+      byte[] expect = test.submatchBytes(0, 0);
+      if (!Arrays.equals(expect, result)) {
+        fail(String.format("findUTF8: expected %s; got %s: %s", GoTestCase.fromUTF8(expect),
+            GoTestCase.fromUTF8(result), test));
       }
     }
   }
 
+  @org.junit.Test
   public void testFind() {
-    for (Test test : FIND_TESTS) {
-      String result = RE2.compile(test.pat).find(test.text);
-      if (test.matches.length == 0 && result.isEmpty()) {
-        // ok
-      } else if (test.matches.length == 0 && !result.isEmpty()) {
-        errorf("find: expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result.isEmpty()) {
-        // Tricky because an empty result has two meanings:
-        // no match or empty match.
-        int[] match = test.matches[0];
-        if (match[0] != match[1]) {
-          errorf("find: expected match; got none: %s", test);
-        }
-      } else {
-        String expect = test.submatchString(0, 0);
-        if (!expect.equals(result)) {
-          errorf("find: expected %s got %s: %s", expect, result, test);
-        }
+    String result = RE2.compile(test.pat).find(test.text);
+    if (test.matches.length == 0 && result.isEmpty()) {
+      // ok
+    } else if (test.matches.length == 0 && !result.isEmpty()) {
+      fail(String.format("find: expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result.isEmpty()) {
+      // Tricky because an empty result has two meanings:
+      // no match or empty match.
+      int[] match = test.matches[0];
+      if (match[0] != match[1]) {
+        fail(String.format("find: expected match; got none: %s", test));
+      }
+    } else {
+      String expect = test.submatchString(0, 0);
+      if (!expect.equals(result)) {
+        fail(String.format("find: expected %s got %s: %s", expect, result, test));
       }
     }
   }
 
   private void testFindIndexCommon(String testName, Test test, int[] result,
                                    boolean resultIndicesAreUTF8) {
-    if (test.matches.length == 0 && len(result) == 0) {
+    if (test.matches.length == 0 && GoTestCase.len(result) == 0) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
-      errorf("%s: expected no match; got one: %s", testName, test);
+      fail(String.format("%s: expected no match; got one: %s", testName, test));
     } else if (test.matches.length > 0 && result == null) {
-      errorf("%s: expected match; got none: %s", testName, test);
+      fail(String.format("%s: expected match; got none: %s", testName, test));
     } else {
       if (!resultIndicesAreUTF8) {
-        result = utf16IndicesToUtf8(result, test.text);
+        result = GoTestCase.utf16IndicesToUtf8(result, test.text);
       }
       int[] expect = test.matches[0];  // UTF-8 indices
       if (expect[0] != result[0] || expect[1] != result[1]) {
-        errorf("%s: expected %s got %s: %s", testName,
-               Arrays.toString(expect), Arrays.toString(result), test);
+        fail(String.format("%s: expected %s got %s: %s", testName,
+               Arrays.toString(expect), Arrays.toString(result), test));
       }
     }
   }
 
+  @org.junit.Test
   public void testFindUTF8Index() {
-    for (Test test : FIND_TESTS) {
-      testFindIndexCommon("testFindUTF8Index", test,
-                          RE2.compile(test.pat).findUTF8Index(test.textUTF8),
-                          true);
-    }
+    testFindIndexCommon("testFindUTF8Index", test,
+        RE2.compile(test.pat).findUTF8Index(test.textUTF8), true);
   }
 
+  @org.junit.Test
   public void testFindIndex() {
-    for (Test test : FIND_TESTS) {
-      int[] result = RE2.compile(test.pat).findIndex(test.text);
-      testFindIndexCommon("testFindIndex", test, result, false);
-    }
+    int[] result = RE2.compile(test.pat).findIndex(test.text);
+    testFindIndexCommon("testFindIndex", test, result, false);
   }
 
   // Now come the simple All cases.
 
+  @org.junit.Test
   public void testFindAllUTF8() {
-    for (Test test : FIND_TESTS) {
-      List<byte[]> result =
-          RE2.compile(test.pat).findAllUTF8(test.textUTF8, -1);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("findAllUTF8: expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        throw new AssertionError(
-            "findAllUTF8: expected match; got none: " + test);
-      } else {
-        if (test.matches.length != result.size()) {
-          errorf("findAllUTF8: expected %d matches; got %d: %s",
-                 test.matches.length, result.size(), test);
-          continue;
-        }
-        for (int i = 0; i < test.matches.length; i++) {
-          byte[] expect = test.submatchBytes(i, 0);
-          if (!Arrays.equals(expect, result.get(i))) {
-            errorf("findAllUTF8: match %d: expected %s; got %s: %s",
-                   i / 2, fromUTF8(expect), fromUTF8(result.get(i)), test);
-          }
+    List<byte[]> result = RE2.compile(test.pat).findAllUTF8(test.textUTF8, -1);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("findAllUTF8: expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      throw new AssertionError("findAllUTF8: expected match; got none: " + test);
+    } else {
+      if (test.matches.length != result.size()) {
+        fail(String.format("findAllUTF8: expected %d matches; got %d: %s", test.matches.length,
+            result.size(), test));
+      }
+      for (int i = 0; i < test.matches.length; i++) {
+        byte[] expect = test.submatchBytes(i, 0);
+        if (!Arrays.equals(expect, result.get(i))) {
+          fail(String.format("findAllUTF8: match %d: expected %s; got %s: %s", i / 2,
+              GoTestCase.fromUTF8(expect), GoTestCase.fromUTF8(result.get(i)), test));
         }
       }
     }
   }
 
+  @org.junit.Test
   public void testFindAll() {
-    for (Test test : FIND_TESTS) {
-      List<String> result = RE2.compile(test.pat).findAll(test.text, -1);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("findAll: expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("findAll: expected match; got none: %s", test);
-      } else {
-        if (test.matches.length != result.size()) {
-          errorf("findAll: expected %d matches; got %d: %s",
-                 test.matches.length, result.size(), test);
-          continue;
-        }
-        for (int i = 0; i < test.matches.length; i++) {
-          String expect = test.submatchString(i, 0);
-          if (!expect.equals(result.get(i))) {
-            errorf("findAll: expected %s; got %s: %s", expect, result, test);
-          }
+    List<String> result = RE2.compile(test.pat).findAll(test.text, -1);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("findAll: expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("findAll: expected match; got none: %s", test));
+    } else {
+      if (test.matches.length != result.size()) {
+        fail(String.format("findAll: expected %d matches; got %d: %s", test.matches.length,
+            result.size(), test));
+      }
+      for (int i = 0; i < test.matches.length; i++) {
+        String expect = test.submatchString(i, 0);
+        if (!expect.equals(result.get(i))) {
+          fail(String.format("findAll: expected %s; got %s: %s", expect, result, test));
         }
       }
     }
@@ -313,45 +318,40 @@ public class FindTest extends GoTestCase {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
-      errorf("%s: expected no match; got one: %s", testName, test);
+      fail(String.format("%s: expected no match; got one: %s", testName, test));
     } else if (test.matches.length > 0 && result == null) {
-      errorf("%s: expected match; got none: %s", testName, test);
+      fail(String.format("%s: expected match; got none: %s", testName, test));
     } else {
       if (test.matches.length != result.size()) {
-        errorf("%s: expected %d matches; got %d: %s", testName,
-               test.matches.length, result.size(), test);
-        return;
+        fail(String.format("%s: expected %d matches; got %d: %s", testName,
+               test.matches.length, result.size(), test));
       }
       for (int k = 0; k < test.matches.length; k++) {
         int[] e = test.matches[k];
         int[] res = result.get(k);
         if (!resultIndicesAreUTF8) {
-          res = utf16IndicesToUtf8(res, test.text);
+          res = GoTestCase.utf16IndicesToUtf8(res, test.text);
         }
         if (e[0] != res[0] || e[1] != res[1]) {
-          errorf("%s: match %d: expected %s; got %s: %s", testName, k,
+          fail(String.format("%s: match %d: expected %s; got %s: %s", testName, k,
                  Arrays.toString(e),  // (only 1st two elements matter here)
                  Arrays.toString(res),
-                 test);
+                 test));
         }
       }
     }
   }
 
+  @org.junit.Test
   public void testFindAllUTF8Index() {
-    for (Test test : FIND_TESTS) {
-      testFindAllIndexCommon(
-          "testFindAllUTF8Index", test,
-          RE2.compile(test.pat).findAllUTF8Index(test.textUTF8, -1), true);
-    }
+    testFindAllIndexCommon("testFindAllUTF8Index", test,
+        RE2.compile(test.pat).findAllUTF8Index(test.textUTF8, -1), true);
   }
 
+  @org.junit.Test
   public void testFindAllIndex() {
-    for (Test test : FIND_TESTS) {
-      testFindAllIndexCommon(
-          "testFindAllIndex", test,
-          RE2.compile(test.pat).findAllIndex(test.text, -1), false);
-    }
+    testFindAllIndexCommon("testFindAllIndex", test,
+        RE2.compile(test.pat).findAllIndex(test.text, -1), false);
   }
 
   // Now come the Submatch cases.
@@ -359,39 +359,36 @@ public class FindTest extends GoTestCase {
   private void testSubmatchBytes(String testName, FindTest.Test test,
                                  int n, byte[][] result) {
     int[] submatches = test.matches[n];
-    if (submatches.length != len(result) * 2) {
-      errorf("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, len(result), test);
-      return;
+    if (submatches.length != GoTestCase.len(result) * 2) {
+      fail(String.format("%s %d: expected %d submatches; got %d: %s",
+             testName, n, submatches.length / 2, GoTestCase.len(result), test));
     }
-    for (int k = 0; k < len(result); k++) {
+    for (int k = 0; k < GoTestCase.len(result); k++) {
       if (submatches[k * 2] == -1) {
         if (result[k] != null) {
-          errorf("%s %d: expected null got %s: %s", testName, n, result, test);
+          fail(String.format("%s %d: expected null got %s: %s", testName, n, result, test));
         }
         continue;
       }
       byte[] expect = test.submatchBytes(n, k);
       if (!Arrays.equals(expect, result[k])) {
-        errorf("%s %d: expected %s; got %s: %s",
-               testName, n, fromUTF8(expect), fromUTF8(result[k]), test);
-        return;
+        fail(String.format("%s %d: expected %s; got %s: %s", testName, n,
+            GoTestCase.fromUTF8(expect), GoTestCase.fromUTF8(result[k]), test));
       }
     }
   }
 
+  @org.junit.Test
   public void testFindUTF8Submatch() {
-    for (Test test : FIND_TESTS) {
-      byte[][] result = RE2.compile(test.pat).findUTF8Submatch(test.textUTF8);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("expected match; got none: %s", test);
-      } else {
-        testSubmatchBytes("testFindUTF8Submatch", test, 0, result);
-      }
+    byte[][] result = RE2.compile(test.pat).findUTF8Submatch(test.textUTF8);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("expected match; got none: %s", test));
+    } else {
+      testSubmatchBytes("testFindUTF8Submatch", test, 0, result);
     }
   }
 
@@ -399,63 +396,60 @@ public class FindTest extends GoTestCase {
   private void testSubmatch(String testName, Test test, int n,
                             String[] result) {
     int[] submatches = test.matches[n];
-    if (submatches.length != len(result) * 2) {
-      errorf("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, len(result), test);
-      return;
+    if (submatches.length != GoTestCase.len(result) * 2) {
+      fail(String.format("%s %d: expected %d submatches; got %d: %s",
+             testName, n, submatches.length / 2, GoTestCase.len(result), test));
     }
     for (int k = 0; k < submatches.length; k += 2) {
       if (submatches[k] == -1) {
         if (result[k / 2] != null && !result[k / 2].isEmpty()) {
-          errorf("%s %d: expected null got %s: %s",
-                 testName, n, Arrays.toString(result), test);
+          fail(String.format("%s %d: expected null got %s: %s",
+                 testName, n, Arrays.toString(result), test));
         }
         continue;
       }
       System.err.println(testName+ "  "+ test + " "+ n + " " + k + " ");
       String expect = test.submatchString(n, k / 2);
       if (!expect.equals(result[k / 2])) {
-        errorf("%s %d: expected %s got %s: %s",
-               testName, n, expect, result, test);
-        return;
+        fail(String.format("%s %d: expected %s got %s: %s",
+               testName, n, expect, result, test));
       }
     }
   }
 
   // (Go: TestFindStringSubmatch)
+  @org.junit.Test
   public void testFindSubmatch() {
-    for (Test test : FIND_TESTS) {
-      String[] result = RE2.compile(test.pat).findSubmatch(test.text);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("expected match; got none: %s", test);
-      } else {
-        testSubmatch("testFindSubmatch", test, 0, result);
-      }
+    String[] result = RE2.compile(test.pat).findSubmatch(test.text);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("expected match; got none: %s", test));
+    } else {
+      testSubmatch("testFindSubmatch", test, 0, result);
     }
   }
 
   private void testSubmatchIndices(String testName, Test test, int n,
                                    int[] result, boolean resultIndicesAreUTF8) {
     int[] expect = test.matches[n];
-    if (expect.length != len(result)) {
-      errorf("%s %d: expected %d matches; got %d: %s",
-             testName, n, expect.length / 2, len(result) / 2, test);
+    if (expect.length != GoTestCase.len(result)) {
+      fail(String.format("%s %d: expected %d matches; got %d: %s",
+             testName, n, expect.length / 2, GoTestCase.len(result) / 2, test));
       return;
     }
     if (!resultIndicesAreUTF8) {
-      result = utf16IndicesToUtf8(result, test.text);
+      result = GoTestCase.utf16IndicesToUtf8(result, test.text);
     }
     for (int k = 0; k < expect.length; ++k) {
       if (expect[k] != result[k]) {
-        errorf("%s %d: submatch error: expected %s got %s: %s",
+        fail(String.format("%s %d: submatch error: expected %s got %s: %s",
                testName, n,
                Arrays.toString(expect),
                Arrays.toString(result),
-               test);
+               test));
       }
     }
   }
@@ -466,76 +460,64 @@ public class FindTest extends GoTestCase {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
-      errorf("%s: expected no match; got one: %s", testName, test);
+      fail(String.format("%s: expected no match; got one: %s", testName, test));
     } else if (test.matches.length > 0 && result == null) {
-      errorf("%s: expected match; got none: %s", testName, test);
+      fail(String.format("%s: expected match; got none: %s", testName, test));
     } else {
       testSubmatchIndices(testName, test, 0, result, resultIndicesAreUTF8);
     }
   }
 
+  @org.junit.Test
   public void testFindUTF8SubmatchIndex() {
-    for (Test test : FIND_TESTS) {
-      testFindSubmatchIndexCommon(
-          "testFindSubmatchIndex", test,
-          RE2.compile(test.pat).findUTF8SubmatchIndex(test.textUTF8),
-          true);
-    }
+    testFindSubmatchIndexCommon("testFindSubmatchIndex", test, RE2.compile(test.pat)
+        .findUTF8SubmatchIndex(test.textUTF8), true);
   }
 
   // (Go: TestFindStringSubmatchIndex)
+  @org.junit.Test
   public void testFindSubmatchIndex() {
-    for (Test test : FIND_TESTS) {
-      testFindSubmatchIndexCommon(
-          "testFindStringSubmatchIndex", test,
-          RE2.compile(test.pat).findSubmatchIndex(test.text),
-          false);
-    }
+    testFindSubmatchIndexCommon("testFindStringSubmatchIndex", test, RE2.compile(test.pat)
+        .findSubmatchIndex(test.text), false);
   }
 
   // Now come the monster AllSubmatch cases.
 
   // (Go: TestFindAllSubmatch)
+  @org.junit.Test
   public void testFindAllUTF8Submatch() {
-    for (Test test : FIND_TESTS) {
-      List<byte[][]> result =
-          RE2.compile(test.pat).findAllUTF8Submatch(test.textUTF8, -1);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("expected match; got none: %s", test);
-      } else if (test.matches.length != result.size()) {
-        errorf("expected %d matches; got %d: %s",
-               test.matches.length, result.size(), test);
-      } else {
-        for (int k = 0; k < test.matches.length; ++k) {
-          testSubmatchBytes("testFindAllSubmatch", test, k, result.get(k));
-        }
+    List<byte[][]> result = RE2.compile(test.pat).findAllUTF8Submatch(test.textUTF8, -1);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("expected match; got none: %s", test));
+    } else if (test.matches.length != result.size()) {
+      fail(String.format("expected %d matches; got %d: %s", test.matches.length, result.size(),
+          test));
+    } else {
+      for (int k = 0; k < test.matches.length; ++k) {
+        testSubmatchBytes("testFindAllSubmatch", test, k, result.get(k));
       }
     }
   }
 
   // (Go: TestFindAllStringSubmatch)
   public void testFindAllSubmatch() {
-    for (Test test : FIND_TESTS) {
-      List<String[]> result =
-          RE2.compile(test.pat).findAllSubmatch(test.text, -1);
-      if (test.matches.length == 0 && result == null) {
-        // ok
-      } else if (test.matches.length == 0 && result != null) {
-        errorf("expected no match; got one: %s", test);
-      } else if (test.matches.length > 0 && result == null) {
-        errorf("expected match; got none: %s", test);
-      } else if (test.matches.length != result.size()) {
-        errorf("expected %d matches; got %d: %s",
-               test.matches.length, result.size(), test);
-      } else {
-        for (int k = 0; k < test.matches.length; ++k) {
-          testSubmatch("testFindAllStringSubmatch",
-                       test, k, result.get(k));
-        }
+    List<String[]> result = RE2.compile(test.pat).findAllSubmatch(test.text, -1);
+    if (test.matches.length == 0 && result == null) {
+      // ok
+    } else if (test.matches.length == 0 && result != null) {
+      fail(String.format("expected no match; got one: %s", test));
+    } else if (test.matches.length > 0 && result == null) {
+      fail(String.format("expected match; got none: %s", test));
+    } else if (test.matches.length != result.size()) {
+      fail(String.format("expected %d matches; got %d: %s", test.matches.length, result.size(),
+          test));
+    } else {
+      for (int k = 0; k < test.matches.length; ++k) {
+        testSubmatch("testFindAllStringSubmatch", test, k, result.get(k));
       }
     }
   }
@@ -547,12 +529,12 @@ public class FindTest extends GoTestCase {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
-      errorf("%s: expected no match; got one: %s", testName, test);
+      fail(String.format("%s: expected no match; got one: %s", testName, test));
     } else if (test.matches.length > 0 && result == null) {
-      errorf("%s: expected match; got none: %s", testName, test);
+      fail(String.format("%s: expected match; got none: %s", testName, test));
     } else if (test.matches.length != result.size()) {
-      errorf("%s: expected %d matches; got %d: %s",
-             testName, test.matches.length, result.size(), test);
+      fail(String.format("%s: expected %d matches; got %d: %s",
+             testName, test.matches.length, result.size(), test));
     } else {
       for (int k = 0; k < test.matches.length; ++k) {
         testSubmatchIndices(testName, test, k, result.get(k),
@@ -562,23 +544,17 @@ public class FindTest extends GoTestCase {
   }
 
   // (Go: TestFindAllSubmatchIndex)
+  @org.junit.Test
   public void testFindAllUTF8SubmatchIndex() {
-    for (Test test : FIND_TESTS) {
-      testFindAllSubmatchIndexCommon(
-          "testFindAllUTF8SubmatchIndex", test,
-          RE2.compile(test.pat).findAllUTF8SubmatchIndex(test.textUTF8, -1),
-          true);
-    }
+    testFindAllSubmatchIndexCommon("testFindAllUTF8SubmatchIndex", test, RE2.compile(test.pat)
+        .findAllUTF8SubmatchIndex(test.textUTF8, -1), true);
   }
 
   // (Go: TestFindAllStringSubmatchIndex)
+  @org.junit.Test
   public void testFindAllSubmatchIndex() {
-    for (Test test : FIND_TESTS) {
-      testFindAllSubmatchIndexCommon(
-          "testFindAllSubmatchIndex", test,
-          RE2.compile(test.pat).findAllSubmatchIndex(test.text, -1),
-          false);
-    }
+    testFindAllSubmatchIndexCommon("testFindAllSubmatchIndex", test, RE2.compile(test.pat)
+        .findAllSubmatchIndex(test.text, -1), false);
   }
 
   // The find_test.go benchmarks are ported to Benchmarks.java.

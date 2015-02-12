@@ -99,6 +99,7 @@
           <configuration>
             <excludes>
               <exclude>**/GoTestCase.java</exclude>
+              <exclude>**/Benchmarks.java</exclude>
             </excludes>
           </configuration>
         </plugin>

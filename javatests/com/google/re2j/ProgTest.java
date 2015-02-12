@@ -7,9 +7,11 @@
 
 package com.google.re2j;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
 
-public class ProgTest extends TestCase {
+import org.junit.Test;
+
+public class ProgTest {
   private static final String[][] COMPILE_TESTS = {
     {"a",
      "0       fail\n" +
@@ -106,6 +108,7 @@ public class ProgTest extends TestCase {
     },
   };
 
+  @Test
   public void testCompile() throws Exception {
     for (String[] test : COMPILE_TESTS) {
       Regexp re = Parser.parse(test[0], RE2.PERL);

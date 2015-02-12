@@ -2,7 +2,8 @@
 
 package com.google.re2j;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,35 +11,41 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import org.junit.Test;
+
 /**
  * This class checks that the behaviour of Pattern and JDK's Pattern are
  * same, and we expect them that way too.
  *
  * @author afrozm@google.com (Afroz Mohiuddin)
  */
-public class PatternTest extends TestCase {
+public class PatternTest {
 
+  @Test
   public void testCompile() {
     Pattern p = Pattern.compile("abc");
     assertEquals("abc", p.pattern());
     assertEquals(0, p.flags());
   }
 
+  @Test
   public void testToString() {
     Pattern p = Pattern.compile("abc");
     assertEquals("abc", p.toString());
   }
 
+  @Test
   public void testCompileFlags() {
     Pattern p = Pattern.compile("abc", 5);
     assertEquals("abc", p.pattern());
     assertEquals(5, p.flags());
   }
 
+  @Test
   public void testSyntaxError() {
     boolean caught = false;
     try {
-      Pattern p = Pattern.compile("abc(");
+      Pattern.compile("abc(");
     } catch (PatternSyntaxException e) {
       assertEquals(-1, e.getIndex());
       assertNotSame("", e.getDescription());
@@ -49,12 +56,14 @@ public class PatternTest extends TestCase {
     assertEquals(true, caught);
   }
 
+  @Test
   public void testMatchesNoFlags() {
     ApiTestUtils.testMatches("ab+c", "abbbc", "cbbba");
     ApiTestUtils.testMatches("ab.*c", "abxyzc", "ab\nxyzc");
     ApiTestUtils.testMatches("^ab.*c$", "abc", "xyz\nabc\ndef");
   }
 
+  @Test
   public void testMatchesWithFlags() {
     ApiTestUtils.testMatchesRE2("ab+c", 0, "abbbc", "cbba");
     ApiTestUtils.testMatchesRE2("ab+c", Pattern.CASE_INSENSITIVE, "abBBc",
@@ -80,6 +89,8 @@ public class PatternTest extends TestCase {
     assertEquals(true, Pattern.compile(regexp, flag).matcher(match).find());
     assertEquals(false, Pattern.compile(regexp, flag).matcher(nonMatch).find());
   }
+
+  @Test
   public void testFind() {
     testFind("ab+c", 0, "xxabbbc", "cbbba");
     testFind("ab+c", Pattern.CASE_INSENSITIVE, "abBBc", "cbbba");
@@ -93,6 +104,7 @@ public class PatternTest extends TestCase {
       "xyz\nAB\nc\ndef", "z");
   }
 
+  @Test
   public void testSplit() {
     ApiTestUtils.testSplit("/", "abcde", new String[] {"abcde"});
     ApiTestUtils.testSplit("/", "a/b/cc//d/e//",
@@ -130,6 +142,7 @@ public class PatternTest extends TestCase {
     ApiTestUtils.testSplit(regexp2, s, new String[] { "b", "", ":and:f" });
   }
 
+  @Test
   public void testGroupCount() {
     // It is a simple delegation, but still test it.
     ApiTestUtils.testGroupCount("(.*)ab(.*)a", 2);
@@ -139,6 +152,7 @@ public class PatternTest extends TestCase {
     ApiTestUtils.testGroupCount("(.*)(\\(a\\)b)(.*)a", 3);
   }
 
+  @Test
   public void testQuote() {
     ApiTestUtils.testMatchesRE2(Pattern.quote("ab+c"), 0, "ab+c", "abc");
   }

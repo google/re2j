@@ -9,7 +9,7 @@
   </parent>
   <groupId>com.google.re2j</groupId>
   <artifactId>re2j</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>re2j</name>
   <url>http://github.com/google/re2j</url>

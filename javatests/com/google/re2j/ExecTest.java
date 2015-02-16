@@ -7,6 +7,9 @@
 
 package com.google.re2j;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,9 +18,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
-import junit.framework.TestCase;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+
+import org.junit.Test;
 
 // TestRE2 tests this package's regexp API against test cases
 // considered during (C++) RE2's exhaustive tests, which run all possible
@@ -63,10 +65,9 @@ import junit.framework.TestSuite;
 // At time of writing, re2.txt is 32 MB but compresses to 760 kB,
 // so we store re2.txt.gz in the repository and decompress it on the fly.
 
-public class ExecTest extends TestCase {
+public class ExecTest {
 
-  public static Test suite() { return new TestSuite(ExecTest.class); }
-
+  @Test
   public void testExamplesInDocumentation() throws PatternSyntaxException {
     RE2 re = RE2.compile("(?i:co(.)a)");
     assertEquals(Arrays.asList("Copa", "coba"),
@@ -78,10 +79,12 @@ public class ExecTest extends TestCase {
                  Arrays.asList(x.get(1)));
   }
 
+  @Test
   public void testRE2Search() throws IOException {
     testRE2("re2-search.txt");
   }
 
+  @Test
   public void testRE2Exhaustive() throws IOException {
     testRE2("re2-exhaustive.txt.gz");  // takes about 30s
   }
@@ -322,12 +325,15 @@ public class ExecTest extends TestCase {
   // POSIX regular expression tests collected by Glenn Fowler at
   // http://www2.research.att.com/~gsf/testregex/.
 
+  @Test
   public void testFowlerBasic() throws Exception {
     testFowler("basic.dat");
   }
+  @Test
   public void testFowlerNullSubexpr() throws Exception {
     testFowler("nullsubexpr.dat");
   }
+  @Test
   public void testFowlerRepetition() throws Exception {
     testFowler("repetition.dat");
   }

@@ -5,9 +5,7 @@ package com.google.re2j;
 import java.io.UnsupportedEncodingException;
 
 // Utilities to make JUnit act a little more like Go's "testing" package.
-// In particular, don't rely on exceptions for error reporting, since they
-// cripple data-driven tests.
-class GoTestCase {
+class GoTestUtils {
   // Other utilities:
 
   protected static int len(Object[] array) {
@@ -31,7 +29,7 @@ class GoTestCase {
   // Beware: logically this operation can fail, but Java doesn't detect it.
   protected static String fromUTF8(byte[] b) {
     try {
-    return new String(b, "UTF-8");
+      return new String(b, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException("can't happen");
     }

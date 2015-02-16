@@ -29,7 +29,7 @@ public class RE2MatchTest {
           test.matches.length > 0));
     }
     // now try bytes
-    m = re.matchUTF8(GoTestCase.utf8(test.text));
+    m = re.matchUTF8(GoTestUtils.utf8(test.text));
     if (m != (test.matches.length > 0)) {
       fail(String.format("RE2.matchUTF8 failure on %s: %s should be %s", test, m,
           test.matches.length > 0));

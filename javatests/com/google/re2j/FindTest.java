@@ -37,7 +37,7 @@ public class FindTest {
     Test(String pat, String text, int n, int ... x) {
       this.pat = pat;
       this.text = text;
-      this.textUTF8 = GoTestCase.utf8(text);
+      this.textUTF8 = GoTestUtils.utf8(text);
       this.matches = new int[n][];
       if (n > 0) {
         int runLength =  x.length / n;
@@ -63,7 +63,7 @@ public class FindTest {
     }
 
     String submatchString(int i, int j) {
-      return GoTestCase.fromUTF8(submatchBytes(i, j));  // yikes
+      return GoTestUtils.fromUTF8(submatchBytes(i, j));  // yikes
     }
 
     @Override public String toString() {
@@ -194,7 +194,7 @@ public class FindTest {
       fail(String.format("RE2.toString() = \"%s\"; should be \"%s\"", re.toString(), test.pat));
     }
     byte[] result = re.findUTF8(test.textUTF8);
-    if (test.matches.length == 0 && GoTestCase.len(result) == 0) {
+    if (test.matches.length == 0 && GoTestUtils.len(result) == 0) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
       fail(String.format("findUTF8: expected no match; got one: %s", test));
@@ -203,8 +203,8 @@ public class FindTest {
     } else {
       byte[] expect = test.submatchBytes(0, 0);
       if (!Arrays.equals(expect, result)) {
-        fail(String.format("findUTF8: expected %s; got %s: %s", GoTestCase.fromUTF8(expect),
-            GoTestCase.fromUTF8(result), test));
+        fail(String.format("findUTF8: expected %s; got %s: %s", GoTestUtils.fromUTF8(expect),
+            GoTestUtils.fromUTF8(result), test));
       }
     }
   }
@@ -233,7 +233,7 @@ public class FindTest {
 
   private void testFindIndexCommon(String testName, Test test, int[] result,
                                    boolean resultIndicesAreUTF8) {
-    if (test.matches.length == 0 && GoTestCase.len(result) == 0) {
+    if (test.matches.length == 0 && GoTestUtils.len(result) == 0) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
       fail(String.format("%s: expected no match; got one: %s", testName, test));
@@ -241,7 +241,7 @@ public class FindTest {
       fail(String.format("%s: expected match; got none: %s", testName, test));
     } else {
       if (!resultIndicesAreUTF8) {
-        result = GoTestCase.utf16IndicesToUtf8(result, test.text);
+        result = GoTestUtils.utf16IndicesToUtf8(result, test.text);
       }
       int[] expect = test.matches[0];  // UTF-8 indices
       if (expect[0] != result[0] || expect[1] != result[1]) {
@@ -283,7 +283,7 @@ public class FindTest {
         byte[] expect = test.submatchBytes(i, 0);
         if (!Arrays.equals(expect, result.get(i))) {
           fail(String.format("findAllUTF8: match %d: expected %s; got %s: %s", i / 2,
-              GoTestCase.fromUTF8(expect), GoTestCase.fromUTF8(result.get(i)), test));
+              GoTestUtils.fromUTF8(expect), GoTestUtils.fromUTF8(result.get(i)), test));
         }
       }
     }
@@ -330,7 +330,7 @@ public class FindTest {
         int[] e = test.matches[k];
         int[] res = result.get(k);
         if (!resultIndicesAreUTF8) {
-          res = GoTestCase.utf16IndicesToUtf8(res, test.text);
+          res = GoTestUtils.utf16IndicesToUtf8(res, test.text);
         }
         if (e[0] != res[0] || e[1] != res[1]) {
           fail(String.format("%s: match %d: expected %s; got %s: %s", testName, k,
@@ -359,11 +359,11 @@ public class FindTest {
   private void testSubmatchBytes(String testName, FindTest.Test test,
                                  int n, byte[][] result) {
     int[] submatches = test.matches[n];
-    if (submatches.length != GoTestCase.len(result) * 2) {
+    if (submatches.length != GoTestUtils.len(result) * 2) {
       fail(String.format("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, GoTestCase.len(result), test));
+             testName, n, submatches.length / 2, GoTestUtils.len(result), test));
     }
-    for (int k = 0; k < GoTestCase.len(result); k++) {
+    for (int k = 0; k < GoTestUtils.len(result); k++) {
       if (submatches[k * 2] == -1) {
         if (result[k] != null) {
           fail(String.format("%s %d: expected null got %s: %s", testName, n, result, test));
@@ -373,7 +373,7 @@ public class FindTest {
       byte[] expect = test.submatchBytes(n, k);
       if (!Arrays.equals(expect, result[k])) {
         fail(String.format("%s %d: expected %s; got %s: %s", testName, n,
-            GoTestCase.fromUTF8(expect), GoTestCase.fromUTF8(result[k]), test));
+            GoTestUtils.fromUTF8(expect), GoTestUtils.fromUTF8(result[k]), test));
       }
     }
   }
@@ -396,9 +396,9 @@ public class FindTest {
   private void testSubmatch(String testName, Test test, int n,
                             String[] result) {
     int[] submatches = test.matches[n];
-    if (submatches.length != GoTestCase.len(result) * 2) {
+    if (submatches.length != GoTestUtils.len(result) * 2) {
       fail(String.format("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, GoTestCase.len(result), test));
+             testName, n, submatches.length / 2, GoTestUtils.len(result), test));
     }
     for (int k = 0; k < submatches.length; k += 2) {
       if (submatches[k] == -1) {
@@ -435,13 +435,13 @@ public class FindTest {
   private void testSubmatchIndices(String testName, Test test, int n,
                                    int[] result, boolean resultIndicesAreUTF8) {
     int[] expect = test.matches[n];
-    if (expect.length != GoTestCase.len(result)) {
+    if (expect.length != GoTestUtils.len(result)) {
       fail(String.format("%s %d: expected %d matches; got %d: %s",
-             testName, n, expect.length / 2, GoTestCase.len(result) / 2, test));
+             testName, n, expect.length / 2, GoTestUtils.len(result) / 2, test));
       return;
     }
     if (!resultIndicesAreUTF8) {
-      result = GoTestCase.utf16IndicesToUtf8(result, test.text);
+      result = GoTestUtils.utf16IndicesToUtf8(result, test.text);
     }
     for (int k = 0; k < expect.length; ++k) {
       if (expect[k] != result[k]) {

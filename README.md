@@ -82,4 +82,5 @@ RE2 was designed and implemented in C++ by Russ Cox. The C++ implementation
 includes both NFA and DFA engines and numerous optimisations. Russ also ported
 a simplified version of the NFA to Go. Alan Donovan ported the NFA-based Go
 implementation to Java. Afroz Mohiuddin wrapped the engine in a familiar Java
-`Matcher` / `Pattern` API.
+`Matcher` / `Pattern` API. James Ring prepared the RE2/J source for its
+release to Open Source.

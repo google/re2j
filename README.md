@@ -83,3 +83,5 @@ includes both NFA and DFA engines and numerous optimisations. Russ also ported
 a simplified version of the NFA to Go. Alan Donovan ported the NFA-based Go
 implementation to Java. Afroz Mohiuddin wrapped the engine in a familiar Java
 `Matcher` / `Pattern` API.
+
+This is just a test, not to be checked in.

@@ -84,3 +84,5 @@ a simplified version of the NFA to Go. Alan Donovan ported the NFA-based Go
 implementation to Java. Afroz Mohiuddin wrapped the engine in a familiar Java
 `Matcher` / `Pattern` API. James Ring prepared the RE2/J source for its
 release to Open Source.
+
+This is just a test, not to be checked in.

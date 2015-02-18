@@ -13,9 +13,6 @@
   <packaging>jar</packaging>
   <name>re2j</name>
   <url>http://github.com/google/re2j</url>
-  <properties>
-    <gpg.skip>true</gpg.skip>
-  </properties>
   <issueManagement>
     <system>github</system>
     <url>http://github.com/google/re2j/issues</url>

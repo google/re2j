@@ -67,6 +67,22 @@ interface:
 It also doesn't have parity with the full set of Java's character classes and
 special regular expression constructs.
 
+# Getting RE2/J
+
+If you're using Maven, you can use the following snippet in your `pom.xml` to get RE2/J:
+
+```xml
+<dependency>
+  <groupId>com.google.re2j</groupId>
+  <artifactId>re2j</artifactId>
+  <version>1.0</version>
+</dependency>
+```
+
+You can use the same artifact details in any build system compatible with the Maven Central repositories (e.g. Gradle, Ivy).
+
+You can also download RE2/J the old-fashioned way: go to [the latest RE2/J release tag](https://github.com/google/re2j/releases/tag/re2j-1.0), download the RE2/J JAR and add it to your CLASSPATH.
+
 # Discussion and contribution
 
 We have set up a Google Group for discussion, please join the [RE2/J discussion

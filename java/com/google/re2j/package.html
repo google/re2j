@@ -1,0 +1,57 @@
+<body>
+  <p>
+    This package provides an implementation of regular expression
+    matching based on Russ Cox's linear-time <a
+    href='http://code.google.com/p/re2/'>RE2 algorithm</a>.
+  </p>
+  <p>
+    The API presented by {@code com.google.re2j} mimics that of {@code
+    java.util.regex.Matcher} and {@code java.util.regex.Pattern}.
+    While not identical, they are similar enough that most users can
+    switch implementations simply by changing their {@code import}s.
+  </p>
+  <p>
+    The syntax of the regular expressions accepted is the same general
+    syntax used by Perl, Python, and other languages.  More precisely,
+    it is the syntax accepted by the C++ and Go implementations of RE2
+    described at <a
+    href='http://code.google.com/p/re2/wiki/Syntax'>http://code.google.com/p/re2/wiki/Syntax</a>,
+    except for <code>\C</code> (match any byte), which is not
+    supported because in this implementation, the matcher's input is
+    conceptually a stream of Unicode code points, not bytes.
+  </p>
+  <p>
+    The current API is rather small and intended for compatibility
+    with {@code java.util.regex}, but the underlying implementation
+    supports some additional features, such as the ability to process
+    input character streams encoded as UTF-8 byte arrays.  These may
+    be exposed in a future release if there is sufficient interest.
+  </p>
+  <p>
+    Example use:
+  </p>
+  <pre>
+    import com.google.re2j.Matcher;
+    import com.google.re2j.Pattern;
+
+    Pattern p = Pattern.compile("b(an)*(.)");
+    Matcher m = p.matcher("by, band, banana");
+    assertTrue(m.lookingAt());
+
+    m.reset();                              // "by, band, banana"
+    assertTrue(m.find());
+    assertEquals("by", m.group(0));         //  --
+    assertEquals(null, m.group(1));         //
+    assertEquals("y",  m.group(2));         //   ^
+    assertTrue(m.find());
+    assertEquals("band", m.group(0));       //      ----
+    assertEquals("an",   m.group(1));       //       ^^
+    assertEquals("d",    m.group(2));       //         ^
+    assertTrue(m.find());
+    assertEquals("banana", m.group(0));     //            -------
+    assertEquals("an",     m.group(1));     //             ^^
+    assertEquals("a",      m.group(2));     //                  ^
+    assertFalse(m.find());
+  </pre>
+</body>
+

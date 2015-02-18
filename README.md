@@ -67,6 +67,15 @@ interface:
 It also doesn't have parity with the full set of Java's character classes and
 special regular expression constructs.
 
+# Discussion and contribution
+
+We have set up a Google Group for discussion, please join the [RE2/J discussion
+list](http://groups.google.com/group/re2j-discuss) if you'd like to get in
+touch.
+
+If you would like to contribute patches, please see the [instructions for
+contributors](CONTRIBUTING.md).
+
 # Who wrote this?
 
 RE2 was designed and implemented in C++ by Russ Cox. The C++ implementation

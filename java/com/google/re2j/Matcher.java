@@ -26,7 +26,7 @@ package com.google.re2j;
  *
  * </ol>
  *
- * <p>See the <href='package-summary.html'>package-level
+ * <p>See the <a href="package-summary.html">package-level
  * documentation</a> for an overview of how to use this API.</p>
  *
  * @author rsc@google.com (Russ Cox)

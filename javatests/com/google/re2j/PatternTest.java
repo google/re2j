@@ -181,6 +181,7 @@ public class PatternTest {
     assertEquals(p.flags(), reserialized.flags());
   }
 
+  @Test
   public void testSerialize() {
     assertSerializes(Pattern.compile("ab+c"));
     assertSerializes(Pattern.compile("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE));

@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 // TestRE2 tests this package's regexp API against test cases
 // considered during (C++) RE2's exhaustive tests, which run all possible
@@ -64,7 +66,7 @@ import org.junit.Test;
 //
 // At time of writing, re2.txt is 32 MB but compresses to 760 kB,
 // so we store re2.txt.gz in the repository and decompress it on the fly.
-
+@RunWith(JUnit4.class)
 public class ExecTest {
 
   @Test

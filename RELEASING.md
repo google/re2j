@@ -81,3 +81,8 @@ Before you publish the release, attach the following binaries to the release:
 * `target/re2j-(releaseNumber)-sources.jar`
 
 Once you publish this release, the process is complete!
+
+# Problems
+
+If you encounter issues, please reach out to the mailing
+list at re2j-discuss@googlegroups.com.

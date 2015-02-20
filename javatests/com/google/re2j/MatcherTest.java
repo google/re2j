@@ -8,12 +8,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Testing the RE2Matcher class.
  *
  * @author afrozm@google.com (Afroz Mohiuddin)
  */
+@RunWith(JUnit4.class)
 public class MatcherTest {
 
   @Test

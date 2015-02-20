@@ -12,6 +12,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * This class checks that the behaviour of Pattern and JDK's Pattern are
@@ -19,6 +21,7 @@ import org.junit.Test;
  *
  * @author afrozm@google.com (Afroz Mohiuddin)
  */
+@RunWith(JUnit4.class)
 public class PatternTest {
 
   @Test
@@ -178,6 +181,7 @@ public class PatternTest {
     assertEquals(p.flags(), reserialized.flags());
   }
 
+  @Test
   public void testSerialize() {
     assertSerializes(Pattern.compile("ab+c"));
     assertSerializes(Pattern.compile("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE));

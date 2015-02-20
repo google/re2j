@@ -50,7 +50,7 @@ and then use that access token in place of your normal password. You may delete
 the access token from your account once the release is done.
 
 Once you've done these steps, you'll have to
-[login to OSSRH](https://oss.sonatype.org)(look for the Log-In button in the 
+[login to OSSRH](https://oss.sonatype.org) (look for the Log-In button in the 
 top-right). Once you are logged in, follow these steps:
 
 * click on "Staging Repositories"

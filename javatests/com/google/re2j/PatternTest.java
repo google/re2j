@@ -3,6 +3,7 @@
 package com.google.re2j;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 
 import java.io.ByteArrayInputStream;
@@ -185,5 +186,6 @@ public class PatternTest {
   public void testSerialize() {
     assertSerializes(Pattern.compile("ab+c"));
     assertSerializes(Pattern.compile("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE));
+    assertFalse(reserialize(Pattern.compile("abc")).matcher("def").find());
   }
 }

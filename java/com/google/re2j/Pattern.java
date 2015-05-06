@@ -2,6 +2,7 @@
 
 package com.google.re2j;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -42,7 +43,7 @@ public final class Pattern implements Serializable {
   private final int flags;
 
   // The compiled RE2 regexp.
-  private transient final RE2 re2;
+  private transient RE2 re2;
 
   // This is visible for testing.
   Pattern(String pattern, int flags, RE2 re2) {
@@ -266,4 +267,10 @@ public final class Pattern implements Serializable {
   }
 
   private static final long serialVersionUID = 0;
+
+  private void readObject(java.io.ObjectInputStream in)
+     throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    re2 = RE2.compileImpl(pattern, flags, /*longest=*/false);
+  }
 }

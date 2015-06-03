@@ -23,39 +23,75 @@ import static org.junit.Assert.fail;
  * Benchmarks for common RE2J operations. The easiest way to run these benchmarks is probably to do:
  *
  * <pre>
- *   mvn exec:java -Dexec.mainClass=com.google.caliper.runner.CaliperMain com.google.re2j.Benchmarks
+ *   mvn exec:java -Dexec.mainClass=com.google.caliper.runner.CaliperMain \
+ *       -Dexec.args=com.google.re2j.Benchmarks \
+ *       -Dexec.classpathScope=test
  * </pre>
  */
-@VmOptions("-XX:-TieredCompilation") // http://stackoverflow.com/questions/29199509
+@VmOptions({"-XX:-TieredCompilation", // http://stackoverflow.com/questions/29199509
+        "-Xms8G", "-Xmx8G"}) // These seem to be necessary to avoid GC during the JDK benchmarks.
+                             // A GC during an experiment causes Caliper to discard the results.
 public class Benchmarks {
-  @Param({"false", "true"})
-  private boolean useJdk;
+  private enum Implementation {
+    RE2J, JDK;
+  }
+  @Param({"RE2J", "JDK"})
+  private Implementation implementation;
+
+  private static final String LONG_DATA;
+
+  static {
+    StringBuilder sb = new StringBuilder(26 << 15);
+    for (int i = 0; i < 1 << 15; i++) {
+      sb.append("abcdefghijklmnopqrstuvwxyz");
+    }
+    LONG_DATA = sb.toString();
+  }
 
   private Matcher pathologicalBacktracking;
-  private RE2 literal;
-  private RE2 notLiteral;
+  private Matcher literal;
+  private Matcher notLiteral;
+  private Matcher matchClassMatcher;
+  private Matcher inRangeMatchClassMatcher;
+  private Matcher replaceAllMatcher;
+  private Matcher anchoredLiteralNonMatchingMatcher;
+  private Matcher longAnchoredLiteralMatchingMatcher;
+  private Matcher anchoredMatchingMatcher;
 
   private interface Matcher {
     boolean match(String input);
+    String replaceAll(String input, String replacement);
   }
 
   @BeforeExperiment
   public void setupExpressions() {
     pathologicalBacktracking = compile("a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?"
         + "aaaaaaaaaaaaaaaaaaaaaaaa");
-    literal = RE2.compile("y");
-    notLiteral = RE2.compile(".y");
+    literal = compile("y");
+    notLiteral = compile(".y");
+    matchClassMatcher = compile("[abcdw]");
+    inRangeMatchClassMatcher = compile("[ac]");
+    replaceAllMatcher = compile("[cjrw]");
+    anchoredLiteralNonMatchingMatcher = compile("^zbc(d|e)");
+    anchoredMatchingMatcher = compile("^.bc(d|e)");
+
+    System.gc();
   }
 
   private Matcher compile(String re) {
-    if (useJdk) {
+    if (implementation == Implementation.JDK) {
       // The JDK implementation appears dramatically faster for these
       // inputs, possibly due to its use of right-to-left matching via
       // Boyer-Moore for anchored patterns. We should totally do that.
       final Pattern r = Pattern.compile(re);
       return new Matcher() {
         public boolean match(String input) {
-          return r.matcher(input).matches();
+          return r.matcher(input).find();
+        }
+
+        @Override
+        public String replaceAll(String input, String replacement) {
+          return r.matcher(input).replaceAll(replacement);
         }
       };
     } else { // com.google.re2
@@ -63,6 +99,11 @@ public class Benchmarks {
       return new Matcher() {
         public boolean match(String input) {
           return r.match(input);
+        }
+
+        @Override
+        public String replaceAll(String input, String replacement) {
+          return r.replaceAll(input, replacement);
         }
       };
     }
@@ -103,9 +144,8 @@ public class Benchmarks {
   public void benchmarkMatchClass(int nreps) {
     String x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + "w";
-    RE2 re = RE2.compile("[abcdw]");
     for (int i = 0; i < nreps; i++) {
-      if (!re.match(x)) {
+      if (!matchClassMatcher.match(x)) {
         fail("no match!");
       }
     }
@@ -117,9 +157,8 @@ public class Benchmarks {
     // range checking is no help here.
     String x = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         + "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" + "c";
-    RE2 re = RE2.compile("[ac]");
     for (int i = 0; i < nreps; i++) {
-      if (!re.match(x)) {
+      if (!inRangeMatchClassMatcher.match(x)) {
         fail("no match!");
       }
     }
@@ -128,53 +167,38 @@ public class Benchmarks {
   @Benchmark
   public void benchmarkReplaceAll(int nreps) {
     String x = "abcdefghijklmnopqrstuvwxyz";
-    RE2 re = RE2.compile("[cjrw]");
     for (int i = 0; i < nreps; i++) {
-      re.replaceAll(x, "");
+      replaceAllMatcher.replaceAll(x, "");
     }
   }
 
   @Benchmark
   public void benchmarkAnchoredLiteralShortNonMatch(int nreps) {
     String x = "abcdefghijklmnopqrstuvwxyz";
-    RE2 re = RE2.compile("^zbc(d|e)");
     for (int i = 0; i < nreps; i++) {
-      re.match(x);
+      anchoredLiteralNonMatchingMatcher.match(x);
     }
-  }
-
-  private static final String LONG_DATA;
-
-  static {
-    StringBuilder sb = new StringBuilder(26 << 15);
-    for (int i = 0; i < 1 << 15; i++) {
-      sb.append("abcdefghijklmnopqrstuvwxyz");
-    }
-    LONG_DATA = sb.toString();
   }
 
   @Benchmark
   public void benchmarkAnchoredLiteralLongNonMatch(int nreps) {
-    RE2 re = RE2.compile("^zbc(d|e)");
     for (int i = 0; i < nreps; i++) {
-      re.match(LONG_DATA);
+      anchoredLiteralNonMatchingMatcher.match(LONG_DATA);
     }
   }
 
   @Benchmark
   public void benchmarkAnchoredShortMatch(int nreps) {
     String x = "abcdefghijklmnopqrstuvwxyz";
-    RE2 re = RE2.compile("^.bc(d|e)");
     for (int i = 0; i < nreps; i++) {
-      re.match(x);
+      anchoredMatchingMatcher.match(x);
     }
   }
 
   @Benchmark
   public void benchmarkAnchoredLongMatch(int nreps) {
-    RE2 re = RE2.compile("^.bc(d|e)");
     for (int i = 0; i < nreps; i++) {
-      re.match(LONG_DATA);
+      anchoredMatchingMatcher.match(LONG_DATA);
     }
   }
 }

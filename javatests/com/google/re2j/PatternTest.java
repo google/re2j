@@ -5,16 +5,18 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * This class checks that the behaviour of Pattern and JDK's Pattern are
@@ -180,6 +182,7 @@ public class PatternTest {
     Pattern reserialized = reserialize(p);
     assertEquals(p.pattern(), reserialized.pattern());
     assertEquals(p.flags(), reserialized.flags());
+    assertNotNull(reserialized.re2());
   }
 
   @Test

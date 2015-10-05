@@ -293,6 +293,38 @@ public class MatcherTest {
         "zzfoo", buffer.toString());
   }
 
+  @Test
+  public void testEmptyReplacementGroups() {
+    StringBuffer buffer = new StringBuffer();
+    Matcher matcher = Pattern.compile("(a)(b$)?(b)?").matcher("abc");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2-$3");
+    assertEquals("a--b", buffer.toString());
+    matcher.appendTail(buffer);
+    assertEquals("a--bc", buffer.toString());
+
+    buffer = new StringBuffer();
+    matcher = Pattern.compile("(a)(b$)?(b)?").matcher("ab");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2-$3");
+    matcher.appendTail(buffer);
+    assertEquals("a-b-", buffer.toString());
+
+    buffer = new StringBuffer();
+    matcher = Pattern.compile("(^b)?(b)?c").matcher("abc");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2");
+    matcher.appendTail(buffer);
+    assertEquals("a-b", buffer.toString());
+
+    buffer = new StringBuffer();
+    matcher = Pattern.compile("^(.)[^-]+(-.)?(.*)").matcher("Name");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1$2");
+    matcher.appendTail(buffer);
+    assertEquals("N", buffer.toString());
+  }
+
   // This example is documented in the com.google.re2j package.html.
   @Test
   public void testDocumentedExample() {

@@ -109,10 +109,6 @@ class RE2 {
   boolean prefixComplete;       // true iff prefix is the entire regexp
   int prefixRune;               // first rune in prefix
 
-  // Cache of machines for running regexp.
-  // Accesses must be serialized using |this| monitor.
-  private final List<Machine> machine = new ArrayList<Machine>();
-
   // This is visible for testing.
   RE2(String expr) {
     RE2 re2 = RE2.compile(expr);
@@ -207,28 +203,11 @@ class RE2 {
     return numSubexp;
   }
 
-  // get() returns a machine to use for matching |this|.  It uses |this|'s
-  // machine cache if possible, to avoid unnecessary allocation.
-  synchronized Machine get() {
-    int n = machine.size();
-    if (n > 0) {
-      return machine.remove(n - 1);
-    }
+  // get() returns a new machine everytime 
+  Machine get() {
     return new Machine(this);
   }
-
-  // Clears the memory associated with this machine.
-  synchronized void reset() {
-    machine.clear();
-  }
-
-  // put() returns a machine to |this|'s machine cache.  There is no attempt to
-  // limit the size of the cache, so it will grow to the maximum number of
-  // simultaneous matches run using |this|.  (The cache empties when |this|
-  // gets garbage collected.)
-  synchronized void put(Machine m) {
-    machine.add(m);
-  }
+  
 
   @Override
   public String toString() {
@@ -242,7 +221,6 @@ class RE2 {
     Machine m = get();
     m.init(ncap);
     int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
-    put(m);
     return cap;
   }
 

@@ -92,7 +92,7 @@ class MachineInput {
     int r1 = -1;
     if (pos > 0 && pos <= slice.length()) {
       int start = pos - 1;
-      r1 = slice.getByte(start--);
+      r1 = slice.getByte(start--) & 0xff;
       if (r1 >= 0x80) {  // decode UTF-8
         // Find start, up to 4 bytes earlier.
         int lim = pos - 4;

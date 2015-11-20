@@ -14,9 +14,6 @@ class GoTestUtils {
   protected static int len(int[] array) {
     return array == null ? 0 : array.length;
   }
-  protected static int len(byte[] array) {
-    return array == null ? 0 : array.length;
-  }
 
   protected static byte[] utf8(String s) {
     try {

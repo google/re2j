@@ -8,7 +8,6 @@
 package com.google.re2j;
 
 import io.airlift.slice.Slice;
-import io.airlift.slice.Slices;
 
 /**
  * MachineInput represents the UTF-8 input text supplied to the Machine. It provides one-character
@@ -17,14 +16,6 @@ import io.airlift.slice.Slices;
 class MachineInput {
 
   static final int EOF = (-1 << 3) | 0;
-
-  static MachineInput fromUTF8(byte[] b) {
-    return fromUTF8(b, 0, b.length);
-  }
-
-  static MachineInput fromUTF8(byte[] b, int start, int end) {
-    return fromUTF8(Slices.wrappedBuffer(b, start, end));
-  }
 
   static MachineInput fromUTF8(Slice slice) {
     return new MachineInput(slice);

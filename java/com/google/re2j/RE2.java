@@ -292,14 +292,6 @@ class RE2 {
   }
 
   /**
-   * Returns true iff this regexp matches the UTF-8 byte array {@code b}.
-   */
-  // This is visible for testing.
-  boolean matchUTF8(byte[] b) {
-    return doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 0) != null;
-  }
-
-  /**
    * Returns true iff textual regular expression {@code pattern}
    * matches {@link Slice} {@code s}.
    *
@@ -528,37 +520,6 @@ class RE2 {
   // any string in the input.
 
   /**
-   * Returns an array holding the text of the leftmost match in {@code b}
-   * of this regular expression.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  byte[] findUTF8(byte[] b) {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
-    if (a == null) {
-      return null;
-    }
-    return Utils.subarray(b, a[0], a[1]);
-  }
-
-  /**
-   * Returns a two-element array of integers defining the location of
-   * the leftmost match in {@code b} of this regular expression.  The
-   * match itself is at {@code b[loc[0]...loc[1]]}.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  int[] findUTF8Index(byte[] b) {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
-    if (a == null) {
-      return null;
-    }
-    return Utils.subarray(a, 0, 2);
-  }
-
-  /**
    * Returns a {@link Slice} holding the text of the leftmost match in
    * {@code s} of this regular expression.
    *
@@ -591,43 +552,6 @@ class RE2 {
       return null;
     }
     return a;
-  }
-
-  /**
-   * Returns an array of arrays the text of the leftmost match of the
-   * regular expression in {@code b} and the matches, if any, of its
-   * subexpressions, as defined by the <a
-   * href='#submatch'>Submatch</a> description above.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  byte[][] findUTF8Submatch(byte[] b) {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap);
-    if (a == null) {
-      return null;
-    }
-    byte[][] ret = new byte[1 + numSubexp][];
-    for (int i = 0; i < ret.length; i++) {
-      if (2 * i < a.length && a[2 * i] >= 0) {
-        ret[i] = Utils.subarray(b, a[2 * i], a[2 * i + 1]);
-      }
-    }
-    return ret;
-  }
-
-  /**
-   * Returns an array holding the index pairs identifying the leftmost
-   * match of this regular expression in {@code b} and the matches, if
-   * any, of its subexpressions, as defined by the the <a
-   * href='#submatch'>Submatch</a> and <a href='#index'>Index</a>
-   * descriptions above.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  int[] findUTF8SubmatchIndex(byte[] b) {
-    return pad(doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap));
   }
 
   /**
@@ -669,51 +593,6 @@ class RE2 {
   }
 
   /**
-   * {@code findAllUTF8()} is the <a href='#all'>All</a> version of
-   * {@link #findUTF8}; it returns a list of up to {@code n} successive
-   * matches of the expression, as defined by the <a href='#all'>All</a>
-   * description above.
-   *
-   * <p>A return value of null indicates no match.
-   *
-   * TODO(adonovan): think about defining a byte slice view class, like
-   * a read-only Go slice backed by |b|.
-   */
-  // This is visible for testing.
-  List<byte[]> findAllUTF8(final byte[] b, int n) {
-    final List<byte[]> result = new ArrayList<byte[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-        @Override public void deliver(int[] match) {
-          result.add(Utils.subarray(b, match[0], match[1]));
-        }});
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
-  }
-
-  /**
-   * {@code findAllUTF8Index} is the <a href='#all'>All</a> version of
-   * {@link #findUTF8Index}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
-   * href='#all'>All</a> description above.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  List<int[]> findAllUTF8Index(final byte[] b, int n) {
-    final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          result.add(Utils.subarray(match, 0, 2));
-        }});
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
-  }
-
-  /**
    * {@code findAll} is the <a href='#all'>All</a> version of
    * {@link #find}; it returns a list of up to {@code n}
    * successive matches of the expression, as defined by the <a
@@ -748,54 +627,6 @@ class RE2 {
     allMatches(MachineInput.fromUTF8(s), n, new DeliverFunc() {
       @Override public void deliver(int[] match) {
           result.add(Utils.subarray(match, 0, 2));
-        }});
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
-  }
-
-  /**
-   * {@code findAllUTF8Submatch} is the <a href='#all'>All</a> version
-   * of {@link #findUTF8Submatch}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
-   * href='#all'>All</a> description above.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  List<byte[][]> findAllUTF8Submatch(final byte[] b, int n) {
-    final List<byte[][]> result = new ArrayList<byte[][]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          byte[][] slice = new byte[match.length / 2][];
-          for (int j = 0; j < slice.length; ++j) {
-            if (match[2 * j] >= 0) {
-              slice[j] = Utils.subarray(b, match[2 * j], match[2 * j + 1]);
-            }
-          }
-          result.add(slice);
-        }});
-    if (result.isEmpty()) {
-      return null;
-    }
-    return result;
-  }
-
-  /**
-   * {@code findAllUTF8SubmatchIndex} is the <a href='#all'>All</a>
-   * version of {@link #findUTF8SubmatchIndex}; it returns a list of up
-   * to {@code n} successive matches of the expression, as defined by
-   * the <a href='#all'>All</a> description above.
-   *
-   * <p>A return value of null indicates no match.
-   */
-  // This is visible for testing.
-  List<int[]> findAllUTF8SubmatchIndex(byte[] b, int n) {
-    final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          result.add(match);
         }});
     if (result.isEmpty()) {
       return null;

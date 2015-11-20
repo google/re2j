@@ -29,12 +29,6 @@ public class RE2MatchTest {
       fail(String.format("RE2.match failure on %s: %s should be %s", test, m,
           test.matches.length > 0));
     }
-    // now try bytes
-    m = re.matchUTF8(GoTestUtils.utf8(test.text));
-    if (m != (test.matches.length > 0)) {
-      fail(String.format("RE2.matchUTF8 failure on %s: %s should be %s", test, m,
-          test.matches.length > 0));
-    }
   }
 
   @Test

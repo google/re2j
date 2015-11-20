@@ -2,6 +2,7 @@
 
 package com.google.re2j;
 
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -90,8 +91,8 @@ public class PatternTest {
   }
 
   private void testFind(String regexp, int flag, String match, String nonMatch) {
-    assertEquals(true, Pattern.compile(regexp, flag).matcher(match).find());
-    assertEquals(false, Pattern.compile(regexp, flag).matcher(nonMatch).find());
+    assertEquals(true, Pattern.compile(regexp, flag).matcher(utf8Slice(match)).find());
+    assertEquals(false, Pattern.compile(regexp, flag).matcher(utf8Slice(nonMatch)).find());
   }
 
   @Test
@@ -186,6 +187,6 @@ public class PatternTest {
   public void testSerialize() {
     assertSerializes(Pattern.compile("ab+c"));
     assertSerializes(Pattern.compile("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE));
-    assertFalse(reserialize(Pattern.compile("abc")).matcher("def").find());
+    assertFalse(reserialize(Pattern.compile("abc")).matcher(utf8Slice("def")).find());
   }
 }

@@ -34,23 +34,4 @@ class GoTestUtils {
       throw new IllegalStateException("can't happen");
     }
   }
-
-  // Convert |idx16|, which are Java (UTF-16) string indices, into the
-  // corresponding indices in the UTF-8 encoding of |text|.
-  //
-  // TODO(adonovan): eliminate duplication w.r.t. ExecTest.
-  protected static int[] utf16IndicesToUtf8(int[] idx16, String text) {
-    try {
-      int[] idx8 = new int[idx16.length];
-      for (int i = 0; i < idx16.length; ++i) {
-        idx8[i] = idx16[i] == -1
-            ? -1
-            : text.substring(0, idx16[i]).getBytes("UTF-8").length;  // yikes
-      }
-      return idx8;
-    } catch (java.io.UnsupportedEncodingException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
 }

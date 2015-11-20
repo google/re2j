@@ -1,5 +1,6 @@
 package com.google.re2j;
 
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -60,7 +61,7 @@ public class RE2QuoteMetaTest {
       }
       String src = "abc" + pattern + "def";
       String repl = "xyz";
-      String replaced = re.replaceAll(src, repl);
+      String replaced = re.replaceAll(utf8Slice(src), utf8Slice(repl)).toStringUtf8();
       String expected = "abcxyzdef";
       if (!replaced.equals(expected)) {
         fail(String.format("quoteMeta(`%s`).replace(`%s`,`%s`) = `%s`; want `%s`", pattern, src,
@@ -76,8 +77,8 @@ public class RE2QuoteMetaTest {
     if (re.prefixComplete != isLiteral) {
       fail(String.format("literalPrefix(\"%s\") = %s; want %s", pattern, re.prefixComplete, isLiteral));
     }
-    if (!re.prefix.equals(literal)) {
-      fail(String.format("literalPrefix(\"%s\") = \"%s\"; want \"%s\"", pattern, re.prefix, literal));
+    if (!re.prefixUTF8.toStringUtf8().equals(literal)) {
+      fail(String.format("literalPrefix(\"%s\") = \"%s\"; want \"%s\"", pattern, re.prefixUTF8.toStringUtf8(), literal));
     }
   }
 

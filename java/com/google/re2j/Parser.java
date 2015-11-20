@@ -12,8 +12,6 @@
 package com.google.re2j;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A parser of regular expression patterns.

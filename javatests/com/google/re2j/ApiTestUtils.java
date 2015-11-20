@@ -2,12 +2,20 @@
 
 package com.google.re2j;
 
+import com.google.common.base.Function;
+
+import static com.google.common.collect.Lists.transform;
+import static io.airlift.slice.Slices.utf8Slice;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.List;
+
+import io.airlift.slice.Slice;
 
 /**
  * Some custom asserts and parametric tests.
@@ -46,6 +54,27 @@ public class ApiTestUtils {
     }
   }
 
+  public static Slice[] stringsToSlices(String[] strings) {
+    Slice[] slices = new Slice[strings.length];
+    for (int i = 0; i < strings.length; ++i) {
+      slices[i] = utf8Slice(strings[i]);
+    }
+    return slices;
+  }
+
+  public static List<String> slicesToStrings(Slice[] slices) {
+    return slices == null ? null : slicesToStrings(asList(slices));
+  }
+
+  public static List<String> slicesToStrings(List<Slice> slices) {
+    return slices == null ? null : transform(slices, new Function<Slice, String>() {
+      @Override
+      public String apply(Slice input) {
+        return input == null ? null : input.toStringUtf8();
+      }
+    });
+  }
+
   /**
    * Tests that both RE2's and JDK's pattern class act as we expect them.
    * The regular expression {@code regexp} matches the string {@code match} and
@@ -62,9 +91,9 @@ public class ApiTestUtils {
     assertFalse("JDK " + errorString + " matches: " + nonMatch,
         java.util.regex.Pattern.matches(regexp, nonMatch));
     assertTrue(errorString + " doesn't match: " + match,
-               Pattern.matches(regexp, match));
+               Pattern.matches(regexp, utf8Slice(match)));
     assertFalse(errorString + " matches: " + nonMatch,
-                Pattern.matches(regexp, nonMatch));
+                Pattern.matches(regexp, utf8Slice(nonMatch)));
   }
 
   // Test matches via a matcher.
@@ -80,7 +109,7 @@ public class ApiTestUtils {
         match, p.matcher(match).matches());
     Pattern pr = Pattern.compile(regexp);
     assertTrue("Pattern with regexp: " + regexp + " doesn't match: " + match,
-        pr.matcher(match).matches());
+        pr.matcher(utf8Slice(match)).matches());
   }
   
   public static void testMatcherNotMatches(String regexp, String nonMatch) {
@@ -89,7 +118,7 @@ public class ApiTestUtils {
         p.matcher(nonMatch).matches());
     Pattern pr = Pattern.compile(regexp);
     assertFalse("Pattern with regexp: " + regexp + " matches: " + nonMatch,
-        pr.matcher(nonMatch).matches());
+        pr.matcher(utf8Slice(nonMatch)).matches());
   }
   
   /**
@@ -105,18 +134,18 @@ public class ApiTestUtils {
     Pattern p = Pattern.compile(regexp, flags);
     String errorString =
         "Pattern with regexp: " + regexp + " and flags: " + flags;
-    assertTrue(errorString + " doesn't match: " + match, p.matches(match));
-    assertFalse(errorString + " matches: " + nonMatch, p.matches(nonMatch));
+    assertTrue(errorString + " doesn't match: " + match, p.matches(utf8Slice(match)));
+    assertFalse(errorString + " matches: " + nonMatch, p.matches(utf8Slice(nonMatch)));
   }
 
   public static void testMatchesRE2(String regexp, int flags, String[] matches,
       String[] nonMatches) {
     Pattern p = Pattern.compile(regexp, flags);
     for (String s : matches) {
-      assertTrue(p.matches(s));
+      assertTrue(p.matches(utf8Slice(s)));
     }
     for (String s : nonMatches) {
-      assertFalse(p.matches(s));
+      assertFalse(p.matches(utf8Slice(s)));
     }
   }
 
@@ -132,9 +161,8 @@ public class ApiTestUtils {
                                String[] expected) {
     assertArrayEquals(expected,
         java.util.regex.Pattern.compile(regexp).split(text, limit));
-    assertArrayEquals(expected, Pattern.compile(regexp).split(text, limit));
+    assertArrayEquals(stringsToSlices(expected), Pattern.compile(regexp).split(utf8Slice(text), limit));
   }
-
 
   // Helper methods for RE2Matcher's test.
 
@@ -142,8 +170,8 @@ public class ApiTestUtils {
   public static void testReplaceAll(String orig, String regex, String repl,
                                     String actual) {
     Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(orig);
-    String replaced = m.replaceAll(repl);
+    Matcher m = p.matcher(utf8Slice(orig));
+    String replaced = m.replaceAll(utf8Slice(repl)).toStringUtf8();
     assertEquals(actual, replaced);
 
     // JDK's
@@ -157,8 +185,8 @@ public class ApiTestUtils {
   public static void testReplaceFirst(String orig, String regex, String repl,
                                       String actual) {
     Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(orig);
-    String replaced = m.replaceFirst(repl);
+    Matcher m = p.matcher(utf8Slice(orig));
+    String replaced = m.replaceFirst(utf8Slice(repl)).toStringUtf8();
     assertEquals(actual, replaced);
 
     // JDK's
@@ -172,7 +200,7 @@ public class ApiTestUtils {
   public static void testGroupCount(String pattern, int count) {
     // RE2
     Pattern p = Pattern.compile(pattern);
-    Matcher m = p.matcher("x");
+    Matcher m = p.matcher(utf8Slice("x"));
     assertEquals(count, p.groupCount());
     assertEquals(count, m.groupCount());
 
@@ -186,11 +214,11 @@ public class ApiTestUtils {
   public static void testGroup(String text, String regexp, String[] output) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
+    Matcher matchString = p.matcher(utf8Slice(text));
     assertEquals(true, matchString.find());
-    assertEquals(output[0], matchString.group());
+    assertEquals(utf8Slice(output[0]), matchString.group());
     for (int i = 0; i < output.length; i++) {
-      assertEquals(output[i], matchString.group(i));
+      assertEquals(output[i] == null ? null : utf8Slice(output[i]), matchString.group(i));
     }
     assertEquals(output.length - 1, matchString.groupCount());
 
@@ -214,11 +242,11 @@ public class ApiTestUtils {
                               String output) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
+    Matcher matchString = p.matcher(utf8Slice(text));
     // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
     assertTrue(matchString.find(start));
     // assertTrue(matchBytes.find(start));
-    assertEquals(output, matchString.group());
+    assertEquals(utf8Slice(output), matchString.group());
     // assertEquals(output, matchBytes.group());
 
     // JDK
@@ -231,7 +259,7 @@ public class ApiTestUtils {
   public static void testFindNoMatch(String text, String regexp, int start) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
+    Matcher matchString = p.matcher(utf8Slice(text));
     // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
     assertFalse(matchString.find(start));
     // assertFalse(matchBytes.find(start));
@@ -244,15 +272,14 @@ public class ApiTestUtils {
 
   public static void testInvalidGroup(String text, String regexp, int group) {
     Pattern p = Pattern.compile(regexp);
-    Matcher m = p.matcher(text);
+    Matcher m = p.matcher(utf8Slice(text));
     m.find();
     m.group(group);
     fail();  // supposed to have exception by now
   }
 
   public static void verifyLookingAt(String text, String regexp, boolean output) {
-    assertEquals(output, Pattern.compile(regexp).matcher(text).lookingAt());
+    assertEquals(output, Pattern.compile(regexp).matcher(utf8Slice(text)).lookingAt());
     assertEquals(output, java.util.regex.Pattern.compile(regexp).matcher(text).lookingAt());
   }
-
 }

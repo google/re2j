@@ -2,6 +2,7 @@
 
 package com.google.re2j;
 
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -11,6 +12,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.airlift.slice.DynamicSliceOutput;
+import io.airlift.slice.Slice;
+import io.airlift.slice.SliceOutput;
+
 /**
  * Testing the RE2Matcher class.
  *
@@ -18,6 +23,8 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class MatcherTest {
+
+  private static final int BUFFER_SIZE = 100;
 
   @Test
   public void testLookingAt() {
@@ -163,7 +170,7 @@ public class MatcherTest {
   public void testThrowsOnNullInputReset() {
     // null in constructor.
     try {
-      new Matcher(Pattern.compile("pattern"), (String) null);
+      new Matcher(Pattern.compile("pattern"), null);
       fail();
     } catch (NullPointerException n) {
       // Linter complains on empty catch block.
@@ -175,7 +182,7 @@ public class MatcherTest {
   public void testThrowsOnNullInputCtor() {
     // null in constructor.
     try {
-      new Matcher(null, "input");
+      new Matcher(null, utf8Slice("input"));
       fail();
     } catch (NullPointerException n) {
       // Linter complains on empty catch block.
@@ -190,7 +197,7 @@ public class MatcherTest {
   @Test
   public void testStartEndBeforeFind() {
     try {
-      Matcher m = Pattern.compile("a").matcher("abaca");
+      Matcher m = Pattern.compile("a").matcher(utf8Slice("abaca"));
       m.start();
       fail();
     } catch (IllegalStateException ise) {
@@ -204,9 +211,9 @@ public class MatcherTest {
    */
   @Test
   public void testMatchesUpdatesMatchInformation() {
-    Matcher m = Pattern.compile("a+").matcher("aaa");
+    Matcher m = Pattern.compile("a+").matcher(utf8Slice("aaa"));
     if (m.matches()) {
-      assertEquals("aaa", m.group(0));
+      assertEquals(utf8Slice("aaa"), m.group(0));
     }
   }
 
@@ -216,22 +223,22 @@ public class MatcherTest {
   @Test
   public void testAlternationMatches() {
     String s = "123:foo";
-    assertTrue(Pattern.compile("(?:\\w+|\\d+:foo)").matcher(s).matches());
-    assertTrue(Pattern.compile("(?:\\d+:foo|\\w+)").matcher(s).matches());
+    assertTrue(Pattern.compile("(?:\\w+|\\d+:foo)").matcher(utf8Slice(s)).matches());
+    assertTrue(Pattern.compile("(?:\\d+:foo|\\w+)").matcher(utf8Slice(s)).matches());
   }
 
-  void helperTestMatchEndUTF16(String string, int num, final int end) {
+  void helperTestMatchEndUTF8(String string, int num, final int end) {
     String pattern = "[" + string + "]";
     RE2 re = new RE2(pattern) {
         @Override
-        public boolean match(CharSequence input, int start, int e, int anchor,
+        public boolean match(Slice input, int start, int anchor,
                              int[] group, int ngroup) {
-          assertEquals(end, e);
-          return super.match(input, start, e, anchor, group, ngroup);
+          assertEquals(input.length(), end);
+          return super.match(input, start, anchor, group, ngroup);
         }
       };
     Pattern pat = new Pattern(pattern, 0, re);
-    Matcher m = pat.matcher(string);
+    Matcher m = pat.matcher(utf8Slice(string));
 
     int found = 0;
     while (m.find()) {
@@ -243,107 +250,107 @@ public class MatcherTest {
 
   /**
    * Test for variable length encoding, test whether RE2's match function gets
-   * the required parameter based on UTF16 codes and not chars and Runes.
+   * the required parameter based on UTF8 codes and not chars and Runes.
    */
   @Test
-  public void testMatchEndUTF16() {
+  public void testMatchEndUTF8() {
     // Latin alphabetic chars such as these 5 lower-case, acute vowels have multi-byte UTF-8
     // encodings but fit in a single UTF-16 code, so the final match is at UTF16 offset 5.
     String vowels = "\225\233\237\243\250";
-    helperTestMatchEndUTF16(vowels, 5, 5);
+    helperTestMatchEndUTF8(vowels, 5, 10);
 
     // But surrogates are encoded as two UTF16 codes, so we should expect match
     // to get 6 rather than 3.
     String utf16 = new StringBuilder().appendCodePoint(0x10000).
         appendCodePoint(0x10001).appendCodePoint(0x10002).toString();
     assertEquals(utf16, "\uD800\uDC00\uD800\uDC01\uD800\uDC02");
-    helperTestMatchEndUTF16(utf16, 3, 6);
+    helperTestMatchEndUTF8(utf16, 3, 12);
   }
 
   @Test
   public void testAppendTail() {
     Pattern p = Pattern.compile("cat");
-    Matcher m = p.matcher("one cat two cats in the yard");
-    StringBuffer sb = new StringBuffer();
+    Matcher m = p.matcher(utf8Slice("one cat two cats in the yard"));
+    SliceOutput so = new DynamicSliceOutput(BUFFER_SIZE);
     while (m.find()) {
-        m.appendReplacement(sb, "dog");
+        m.appendReplacement(so, utf8Slice("dog"));
     }
-    m.appendTail(sb);
-    m.appendTail(sb);
-    assertEquals("one dog two dogs in the yards in the yard", sb.toString());
+    m.appendTail(so);
+    m.appendTail(so);
+    assertEquals("one dog two dogs in the yards in the yard", so.slice().toStringUtf8());
   }
 
   @Test
   public void testResetOnFindInt() {
-    StringBuffer buffer;
-    Matcher matcher = Pattern.compile("a").matcher("zza");
+    SliceOutput buffer;
+    Matcher matcher = Pattern.compile("a").matcher(utf8Slice("zza"));
 
     assertTrue(matcher.find());
 
-    buffer = new StringBuffer();
-    matcher.appendReplacement(buffer, "foo");
+    buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    matcher.appendReplacement(buffer, utf8Slice("foo"));
     assertEquals("1st time",
-        "zzfoo", buffer.toString());
+        "zzfoo", buffer.slice().toStringUtf8());
 
     assertTrue(matcher.find(0));
 
-    buffer = new StringBuffer();
-    matcher.appendReplacement(buffer, "foo");
+    buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    matcher.appendReplacement(buffer, utf8Slice("foo"));
     assertEquals("2nd time",
-        "zzfoo", buffer.toString());
+        "zzfoo", buffer.slice().toStringUtf8());
   }
 
   @Test
   public void testEmptyReplacementGroups() {
-    StringBuffer buffer = new StringBuffer();
-    Matcher matcher = Pattern.compile("(a)(b$)?(b)?").matcher("abc");
+    SliceOutput buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    Matcher matcher = Pattern.compile("(a)(b$)?(b)?").matcher(utf8Slice("abc"));
     assertTrue(matcher.find());
-    matcher.appendReplacement(buffer, "$1-$2-$3");
-    assertEquals("a--b", buffer.toString());
+    matcher.appendReplacement(buffer, utf8Slice("$1-$2-$3"));
+    assertEquals("a--b", buffer.slice().toStringUtf8());
     matcher.appendTail(buffer);
-    assertEquals("a--bc", buffer.toString());
+    assertEquals("a--bc", buffer.slice().toStringUtf8());
 
-    buffer = new StringBuffer();
-    matcher = Pattern.compile("(a)(b$)?(b)?").matcher("ab");
+    buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    matcher = Pattern.compile("(a)(b$)?(b)?").matcher(utf8Slice("ab"));
     assertTrue(matcher.find());
-    matcher.appendReplacement(buffer, "$1-$2-$3");
+    matcher.appendReplacement(buffer, utf8Slice("$1-$2-$3"));
     matcher.appendTail(buffer);
-    assertEquals("a-b-", buffer.toString());
+    assertEquals("a-b-", buffer.slice().toStringUtf8());
 
-    buffer = new StringBuffer();
-    matcher = Pattern.compile("(^b)?(b)?c").matcher("abc");
+    buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    matcher = Pattern.compile("(^b)?(b)?c").matcher(utf8Slice("abc"));
     assertTrue(matcher.find());
-    matcher.appendReplacement(buffer, "$1-$2");
+    matcher.appendReplacement(buffer, utf8Slice("$1-$2"));
     matcher.appendTail(buffer);
-    assertEquals("a-b", buffer.toString());
+    assertEquals("a-b", buffer.slice().toStringUtf8());
 
-    buffer = new StringBuffer();
-    matcher = Pattern.compile("^(.)[^-]+(-.)?(.*)").matcher("Name");
+    buffer = new DynamicSliceOutput(BUFFER_SIZE);
+    matcher = Pattern.compile("^(.)[^-]+(-.)?(.*)").matcher(utf8Slice("Name"));
     assertTrue(matcher.find());
-    matcher.appendReplacement(buffer, "$1$2");
+    matcher.appendReplacement(buffer, utf8Slice("$1$2"));
     matcher.appendTail(buffer);
-    assertEquals("N", buffer.toString());
+    assertEquals("N", buffer.slice().toStringUtf8());
   }
 
   // This example is documented in the com.google.re2j package.html.
   @Test
   public void testDocumentedExample() {
     Pattern p = Pattern.compile("b(an)*(.)");
-    Matcher m = p.matcher("by, band, banana");
+    Matcher m = p.matcher(utf8Slice("by, band, banana"));
     assertTrue(m.lookingAt());
     m.reset();
     assertTrue(m.find());
-    assertEquals("by", m.group(0));
+    assertEquals(utf8Slice("by"), m.group(0));
     assertEquals(null, m.group(1));
-    assertEquals("y", m.group(2));
+    assertEquals(utf8Slice("y"), m.group(2));
     assertTrue(m.find());
-    assertEquals("band", m.group(0));
-    assertEquals("an", m.group(1));
-    assertEquals("d", m.group(2));
+    assertEquals(utf8Slice("band"), m.group(0));
+    assertEquals(utf8Slice("an"), m.group(1));
+    assertEquals(utf8Slice("d"), m.group(2));
     assertTrue(m.find());
-    assertEquals("banana", m.group(0));
-    assertEquals("an", m.group(1));
-    assertEquals("a", m.group(2));
+    assertEquals(utf8Slice("banana"), m.group(0));
+    assertEquals(utf8Slice("an"), m.group(1));
+    assertEquals(utf8Slice("a"), m.group(2));
     assertFalse(m.find());
   }
 

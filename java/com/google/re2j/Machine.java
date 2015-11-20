@@ -200,7 +200,7 @@ class Machine {
           // Have match; finished exploring alternatives.
           break;
         }
-        if (!re2.prefix.isEmpty() &&
+        if (re2.prefixUTF8.length() > 0 &&
             rune1 != re2.prefixRune &&
             in.canCheckPrefix()) {
           // Match requires literal prefix; fast search for it.

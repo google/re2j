@@ -4,6 +4,8 @@
 
 package com.google.re2j;
 
+import io.airlift.slice.Slice;
+
 /**
  * Various constants and helper utilities.
  */
@@ -109,30 +111,30 @@ abstract class Utils {
 
   // Returns the index of the first occurrence of array |target| within
   // array |source| after |fromIndex|, or -1 if not found.
-  static int indexOf(byte[] source, byte[] target, int fromIndex) {
-    if (fromIndex >= source.length) {
-      return target.length == 0 ? source.length : -1;
+  static int indexOf(Slice source, Slice target, int fromIndex) {
+    if (fromIndex >= source.length()) {
+      return target.length() == 0 ? source.length() : -1;
     }
     if (fromIndex < 0) {
       fromIndex = 0;
     }
-    if (target.length == 0) {
+    if (target.length() == 0) {
       return fromIndex;
     }
 
-    byte first = target[0];
-    for (int i = fromIndex, max = source.length - target.length; i <= max;
+    byte first = target.getByte(0);
+    for (int i = fromIndex, max = source.length() - target.length(); i <= max;
          i++) {
       // Look for first byte.
-      if (source[i] != first) {
-        while (++i <= max && source[i] != first) {}
+      if (source.getByte(i) != first) {
+        while (++i <= max && source.getByte(i) != first) {}
       }
 
       // Found first byte, now look at the rest of v2.
       if (i <= max) {
         int j = i + 1;
-        int end = j + target.length - 1;
-        for (int k = 1; j < end && source[j] == target[k]; j++, k++) {}
+        int end = j + target.length() - 1;
+        for (int k = 1; j < end && source.getByte(j) == target.getByte(k); j++, k++) {}
 
         if (j == end) {
           return i;  // found whole array

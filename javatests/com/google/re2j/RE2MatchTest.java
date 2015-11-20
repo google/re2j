@@ -1,5 +1,6 @@
 package com.google.re2j;
 
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class RE2MatchTest {
   @Test
   public void testMatch() {
     RE2 re = RE2.compile(test.pat);
-    boolean m = re.match(test.text);
+    boolean m = re.match(utf8Slice(test.text));
     if (m != (test.matches.length > 0)) {
       fail(String.format("RE2.match failure on %s: %s should be %s", test, m,
           test.matches.length > 0));
@@ -38,7 +39,7 @@ public class RE2MatchTest {
 
   @Test
   public void testMatchFunction() {
-    boolean m = RE2.match(test.pat, test.text);
+    boolean m = RE2.match(test.pat, utf8Slice(test.text));
     if (m != (test.matches.length > 0)) {
       fail(String.format("RE2.match failure on %s: %s should be %s", test, m,
           test.matches.length > 0));

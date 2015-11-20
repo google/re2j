@@ -18,10 +18,14 @@
 
 package com.google.re2j;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import io.airlift.slice.DynamicSliceOutput;
+import io.airlift.slice.Slice;
+import io.airlift.slice.SliceOutput;
+import io.airlift.slice.Slices;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular
@@ -104,8 +108,7 @@ class RE2 {
   final int numSubexp;
   boolean longest;
 
-  String prefix;                // required UTF-16 prefix in unanchored matches
-  byte[] prefixUTF8;            // required UTF-8 prefix in unanchored matches
+  Slice prefixUTF8;             // required UTF-8 prefix in unanchored matches
   boolean prefixComplete;       // true iff prefix is the entire regexp
   int prefixRune;               // first rune in prefix
 
@@ -122,7 +125,6 @@ class RE2 {
     this.cond = re2.cond;
     this.numSubexp = re2.numSubexp;
     this.longest = re2.longest;
-    this.prefix = re2.prefix;
     this.prefixUTF8 = re2.prefixUTF8;
     this.prefixComplete = re2.prefixComplete;
     this.prefixRune = re2.prefixRune;
@@ -187,14 +189,10 @@ class RE2 {
     RE2 re2 = new RE2(expr, prog, maxCap, longest);
     StringBuilder prefixBuilder = new StringBuilder();
     re2.prefixComplete = prog.prefix(prefixBuilder);
-    re2.prefix = prefixBuilder.toString();
-    try {
-      re2.prefixUTF8 = re2.prefix.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("can't happen");
-    }
-    if (!re2.prefix.isEmpty()) {
-      re2.prefixRune = re2.prefix.codePointAt(0);
+    String prefix = prefixBuilder.toString();
+    re2.prefixUTF8 = Slices.utf8Slice(prefixBuilder.toString());
+    if (!prefix.isEmpty()) {
+      re2.prefixRune = prefix.codePointAt(0);
     }
     return re2;
   }
@@ -249,8 +247,8 @@ class RE2 {
   /**
    * Returns true iff this regexp matches the string {@code s}.
    */
-  boolean match(CharSequence s) {
-    return doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 0) != null;
+  boolean match(Slice s) {
+    return doExecute(MachineInput.fromUTF8(s), 0, UNANCHORED, 0) != null;
   }
 
   /**
@@ -261,17 +259,16 @@ class RE2 {
    * from the size of the group array. It is most efficient not to ask for
    * submatch boundaries.
    *
-   * @param input the input byte array
+   * @param input the input {@link Slice}
    * @param start the beginning position in the input
-   * @param end the end position in the input
    * @param anchor the anchoring flag (UNANCHORED, ANCHOR_START, ANCHOR_BOTH)
    * @param group the array to fill with submatch positions
    * @param ngroup the number of array pairs to fill in
    * @return true if a match was found
    */
-  boolean match(CharSequence input, int start, int end, int anchor, int[] group,
+  boolean match(Slice input, int start, int anchor, int[] group,
                 int ngroup) {
-    if (start > end) {
+    if (start > input.length()) {
       return false;
     }
     // TODO(afrozm): We suspect that the correct code should look something
@@ -281,7 +278,7 @@ class RE2 {
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    int[] groupMatch = doExecute(MachineInput.fromUTF16(input, 0, end), start,
+    int[] groupMatch = doExecute(MachineInput.fromUTF8(input), start,
         anchor, 2 * ngroup);
 
     if (groupMatch == null) {
@@ -304,31 +301,31 @@ class RE2 {
 
   /**
    * Returns true iff textual regular expression {@code pattern}
-   * matches string {@code s}.
+   * matches {@link Slice} {@code s}.
    *
    * <p>More complicated queries need to use {@link #compile} and the
    * full {@code RE2} interface.
    */
   // This is visible for testing.
-  static boolean match(String pattern, CharSequence s) throws PatternSyntaxException {
+  static boolean match(String pattern, Slice s) throws PatternSyntaxException {
     return compile(pattern).match(s);
   }
 
   // This is visible for testing.
   interface ReplaceFunc {
-    String replace(String orig);
+    Slice replace(Slice orig);
   }
 
   /**
    * Returns a copy of {@code src} in which all matches for this regexp
    * have been replaced by {@code repl}.  No support is provided for
    * expressions (e.g. {@code \1} or {@code $1}) in the replacement
-   * string.
+   * {@link Slice}.
    */
   // This is visible for testing.
-  String replaceAll(String src, final String repl) {
+  Slice replaceAll(Slice src, final Slice repl) {
     return replaceAllFunc(src, new ReplaceFunc() {
-        @Override public String replace(String orig) { return repl; }
+        @Override public Slice replace(Slice orig) { return repl; }
       }, 2 * src.length() + 1);
     // TODO(afrozm): Is the reasoning correct, there can be at the most 2*len +1
     // replacements. Basically [a-z]*? abc x will be xaxbcx. So should it be
@@ -339,12 +336,12 @@ class RE2 {
    * Returns a copy of {@code src} in which only the first match for this regexp
    * has been replaced by {@code repl}.  No support is provided for
    * expressions (e.g. {@code \1} or {@code $1}) in the replacement
-   * string.
+   * {@link Slice}.
    */
   // This is visible for testing.
-  String replaceFirst(String src, final String repl) {
+  Slice replaceFirst(Slice src, final Slice repl) {
     return replaceAllFunc(src, new ReplaceFunc() {
-      @Override public String replace(String orig) { return repl; }
+      @Override public Slice replace(Slice orig) { return repl; }
     }, 1);
   }
 
@@ -353,14 +350,14 @@ class RE2 {
    * for this regexp have been replaced by the return value of of function
    * {@code repl} (whose first argument is the matched string). No support is
    * provided for expressions (e.g. {@code \1} or {@code $1}) in the
-   * replacement string.
+   * replacement {@link Slice}.
    */
   // This is visible for testing.
-  String replaceAllFunc(String src, ReplaceFunc repl, int maxReplaces) {
+  Slice replaceAllFunc(Slice src, ReplaceFunc repl, int maxReplaces) {
     int lastMatchEnd = 0; // end position of the most recent match
     int searchPos = 0;    // position where we next look for a match
-    StringBuilder buf = new StringBuilder();
-    MachineInput input = MachineInput.fromUTF16(src);
+    SliceOutput buf = new DynamicSliceOutput(src.length());
+    MachineInput input = MachineInput.fromUTF8(src);
     int numReplaces = 0;
     while (searchPos <= src.length()) {
       int[] a = doExecute(input, searchPos, UNANCHORED, 2);
@@ -369,7 +366,7 @@ class RE2 {
       }
 
       // Copy the unmatched characters before this match.
-      buf.append(src.substring(lastMatchEnd, a[0]));
+      buf.writeBytes(src, lastMatchEnd, a[0] - lastMatchEnd);
 
       // Now insert a copy of the replacement string, but not for a
       // match of the empty string immediately after another match.
@@ -382,7 +379,7 @@ class RE2 {
       // when that case is touched (happens only at the end of the input string
       // though).
       if (a[1] > lastMatchEnd || a[0] == 0) {
-        buf.append(repl.replace(src.substring(a[0], a[1])));
+        buf.writeBytes(repl.replace(src.slice(a[0], a[1] - a[0])));
         // Increment the replace count.
         ++numReplaces;
       }
@@ -406,9 +403,9 @@ class RE2 {
     }
 
     // Copy the unmatched characters after the last match.
-    buf.append(src.substring(lastMatchEnd));
+    buf.writeBytes(src, lastMatchEnd, src.length() - lastMatchEnd);
 
-    return buf.toString();
+    return buf.slice();
   }
 
   /**
@@ -562,34 +559,34 @@ class RE2 {
   }
 
   /**
-   * Returns a string holding the text of the leftmost match in
+   * Returns a {@link Slice} holding the text of the leftmost match in
    * {@code s} of this regular expression.
    *
-   * <p>If there is no match, the return value is an empty string, but it
+   * <p>If there is no match, the return value is an empty {@link Slice}, but it
    * will also be empty if the regular expression successfully matches
-   * an empty string.  Use {@link #findIndex} or
+   * an empty {@link Slice}.  Use {@link #findIndex} or
    * {@link #findSubmatch} if it is necessary to distinguish these
    * cases.
    */
   // This is visible for testing.
-  String find(String s) {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
+  Slice find(Slice s) {
+    int[] a = doExecute(MachineInput.fromUTF8(s), 0, UNANCHORED, 2);
     if (a == null) {
-      return "";
+      return Slices.EMPTY_SLICE;
     }
-    return s.substring(a[0], a[1]);
+    return s.slice(a[0], a[1] - a[0]);
   }
 
   /**
    * Returns a two-element array of integers defining the location of
    * the leftmost match in {@code s} of this regular expression.  The
-   * match itself is at {@code s.substring(loc[0], loc[1])}.
+   * match itself is at {@code s.slice(loc[0], loc[1] - loc[0])}.
    *
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  int[] findIndex(String s) {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
+  int[] findIndex(Slice s) {
+    int[] a = doExecute(MachineInput.fromUTF8(s), 0, UNANCHORED, 2);
     if (a == null) {
       return null;
     }
@@ -634,7 +631,7 @@ class RE2 {
   }
 
   /**
-   * Returns an array of strings holding the text of the leftmost match
+   * Returns an array of {@link Slice}s holding the text of the leftmost match
    * of the regular expression in {@code s} and the matches, if any, of
    * its subexpressions, as defined by the <a
    * href='#submatch'>Submatch</a> description above.
@@ -642,15 +639,17 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  String[] findSubmatch(String s) {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap);
+  Slice[] findSubmatch(Slice s) {
+    int[] a = doExecute(MachineInput.fromUTF8(s), 0, UNANCHORED, prog.numCap);
     if (a == null) {
       return null;
     }
-    String[] ret = new String[1 + numSubexp];
+    Slice[] ret = new Slice[1 + numSubexp];
     for (int i = 0; i < ret.length; i++) {
       if (2 * i < a.length && a[2 * i] >= 0) {
-        ret[i] = s.substring(a[2 * i], a[2 * i + 1]);
+        int begin = a[2 * i];
+        int end = a[2 * i + 1];
+        ret[i] = s.slice(begin, end - begin);
       }
     }
     return ret;
@@ -665,8 +664,8 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  int[] findSubmatchIndex(String s) {
-    return pad(doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap));
+  int[] findSubmatchIndex(Slice s) {
+    return pad(doExecute(MachineInput.fromUTF8(s), 0, UNANCHORED, prog.numCap));
   }
 
   /**
@@ -723,11 +722,11 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  List<String> findAll(final String s, int n) {
-    final List<String> result = new ArrayList<String>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
+  List<Slice> findAll(final Slice s, int n) {
+    final List<Slice> result = new ArrayList<Slice>();
+    allMatches(MachineInput.fromUTF8(s), n, new DeliverFunc() {
         @Override public void deliver(int[] match) {
-          result.add(s.substring(match[0], match[1]));
+          result.add(s.slice(match[0], match[1] - match[0]));
         }});
     if (result.isEmpty()) {
       return null;
@@ -744,9 +743,9 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  List<int[]> findAllIndex(String s, int n) {
+  List<int[]> findAllIndex(Slice s, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
+    allMatches(MachineInput.fromUTF8(s), n, new DeliverFunc() {
       @Override public void deliver(int[] match) {
           result.add(Utils.subarray(match, 0, 2));
         }});
@@ -813,14 +812,16 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  List<String[]> findAllSubmatch(final String s, int n) {
-    final List<String[]> result = new ArrayList<String[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
+  List<Slice[]> findAllSubmatch(final Slice s, int n) {
+    final List<Slice[]> result = new ArrayList<Slice[]>();
+    allMatches(MachineInput.fromUTF8(s), n, new DeliverFunc() {
         @Override public void deliver(int[] match) {
-          String[] slice = new String[match.length / 2];
+          Slice[] slice = new Slice[match.length / 2];
           for (int j = 0; j < slice.length; ++j) {
             if (match[2 * j] >= 0) {
-              slice[j] = s.substring(match[2 * j], match[2 * j + 1]);
+              int begin = match[2 * j];
+              int end = match[2 * j + 1];
+              slice[j] = s.slice(begin, end - begin);
             }
           }
           result.add(slice);
@@ -840,9 +841,9 @@ class RE2 {
    * <p>A return value of null indicates no match.
    */
   // This is visible for testing.
-  List<int[]> findAllSubmatchIndex(String s, int n) {
+  List<int[]> findAllSubmatchIndex(Slice s, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
+    allMatches(MachineInput.fromUTF8(s), n, new DeliverFunc() {
         @Override public void deliver(int[] match) {
           result.add(match);
         }});

@@ -1,5 +1,6 @@
 package com.google.re2j;
 
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -162,8 +163,8 @@ public class RE2ReplaceTest {
     } catch (PatternSyntaxException e) {
       fail(String.format("Unexpected error compiling %s: %s", pattern, e.getMessage()));
     }
-    String actual = replaceFirst ? re.replaceFirst(source, replacement)
-        : re.replaceAll(source, replacement);
+    String actual = replaceFirst ? re.replaceFirst(utf8Slice(source), utf8Slice(replacement)).toStringUtf8()
+        : re.replaceAll(utf8Slice(source), utf8Slice(replacement)).toStringUtf8();
     if (!actual.equals(expected)) {
       fail(String.format("%s.replaceAll(%s,%s) = %s; want %s", pattern, source,
           replacement, actual, expected));

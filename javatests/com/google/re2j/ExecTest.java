@@ -7,6 +7,9 @@
 
 package com.google.re2j;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.re2j.ApiTestUtils.slicesToStrings;
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -22,6 +25,8 @@ import java.util.zip.GZIPInputStream;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import io.airlift.slice.Slice;
 
 // TestRE2 tests this package's regexp API against test cases
 // considered during (C++) RE2's exhaustive tests, which run all possible
@@ -72,12 +77,12 @@ public class ExecTest {
   @Test
   public void testExamplesInDocumentation() throws PatternSyntaxException {
     RE2 re = RE2.compile("(?i:co(.)a)");
-    assertEquals(Arrays.asList("Copa", "coba"),
-                 re.findAll("Copacobana", 10));
-    List<String[]> x = re.findAllSubmatch("Copacobana", 100);
-    assertEquals(Arrays.asList("Copa", "p"),
+    assertEquals(Arrays.asList(utf8Slice("Copa"), utf8Slice("coba")),
+                 re.findAll(utf8Slice("Copacobana"), 10));
+    List<Slice[]> x = re.findAllSubmatch(utf8Slice("Copacobana"), 100);
+    assertEquals(Arrays.asList(utf8Slice("Copa"), utf8Slice("p")),
                  Arrays.asList(x.get(0)));
-    assertEquals(Arrays.asList("coba", "b"),
+    assertEquals(Arrays.asList(utf8Slice("coba"), utf8Slice("b")),
                  Arrays.asList(x.get(1)));
   }
 
@@ -202,12 +207,7 @@ public class ExecTest {
           RE2 regexp = partial ? re : refull;
 
           regexp.longest = longest;
-          int[] have = regexp.findSubmatchIndex(text);  // UTF-16 indices
-          if (multibyte && have != null) {
-            // The testdata uses UTF-8 indices, but we're using the UTF-16 API.
-            // Perhaps we should use the UTF-8 RE2 API?
-            have = utf16IndicesToUtf8(have, text);
-          }
+          int[] have = regexp.findSubmatchIndex(utf8Slice(text));  // UTF-8 indices
           int[] want = parseResult(file, lineno, res[i]);  // UTF-8 indices
           if (!Arrays.equals(want, have)) {
             System.err.format(
@@ -223,7 +223,7 @@ public class ExecTest {
           }
 
           regexp.longest = longest;
-          boolean b = regexp.match(text);
+          boolean b = regexp.match(utf8Slice(text));
           if (b != (want != null)) {
             System.err.format(
                 "%s:%d: %s[partial=%b,longest=%b].match(%s) = " +
@@ -343,7 +343,7 @@ public class ExecTest {
   private static final RE2 NOTAB = RE2.compilePOSIX("[^\t]+");
 
   private void testFowler(String file) throws IOException {
-    InputStream in = ExecTest.class.getResourceAsStream("/" + file);
+    final InputStream in = ExecTest.class.getResourceAsStream("/" + file);
     // TODO(adonovan): call in.close() on all paths.
     UNIXBufferedReader r =
         new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
@@ -367,7 +367,9 @@ public class ExecTest {
       if (line.isEmpty() || line.charAt(0) == '#') {
         continue;
       }
-      List<String> field = NOTAB.findAll(line, -1);
+
+      List<String> field = newArrayList(slicesToStrings(NOTAB.findAll(utf8Slice(line), -1)));
+
       for (int i = 0; i < field.size(); ++i) {
         if (field.get(i).equals("NULL")) {
           field.set(i, "");
@@ -558,14 +560,14 @@ public class ExecTest {
           nerr++;
           continue;
         }
-        boolean match = re.match(text);
+        boolean match = re.match(utf8Slice(text));
         if (match != shouldCompileMatch[1]) {
           System.err.format("%s:%d: %s.match(%s) = %s, want %s\n",
                             file, lineno, pattern, text, match, !match);
           nerr++;
           continue;
         }
-        int[] haveArray = re.findSubmatchIndex(text);
+        int[] haveArray = re.findSubmatchIndex(utf8Slice(text));
         if (haveArray == null) {
           haveArray = Utils.EMPTY_INTS;  // to make .length and printing safe
         }

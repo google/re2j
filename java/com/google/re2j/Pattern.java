@@ -4,6 +4,8 @@ package com.google.re2j;
 
 import java.io.Serializable;
 
+import io.airlift.slice.Slice;
+
 /**
  * A compiled representation of an RE2 regular expression, mimicking the
  * {@code java.util.regex.Pattern} API.
@@ -136,63 +138,63 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Matches a string against a regular expression.
+   * Matches a {@link Slice} against a regular expression.
    *
    * @param regex the regular expression
    * @param input the input
    * @return true if the regular expression matches the entire input
    * @throws PatternSyntaxException if the regular expression is malformed
    */
-  public static boolean matches(String regex, CharSequence input) {
+  public static boolean matches(String regex, Slice input) {
     return compile(regex).matcher(input).matches();
   }
 
-  public boolean matches(String input) {
+  public boolean matches(Slice input) {
     return this.matcher(input).matches();
   }
 
   /**
    * Creates a new {@code Matcher} matching the pattern against the input.
    *
-   * @param input the input string
+   * @param input the input {@link Slice}
    */
-  public Matcher matcher(CharSequence input) {
+  public Matcher matcher(Slice input) {
     return new Matcher(this, input);
   }
 
   /**
    * Splits input around instances of the regular expression.
-   * It returns an array giving the strings that occur before, between, and after instances
-   * of the regular expression.  Empty strings that would occur at the end
+   * It returns an array giving the {@link Slice}s that occur before, between, and after instances
+   * of the regular expression.  Empty {@link Slice}s that would occur at the end
    * of the array are omitted.
    *
-   * @param input the input string to be split
-   * @return the split strings
+   * @param input the input {@link Slice} to be split
+   * @return the split {@link Slice}s
    */
-  public String[] split(String input) {
+  public Slice[] split(Slice input) {
     return split(input, 0);
   }
 
   /**
    * Splits input around instances of the regular expression.
-   * It returns an array giving the strings that occur before, between, and after instances
+   * It returns an array giving the {@link Slice}s that occur before, between, and after instances
    * of the regular expression.
    *
    * <p>If {@code limit <= 0}, there is no limit on the size of the returned array.
-   * If {@code limit == 0}, empty strings that would occur at the end of the array are omitted.
-   * If {@code limit > 0}, at most limit strings are returned.  The final string contains
+   * If {@code limit == 0}, empty {@link Slice}s that would occur at the end of the array are omitted.
+   * If {@code limit > 0}, at most limit {@link Slice}s are returned.  The final {@link Slice} contains
    * the remainder of the input, possibly including additional matches of the pattern.
    *
-   * @param input the input string to be split
+   * @param input the input {@link Slice} to be split
    * @param limit the limit
-   * @return the split strings
+   * @return the split {@link Slice}s
    */
-  public String[] split(String input, int limit) {
+  public Slice[] split(Slice input, int limit) {
     return split(new Matcher(this, input), limit);
   }
 
   /** Helper: run split on m's input. */
-  private String[] split(Matcher m, int limit) {
+  private Slice[] split(Matcher m, int limit) {
     int matchCount = 0;
     int arraySize = 0;
     int last = 0;
@@ -213,7 +215,7 @@ public final class Pattern implements Serializable {
       arraySize = limit;
       trunc = 1;
     }
-    String[] array = new String[arraySize];
+    Slice[] array = new Slice[arraySize];
     int i = 0;
     last = 0;
     m.reset();

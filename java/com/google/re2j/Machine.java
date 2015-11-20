@@ -201,7 +201,6 @@ class Machine {
           break;
         }
         if (re2.prefixUTF8.length() > 0 &&
-            rune1 != re2.prefixRune &&
             in.canCheckPrefix()) {
           // Match requires literal prefix; fast search for it.
           int advance = in.index(re2, pos);

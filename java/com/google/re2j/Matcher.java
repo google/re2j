@@ -366,7 +366,10 @@ public final class Matcher {
           if (n > groupCount) {
             throw new IndexOutOfBoundsException("n > number of groups: " + n);
           }
-          sb.append(substring(start(n), end(n)));
+          String group = group(n);
+          if (group != null) {
+            sb.append(group);
+          }
           last = i;
           i--;
           continue;

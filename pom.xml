@@ -4,9 +4,9 @@
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
-    <version>7</version>
+    <version>9</version>
   </parent>
-  <groupId>com.google.re2j</groupId>
+  <groupId>com.teradata</groupId>
   <artifactId>re2j</artifactId>
   <version>1.2-SNAPSHOT</version>
   <packaging>jar</packaging>
@@ -27,10 +27,20 @@
     <maven>3.0.3</maven>
   </prerequisites>
   <scm>
-    <connection>scm:git:https://github.com/google/re2j.git</connection>
-    <developerConnection>scm:git:https://github.com/google/re2j.git</developerConnection>
-    <url>http://github.com/google/re2j.git</url>
+    <connection>scm:git:https://github.com/Teradata/re2j.git</connection>
+    <developerConnection>scm:git:https://github.com/Teradata/re2j.git</developerConnection>
+    <url>https://github.com/Teradata/re2j.git</url>
   </scm>
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
   <build>
     <sourceDirectory>java</sourceDirectory>
     <testSourceDirectory>javatests</testSourceDirectory>
@@ -42,7 +52,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>

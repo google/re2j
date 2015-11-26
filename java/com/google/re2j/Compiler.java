@@ -7,9 +7,20 @@
 
 package com.google.re2j;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import static com.google.re2j.Inst.Op.BYTE;
+import static com.google.re2j.Inst.Op.BYTE1;
+import static com.google.re2j.RE2.FOLD_CASE;
+import static com.google.re2j.Unicode.RUNE_SELF;
+import static com.google.re2j.Unicode.UTF_MAX;
+import static com.google.re2j.Unicode.codePointToUtf8;
+import static com.google.re2j.Unicode.maxRune;
+import static com.google.re2j.Unicode.simpleFold;
+
 /**
- * Compiler from {@code Regexp} (RE2 abstract syntax) to {@code RE2}
- * (compiled regular expression).
+ * Compiler from {@code Regexp} (RE2 abstract syntax) to {@code RE2} (compiled regular expression).
  *
  * The only entry point is {@link #compileRegexp}.
  */
@@ -17,6 +28,7 @@ class Compiler {
 
   /**
    * A fragment of a compiled regular expression program.
+   *
    * @see http://swtch.com/~rsc/regexp/regexp1.html
    */
   private static class Frag {
@@ -152,35 +164,93 @@ class Compiler {
   }
 
   private Frag rune(int rune, int flags) {
-    return rune(new int[] { rune }, flags);
+    if ((flags & FOLD_CASE) == 0) {
+      return rune(new int[]{rune}, flags);
+    } else {
+      return alt(rune(new int[]{rune}, flags), rune(new int[]{simpleFold(rune)}, flags));
+    }
   }
 
   // flags : parser flags
   private Frag rune(int[] runes, int flags) {
-    Frag f = newInst(Inst.Op.RUNE);
-    Inst i = prog.getInst(f.i);
-    i.runes = runes;
-    flags &= RE2.FOLD_CASE;  // only relevant flag is FoldCase
-    if (runes.length != 1 || Unicode.simpleFold(runes[0]) == runes[0]) {
-      flags &= ~RE2.FOLD_CASE;  // and sometimes not even that
+    if (runes.length == 1) {
+      return rune(runes[0], runes[0], flags);
+    } else if (runes.length > 1) {
+      List<Integer> expandedRunes = new LinkedList<>();
+      for (int i = 0; i < runes.length; i += 2) {
+        expandRuneRange(runes[i], runes[i + 1], expandedRunes);
+      }
+      Frag alt = rune(expandedRunes.get(0), expandedRunes.get(1), flags);
+      for (int i = 2; i < expandedRunes.size(); i += 2) {
+        alt = alt(alt, rune(expandedRunes.get(i), expandedRunes.get(i + 1), flags));
+      }
+      return alt;
+    } else {
+      return fail();
     }
+  }
+
+  private void expandRuneRange(int lo, int hi, List<Integer> runes) {
+    // Split range into same-length sized ranges.
+    for (int i = 1; i < UTF_MAX; i++) {
+      int max = maxRune(i);
+      if (lo <= max && max < hi) {
+        expandRuneRange(lo, max, runes);
+        expandRuneRange(max + 1, hi, runes);
+        return;
+      }
+    }
+
+    // ASCII range is always a special case.
+    if (hi < RUNE_SELF) {
+      runes.add(lo);
+      runes.add(hi);
+      return;
+    }
+
+    // Split range into sections that agree on leading bytes.
+    for (int i = 1; i < UTF_MAX; i++) {
+      int m = (1 << (6 * i)) - 1;  // last i bytes of a UTF-8 sequence
+      if ((lo & ~m) != (hi & ~m)) {
+        if ((lo & m) != 0) {
+          expandRuneRange(lo, lo | m, runes);
+          expandRuneRange((lo | m) + 1, hi, runes);
+          return;
+        }
+        if ((hi & m) != m) {
+          expandRuneRange(lo, (hi & ~m) - 1, runes);
+          expandRuneRange(hi & ~m, hi, runes);
+          return;
+        }
+      }
+    }
+
+    runes.add(lo);
+    runes.add(hi);
+  }
+
+  private Frag rune(int lo, int hi, int flags) {
+    return bytes(codePointToUtf8(lo), codePointToUtf8(hi), flags);
+  }
+
+  private Frag bytes(byte[] lo, byte[] hi, int flags) {
+    Frag prefix = byteRange(new byte[]{lo[0], hi[0]}, flags);
+    for (int i = 1; i < lo.length; ++i) {
+      prefix = cat(prefix, byteRange(new byte[]{lo[i], hi[i]}, flags));
+    }
+    return prefix;
+  }
+
+  private Frag byteRange(byte[] byteRanges, int flags) {
+    Frag f = newInst(BYTE);
+    Inst i = prog.getInst(f.i);
+    i.byteRanges = byteRanges;
     i.arg = flags;
     f.out = f.i << 1;
     // Special cases for exec machine.
-    if ((flags & RE2.FOLD_CASE) == 0 && runes.length == 1 ||
-        runes.length == 2 &&
-        runes[0] == runes[1]) {
-      i.op = Inst.Op.RUNE1;
-    } else if (runes.length == 2 &&
-               runes[0] == 0 &&
-               runes[1] == Unicode.MAX_RUNE) {
-      i.op = Inst.Op.RUNE_ANY;
-    } else if (runes.length == 4 &&
-               runes[0] == 0 &&
-               runes[1] == '\n' - 1 &&
-               runes[2] == '\n'+1 &&
-               runes[3] == Unicode.MAX_RUNE) {
-      i.op = Inst.Op.RUNE_ANY_NOT_NL;
+    if (byteRanges.length == 1 || (byteRanges.length == 2 && byteRanges[0] == byteRanges[1])) {
+      i.op = BYTE1;
+      i.byteRanges = new byte[]{byteRanges[0]};
     }
     return f;
   }

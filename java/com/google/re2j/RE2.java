@@ -27,6 +27,8 @@ import io.airlift.slice.Slice;
 import io.airlift.slice.SliceOutput;
 import io.airlift.slice.Slices;
 
+import static com.google.re2j.MachineInput.EOF;
+
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular
  * expression, independent of the public Java-like Pattern/Matcher API.
@@ -110,7 +112,6 @@ class RE2 {
 
   Slice prefixUTF8;             // required UTF-8 prefix in unanchored matches
   boolean prefixComplete;       // true iff prefix is the entire regexp
-  int prefixRune;               // first rune in prefix
 
   // Cache of machines for running regexp.
   // Accesses must be serialized using |this| monitor.
@@ -127,7 +128,6 @@ class RE2 {
     this.longest = re2.longest;
     this.prefixUTF8 = re2.prefixUTF8;
     this.prefixComplete = re2.prefixComplete;
-    this.prefixRune = re2.prefixRune;
   }
 
   private RE2(String expr, Prog prog, int numSubexp, boolean longest) {
@@ -187,13 +187,9 @@ class RE2 {
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re);
     RE2 re2 = new RE2(expr, prog, maxCap, longest);
-    StringBuilder prefixBuilder = new StringBuilder();
+    SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
     re2.prefixComplete = prog.prefix(prefixBuilder);
-    String prefix = prefixBuilder.toString();
-    re2.prefixUTF8 = Slices.utf8Slice(prefixBuilder.toString());
-    if (!prefix.isEmpty()) {
-      re2.prefixRune = prefix.codePointAt(0);
-    }
+    re2.prefixUTF8 = prefixBuilder.slice();
     return re2;
   }
 
@@ -377,10 +373,9 @@ class RE2 {
       }
       lastMatchEnd = a[1];
 
-      // Advance past this match; always advance at least one character.
-      int width = input.step(searchPos) & 0x7;
-      if (searchPos + width > a[1]) {
-        searchPos += width;
+      // Advance past this match
+      if (searchPos + 1 > a[1]) {
+        searchPos++;
       } else if (searchPos + 1 > a[1]) {
         // This clause is only needed at the end of the input
         // string.  In that case, DecodeRuneInString returns width=0.
@@ -465,11 +460,11 @@ class RE2 {
           // after a previous match, so ignore it.
           accept = false;
         }
-        int r = input.step(pos);
-        if (r < 0) {  // EOF
+        byte b = input.getByte(pos);
+        if (b == EOF) {
           pos = end + 1;
         } else {
-          pos += r & 0x7;
+          pos++;
         }
       } else {
         pos = matches[1];

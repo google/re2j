@@ -10,6 +10,12 @@ package com.google.re2j;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.airlift.slice.SliceOutput;
+import io.airlift.slice.Slices;
+
+import static com.google.re2j.Inst.Op.BYTE;
+import static com.google.re2j.Inst.Op.MATCH;
+
 /**
  * A Prog is a compiled regular expression program.
  */
@@ -51,25 +57,36 @@ class Prog {
     return i;
   }
 
-  // prefix() returns a pair of a literal string that all matches for the
+  // prefix() returns a pair of a literal slice that all matches for the
   // regexp must start with, and a boolean which is true if the prefix is the
-  // entire match.  The string is returned by appending to |prefix|.
-  boolean prefix(StringBuilder prefix) {
+  // entire match.  The slice is returned by appending to |prefix|.
+  boolean prefix(SliceOutput prefix) {
     Inst i = skipNop(start);
 
     // Avoid allocation of buffer if prefix is empty.
-    if (i.op() != Inst.Op.RUNE || i.runes.length != 1) {
-      return i.op == Inst.Op.MATCH;  // (append "" to prefix)
+    if (i.op() != BYTE || i.byteRanges.length != 1) {
+      return i.op == MATCH;  // (append "" to prefix)
+    }
+
+    int length = 0;
+    while (i.op() == BYTE && i.byteRanges.length == 1) {
+      i = skipNop(i.out);
+      length++;
+    }
+
+    byte[] bytes = new byte[length];
+    length = 0;
+    i = skipNop(start);
+    while (i.op() == BYTE && i.byteRanges.length == 1) {
+      bytes[length] = i.byteRanges[0];
+      i = skipNop(i.out);
+      length++;
     }
 
     // Have prefix; gather characters.
-    while (i.op() == Inst.Op.RUNE &&
-           i.runes.length == 1 &&
-           (i.arg & RE2.FOLD_CASE) == 0) {
-      prefix.appendCodePoint(i.runes[0]);  // an int, not a byte.
-      i = skipNop(i.out);
-    }
-    return i.op == Inst.Op.MATCH;
+    prefix.appendBytes(Slices.wrappedBuffer(bytes));
+
+    return i.op == MATCH;
   }
 
   // startCond() returns the leading empty-width conditions that must be true

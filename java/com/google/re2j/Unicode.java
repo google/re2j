@@ -7,12 +7,17 @@
 
 package com.google.re2j;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Utilities for dealing with Unicode better than Java does.
  *
  * @author adonovan@google.com (Alan Donovan)
  */
 class Unicode {
+
+  // Rune and UTF8 sequences are the same.
+  static final int RUNE_SELF = 0x80;
 
   // The highest legal rune value.
   static final int MAX_RUNE = 0x10FFFF;
@@ -32,6 +37,9 @@ class Unicode {
   // Checked during test.
   static final int MIN_FOLD = 0x0041;
   static final int MAX_FOLD = 0x1044f;
+
+  // Maximum bytes per rune
+  static final int UTF_MAX = 4;
 
   // is32 uses binary search to test whether rune is in the specified
   // slice of 32-bit ranges.
@@ -71,6 +79,20 @@ class Unicode {
     return ranges.length > 0 &&
         r >= ranges[0][0] &&
         is32(ranges, r);
+  }
+
+  static byte[] codePointToUtf8(int codePoint) {
+    return new String(Character.toChars(codePoint)).getBytes(UTF_8);
+  }
+
+  static int maxRune(int len) {
+    int b; // number of Rune bits in len-byte UTF-8 sequence (len < UTFmax)
+    if (len == 1) {
+      b = 7;
+    } else {
+      b = 8 - (len + 1) + 6 * (len - 1);
+    }
+    return (1 << b) - 1; // maximum Rune for b bits.
   }
 
   // isUpper reports whether the rune is an upper case letter.

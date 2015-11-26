@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.google.re2j.MachineInput.EOF;
+import static com.google.re2j.Utils.emptyOpContext;
+import static com.google.re2j.Utils.isRuneStart;
+
 // A Machine matches an input string of Unicode characters against an
 // RE2 instance using a simple NFA.
 //
@@ -173,21 +177,13 @@ class Machine {
     matched = false;
     Arrays.fill(matchcap, -1);
     Queue runq = q0, nextq = q1;
-    int r = in.step(pos);
-    int rune = r >> 3;
-    int width = r & 7;
-    int rune1 = -1;
-    int width1 = 0;
-    if (r != MachineInput.EOF) {
-      r = in.step(pos + width);
-      rune1 = r >> 3;
-      width1 = r & 7;
-    }
-    int flag;  // bitmask of EMPTY_* flags
+    byte b = in.getByte(pos);
+    byte b1 = in.getByte(pos + 1);
+    int flag; // bitmask of EMPTY_* flags
     if (pos == 0) {
-      flag = Utils.emptyOpContext(-1, rune);
+      flag = emptyOpContext(EOF, b);
     } else {
-      flag = in.context(pos);
+      flag = emptyOpContext(in.getByte(pos - 1), b);
     }
     for (;;) {
 
@@ -200,23 +196,18 @@ class Machine {
           // Have match; finished exploring alternatives.
           break;
         }
-        if (re2.prefixUTF8.length() > 0 &&
-            in.canCheckPrefix()) {
+        if (re2.prefixUTF8.length() > 0) {
           // Match requires literal prefix; fast search for it.
           int advance = in.index(re2, pos);
           if (advance < 0) {
             break;
           }
           pos += advance;
-          r = in.step(pos);
-          rune = r >> 3;
-          width = r & 7;
-          r = in.step(pos + width);
-          rune1 = r >> 3;
-          width1 = r & 7;
+          b = in.getByte(pos);
+          b1 = in.getByte(pos + 1);
         }
       }
-      if (!matched && (pos == 0 || anchor == RE2.UNANCHORED)) {
+      if (!matched && (pos == 0 || anchor == RE2.UNANCHORED) && (b == EOF || isRuneStart(b))) {
         // If we are anchoring at begin then only add threads that begin
         // at |pos| = 0.
         if (matchcap.length > 0) {
@@ -224,9 +215,9 @@ class Machine {
         }
         add(runq, prog.start, pos, matchcap, flag, null);
       }
-      flag = Utils.emptyOpContext(rune, rune1);
-      step(runq, nextq, pos, pos + width, rune, flag, anchor, pos == in.endPos());
-      if (width == 0) {  // EOF
+      flag = emptyOpContext(b, b1);
+      step(runq, nextq, pos, pos + 1, b, flag, anchor, pos == in.endPos());
+      if (b == EOF) {
         break;
       }
       if (matchcap.length == 0 && matched) {
@@ -234,14 +225,9 @@ class Machine {
         // to where it is, so any match will do.
         break;
       }
-      pos += width;
-      rune = rune1;
-      width = width1;
-      if (rune != -1) {
-        r = in.step(pos + width);
-        rune1 = r >> 3;
-        width1 = r & 7;
-      }
+      pos++;
+      b = b1;
+      b1 = in.getByte(pos + 1);
       Queue tmpq = runq;
       runq = nextq;
       nextq = tmpq;
@@ -252,13 +238,13 @@ class Machine {
 
   // step() executes one step of the machine, running each of the threads
   // on |runq| and appending new threads to |nextq|.
-  // The step processes the rune |c| (which may be -1 for EOF),
+  // The step processes the byte |b| (which may be -1 for EOF),
   // which starts at position |pos| and ends at |nextPos|.
-  // |nextCond| gives the setting for the EMPTY_* flags after |c|.
+  // |nextCond| gives the setting for the EMPTY_* flags after |b|.
   // |anchor| is the anchoring flag and |atEnd| signals if we are at the end of
   // the input string.
-  private void step(Queue runq, Queue nextq, int pos, int nextPos, int c,
-            int nextCond, int anchor, boolean atEnd) {
+  private void step(Queue runq, Queue nextq, int pos, int nextPos, byte b,
+                    int nextCond, int anchor, boolean atEnd) {
     boolean longest = re2.longest;
     for (int j = 0; j < runq.size; ++j) {
       Queue.Entry entry = runq.dense[j];
@@ -301,20 +287,12 @@ class Machine {
           matched = true;
           break;
 
-        case RUNE:
-          add = i.matchRune(c);
+        case BYTE:
+          add = i.matchByte(b);
           break;
 
-        case RUNE1:
-          add = c == i.runes[0];
-          break;
-
-        case RUNE_ANY:
-          add = true;
-          break;
-
-        case RUNE_ANY_NOT_NL:
-          add = c != '\n';
+        case BYTE1:
+          add = b == i.byteRanges[0];
           break;
 
         default:
@@ -380,10 +358,8 @@ class Machine {
         break;
 
       case MATCH:
-      case RUNE:
-      case RUNE1:
-      case RUNE_ANY:
-      case RUNE_ANY_NOT_NL:
+      case BYTE:
+      case BYTE1:
         if (t == null) {
           t = alloc(inst);
         } else {

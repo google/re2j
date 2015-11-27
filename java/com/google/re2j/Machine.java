@@ -7,9 +7,7 @@
 
 package com.google.re2j;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.google.re2j.MachineInput.EOF;
 import static com.google.re2j.Utils.emptyOpContext;
@@ -20,6 +18,8 @@ import static com.google.re2j.Utils.isRuneStart;
 //
 // Called by RE2.doExecute.
 class Machine {
+
+  private static final int INITIAL_POOL_SIZE = 10;
 
   // A logical thread in the NFA.
   private static class Thread {
@@ -32,9 +32,9 @@ class Machine {
 
   // A queue is a 'sparse array' holding pending threads of execution.  See:
   // research.swtch.com/2008/03/using-uninitialized-memory-for-fun-and.html
-  private static class Queue {
+  private class Queue {
 
-    static class Entry {
+    class Entry {
       int pc;
       Thread thread;
     }
@@ -72,12 +72,11 @@ class Machine {
     }
 
     // Frees all threads on the thread queue, returning them to the free pool.
-    void clear(List<Thread> freePool) {
+    void clear() {
       for(int i = 0; i < size; ++i) {
         Entry entry = dense[i];
         if (entry != null && entry.thread != null) {
-          // free(entry.thread)
-          freePool.add(entry.thread);
+          free(entry.thread);
         }
         // (don't release dense[i] to GC; recycle it.)
       }
@@ -111,8 +110,8 @@ class Machine {
   private final Queue q0, q1;
 
   // pool of available threads
-  // Really a stack:
-  private List<Thread> pool = new ArrayList<Thread>();
+  private Thread pool[] = new Thread[INITIAL_POOL_SIZE];
+  private int poolSize = 0;
 
   // Whether a match was found.
   private boolean matched;
@@ -134,8 +133,8 @@ class Machine {
 
   // init() reinitializes an existing Machine for re-use on a new input.
   void init(int ncap) {
-    for (Thread t : pool) {
-      t.cap = new int[ncap];
+    for (int i = 0; i < poolSize; ++i) {
+      pool[i].cap = new int[ncap];
     }
     this.matchcap = new int[ncap];
   }
@@ -152,17 +151,26 @@ class Machine {
   // alloc() allocates a new thread with the given instruction.
   // It uses the free pool if possible.
   private Thread alloc(Inst inst) {
-    int n = pool.size();
-    Thread t = n > 0
-        ? pool.remove(n - 1)
-        : new Thread(matchcap.length);
+    Thread t;
+    if (poolSize > 0) {
+      t = pool[--poolSize];
+    } else {
+      t = new Thread(matchcap.length);
+    }
+
     t.inst = inst;
     return t;
   }
 
   // free() returns t to the free pool.
   private void free(Thread t) {
-    pool.add(t);
+    if (poolSize >= pool.length) {
+      Thread[] newPool = new Thread[pool.length * 2];
+      System.arraycopy(pool, 0, newPool, 0, pool.length);
+      pool = newPool;
+    }
+
+    pool[poolSize++] = t;
   }
 
   // match() runs the machine over the input |in| starting at |pos| with the
@@ -236,7 +244,7 @@ class Machine {
       runq = nextq;
       nextq = tmpq;
     }
-    nextq.clear(pool);
+    nextq.clear();
     return matched;
   }
 
@@ -260,8 +268,7 @@ class Machine {
         continue;
       }
       if (longest && matched && t.cap.length > 0 && matchcap[0] < t.cap[0]) {
-        // free(t)
-        pool.add(t);
+        free(t);
         continue;
       }
       Inst i = t.inst;
@@ -282,8 +289,7 @@ class Machine {
             for (int k = j + 1; k < runq.size; ++k) {
               Queue.Entry d = runq.dense[k];
               if (d.thread != null) {
-                // free(d.thread)
-                pool.add(d.thread);
+                free(d.thread);
               }
             }
             runq.size = 0;
@@ -306,8 +312,7 @@ class Machine {
         t = add(nextq, i.out, nextPos, t.cap, nextCond, t);
       }
       if (t != null) {
-        // free(t)
-        pool.add(t);
+        free(t);
       }
     }
     runq.size = 0;

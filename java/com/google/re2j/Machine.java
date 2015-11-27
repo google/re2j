@@ -104,6 +104,9 @@ class Machine {
   // Compiled program.
   private final Prog prog;
 
+  // Program instructions.
+  private final Inst[] instructions;
+
   // Two queues for runq, nextq.
   private final Queue q0, q1;
 
@@ -122,6 +125,7 @@ class Machine {
    */
   Machine(RE2 re2) {
     this.prog = re2.prog;
+    this.instructions = prog.getInst();
     this.re2 = re2;
     this.q0 = new Queue(prog.numInst());
     this.q1 = new Queue(prog.numInst());
@@ -322,7 +326,7 @@ class Machine {
       return t;
     }
     Queue.Entry d = q.add(pc);
-    Inst inst = prog.getInst(pc);
+    Inst inst = instructions[pc];
     switch (inst.op()) {
       default:
         throw new IllegalStateException("unhandled");

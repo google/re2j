@@ -35,6 +35,10 @@ class Prog {
     return inst.get(pc);
   }
 
+  Inst[] getInst() {
+    return inst.toArray(new Inst[inst.size()]);
+  }
+
   // Returns the number of instructions in this program.
   int numInst() {
     return inst.size();

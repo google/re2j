@@ -134,10 +134,10 @@ class RE2 {
   boolean prefixComplete;       // true iff prefix is the entire regexp
 
   // Cache of machines for running regexp.
-  private final ThreadLocal<Machine> machine = new ThreadLocal<Machine>() {
+  private final ThreadLocal<NFAMachine> nfaMachine = new ThreadLocal<NFAMachine>() {
     @Override
-    protected Machine initialValue() {
-      return new Machine(RE2.this);
+    protected NFAMachine initialValue() {
+      return new NFAMachine(RE2.this);
     }
   };
 
@@ -237,9 +237,9 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, Anchor anchor, int ncap) {
-    Machine m = machine.get();
-    m.init(ncap);
-    return m.match(in, pos, anchor) ? m.submatches() : null;
+    Machine m = nfaMachine.get();
+    int[] submatches = new int[ncap];
+    return m.match(in, pos, anchor, submatches) ? submatches : null;
   }
 
   /**

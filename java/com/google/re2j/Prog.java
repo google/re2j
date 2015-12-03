@@ -23,6 +23,7 @@ class Prog {
 
   private final List<Inst> inst = new ArrayList<Inst>();
   int start; // index of start instruction
+  int startUnanchored; // index of unanchored start instruction
   int numCap = 2; // number of CAPTURE insts in re
                   // 2 => implicit ( and ) for whole match $0
 
@@ -186,6 +187,9 @@ class Prog {
       out.append(pc);
       if (pc == start) {
         out.append('*');
+      }
+      if (pc == startUnanchored) {
+        out.append("@");
       }
       // Use spaces not tabs since they're not always preserved in
       // Google Java source, such as our tests.

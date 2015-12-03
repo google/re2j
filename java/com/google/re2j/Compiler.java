@@ -50,17 +50,15 @@ class Compiler {
   }
 
   private final Prog prog = new Prog();  // Program being built
+  private boolean reversed;
 
   private Compiler() {
     newInst(Inst.Op.FAIL);  // always the first instruction
   }
 
-  static Prog compileRegexp(Regexp re) {
+  static Prog compileRegexp(Regexp re, boolean reversed) {
     Compiler c = new Compiler();
-    Frag f = c.compile(re);
-    c.prog.patch(f.out, c.newInst(Inst.Op.MATCH).i);
-    c.prog.start = f.i;
-    return c.prog;
+    return c.compileToProgram(re, reversed);
   }
 
   private Frag newInst(Inst.Op op) {
@@ -74,6 +72,10 @@ class Compiler {
     Frag f = newInst(Inst.Op.NOP);
     f.out = f.i << 1;
     return f;
+  }
+
+  private Frag match() {
+    return newInst(Inst.Op.MATCH);
   }
 
   private Frag fail() {
@@ -98,9 +100,14 @@ class Compiler {
     if (f1.i == 0 || f2.i == 0) {
       return fail();
     }
-    // TODO(rsc): elide nop
-    prog.patch(f1.out, f2.i);
-    return new Frag(f1.i, f2.out);
+
+    if (reversed) {
+      prog.patch(f2.out, f1.i);
+      return new Frag(f2.i, f1.out);
+    } else {
+      prog.patch(f1.out, f2.i);
+      return new Frag(f1.i, f2.out);
+    }
   }
 
   // Given fragments for a and b, returns fragment for a|b.
@@ -259,6 +266,28 @@ class Compiler {
     0, '\n' - 1, '\n' + 1, Unicode.MAX_RUNE
   };
   private static final int[] ANY_RUNE = { 0, Unicode.MAX_RUNE };
+  private static final byte[] ANY_BYTE = { 0, (byte) 0xff };
+
+  private Prog compileToProgram(Regexp re, boolean reversed) {
+    this.reversed = reversed;
+    Frag f = compile(re);
+    this.reversed = false;
+
+    // Finish by putting Match node at end, and record start.
+    // Turn off c.reversed (if it is set) to force the remaining concatenations to behave normally.
+    Frag all = cat(f, match());
+    prog.start = all.i;
+
+    // Also create unanchored version, which starts with a .*? loop.
+    if ((prog.startCond() & Utils.EMPTY_BEGIN_TEXT) == 0) {
+      Frag unanchored = cat(star(byteRange(ANY_BYTE, 0), true), all);
+      prog.startUnanchored = unanchored.i;
+    } else {
+      prog.startUnanchored = prog.start;
+    }
+
+    return prog;
+  }
 
   private Frag compile(Regexp re) {
     switch (re.op) {
@@ -284,13 +313,13 @@ class Compiler {
       case ANY_CHAR:
         return rune(ANY_RUNE, 0);
       case BEGIN_LINE:
-        return empty(Utils.EMPTY_BEGIN_LINE);
+        return empty(reversed ? Utils.EMPTY_END_LINE : Utils.EMPTY_BEGIN_LINE);
       case END_LINE:
-        return empty(Utils.EMPTY_END_LINE);
+        return empty(reversed ? Utils.EMPTY_BEGIN_LINE : Utils.EMPTY_END_LINE);
       case BEGIN_TEXT:
-        return empty(Utils.EMPTY_BEGIN_TEXT);
+        return empty(reversed ? Utils.EMPTY_END_TEXT : Utils.EMPTY_BEGIN_TEXT);
       case END_TEXT:
-        return empty(Utils.EMPTY_END_TEXT);
+        return empty(reversed ? Utils.EMPTY_BEGIN_TEXT : Utils.EMPTY_END_TEXT);
       case WORD_BOUNDARY:
         return empty(Utils.EMPTY_WORD_BOUNDARY);
       case NO_WORD_BOUNDARY:

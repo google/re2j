@@ -105,6 +105,7 @@ class RE2 {
 
   final String expr;            // as passed to Compile
   final Prog prog;              // compiled program
+  final Prog reverseProg;       // program for matching reversed text
   final int cond;               // EMPTY_* bitmask: empty-width conditions
                                 // required at start of match
   final int numSubexp;
@@ -127,6 +128,7 @@ class RE2 {
     // Copy everything.
     this.expr = re2.expr;
     this.prog = re2.prog;
+    this.reverseProg = re2.reverseProg;
     this.cond = re2.cond;
     this.numSubexp = re2.numSubexp;
     this.longest = re2.longest;
@@ -134,9 +136,10 @@ class RE2 {
     this.prefixComplete = re2.prefixComplete;
   }
 
-  private RE2(String expr, Prog prog, int numSubexp, boolean longest) {
+  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, boolean longest) {
     this.expr = expr;
     this.prog = prog;
+    this.reverseProg = reverseProg;
     this.numSubexp = numSubexp;
     this.cond = prog.startCond();
     this.longest = longest;
@@ -189,8 +192,9 @@ class RE2 {
     Regexp re = Parser.parse(expr, mode);
     int maxCap = re.maxCap();  // (may shrink during simplify)
     re = Simplify.simplify(re);
-    Prog prog = Compiler.compileRegexp(re);
-    RE2 re2 = new RE2(expr, prog, maxCap, longest);
+    Prog prog = Compiler.compileRegexp(re, false);
+    Prog reverseProg = Compiler.compileRegexp(re, true);
+    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, longest);
     SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
     re2.prefixComplete = prog.prefix(prefixBuilder);
     re2.prefixUTF8 = prefixBuilder.slice();

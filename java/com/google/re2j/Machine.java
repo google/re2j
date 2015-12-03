@@ -7,6 +7,8 @@
 
 package com.google.re2j;
 
+import com.google.re2j.RE2.Anchor;
+
 import java.util.Arrays;
 
 import static com.google.re2j.MachineInput.EOF;
@@ -177,13 +179,12 @@ class Machine {
   // RE2 Anchor |anchor|.
   // It reports whether a match was found.
   // If so, matchcap holds the submatch information.
-  boolean match(MachineInput in, int pos, int anchor) {
+  boolean match(MachineInput in, int pos, Anchor anchor) {
     int startCond = re2.cond;
     if (startCond == Utils.EMPTY_ALL) {  // impossible
       return false;
     }
-    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) &&
-        pos != 0){
+    if (anchor.isAnchorStart() && pos != 0) {
       return false;
     }
     matched = false;
@@ -219,7 +220,7 @@ class Machine {
           b1 = in.getByte(pos + 1);
         }
       }
-      if (!matched && (pos == 0 || anchor == RE2.UNANCHORED) && (b == EOF || isRuneStart(b))) {
+      if (!matched && (pos == 0 || anchor.isUnanchored()) && (b == EOF || isRuneStart(b))) {
         // If we are anchoring at begin then only add threads that begin
         // at |pos| = 0.
         if (matchcap.length > 0) {
@@ -256,7 +257,7 @@ class Machine {
   // |anchor| is the anchoring flag and |atEnd| signals if we are at the end of
   // the input string.
   private void step(Queue runq, Queue nextq, int pos, int nextPos, byte b,
-                    int nextCond, int anchor, boolean atEnd) {
+                    int nextCond, Anchor anchor, boolean atEnd) {
     boolean longest = re2.longest;
     for (int j = 0; j < runq.size; ++j) {
       Queue.Entry entry = runq.dense[j];
@@ -275,7 +276,7 @@ class Machine {
       boolean add = false;
       switch (i.op) {
         case MATCH:
-          if (anchor == RE2.ANCHOR_BOTH && !atEnd) {
+          if (anchor.isAnchorBoth() && !atEnd) {
             // Don't match if we anchor at both start and end and those
             // expectations aren't met.
             break;

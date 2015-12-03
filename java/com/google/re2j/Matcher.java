@@ -2,9 +2,15 @@
 
 package com.google.re2j;
 
+import com.google.re2j.RE2.Anchor;
+
 import io.airlift.slice.DynamicSliceOutput;
 import io.airlift.slice.Slice;
 import io.airlift.slice.SliceOutput;
+
+import static com.google.re2j.RE2.Anchor.ANCHOR_BOTH;
+import static com.google.re2j.RE2.Anchor.ANCHOR_START;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
 
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a
@@ -58,7 +64,7 @@ public final class Matcher {
   private boolean hasGroups;
 
   // The anchor flag to use when repeating the match to find subgroups.
-  private int anchorFlag;
+  private Anchor anchorFlag;
 
   private Matcher(Pattern pattern) {
     if (pattern == null) {
@@ -230,7 +236,7 @@ public final class Matcher {
    * @return true if the entire input matches the pattern
    */
   public boolean matches() {
-    return genMatch(0, RE2.ANCHOR_BOTH);
+    return genMatch(0, ANCHOR_BOTH);
   }
 
   /**
@@ -240,7 +246,7 @@ public final class Matcher {
    * @return true if the beginning of the input matches the pattern
    */
   public boolean lookingAt() {
-    return genMatch(0, RE2.ANCHOR_START);
+    return genMatch(0, ANCHOR_START);
   }
 
   /**
@@ -259,7 +265,7 @@ public final class Matcher {
         start++;
       }
     }
-    return genMatch(start, RE2.UNANCHORED);
+    return genMatch(start, UNANCHORED);
   }
 
   /**
@@ -277,11 +283,11 @@ public final class Matcher {
           "start index out of bounds: " + start);
     }
     reset();
-    return genMatch(start, 0);
+    return genMatch(start, UNANCHORED);
   }
 
   /** Helper: does match starting at start, with RE2 anchor flag. */
-  private boolean genMatch(int startByte, int anchor) {
+  private boolean genMatch(int startByte, Anchor anchor) {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
     boolean ok = pattern.re2().match(input, startByte,

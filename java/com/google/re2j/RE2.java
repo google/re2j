@@ -28,6 +28,7 @@ import io.airlift.slice.SliceOutput;
 import io.airlift.slice.Slices;
 
 import static com.google.re2j.MachineInput.EOF;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular
@@ -97,9 +98,27 @@ class RE2 {
   static final int POSIX = 0;
 
   //// Anchors
-  static final int UNANCHORED = 0;
-  static final int ANCHOR_START = 1;
-  static final int ANCHOR_BOTH = 2;
+  enum Anchor {
+    UNANCHORED,
+    ANCHOR_START,
+    ANCHOR_BOTH;
+
+    boolean isUnanchored() {
+      return this == UNANCHORED;
+    }
+
+    boolean isAnchorEnd() {
+      return this == ANCHOR_BOTH;
+    }
+
+    boolean isAnchorStart() {
+      return this == ANCHOR_START || this == ANCHOR_BOTH;
+    }
+
+    boolean isAnchorBoth() {
+      return this == ANCHOR_BOTH;
+    }
+  }
 
   //// RE2 instance members.
 
@@ -217,7 +236,7 @@ class RE2 {
   // doExecute() finds the leftmost match in the input and returns
   // the position of its subexpressions.
   // Derived from exec.go.
-  private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
+  private int[] doExecute(MachineInput in, int pos, Anchor anchor, int ncap) {
     Machine m = machine.get();
     m.init(ncap);
     return m.match(in, pos, anchor) ? m.submatches() : null;
@@ -245,7 +264,7 @@ class RE2 {
    * @param ngroup the number of array pairs to fill in
    * @return true if a match was found
    */
-  boolean match(Slice input, int start, int anchor, int[] group,
+  boolean match(Slice input, int start, Anchor anchor, int[] group,
                 int ngroup) {
     if (start > input.length()) {
       return false;

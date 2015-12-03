@@ -7,6 +7,8 @@
 
 package com.google.re2j;
 
+import static com.google.re2j.RE2.Anchor.ANCHOR_BOTH;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
 import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 
@@ -18,21 +20,21 @@ public class RE2Test {
   @Test
   public void testFullMatch() {
     assertEquals(true, new RE2("ab+c").match(
-        utf8Slice("abbbbbc"), 0, RE2.ANCHOR_BOTH, null, 0));
+        utf8Slice("abbbbbc"), 0, ANCHOR_BOTH, null, 0));
     assertEquals(false, new RE2("ab+c").match(
-      utf8Slice("xabbbbbc"), 0, RE2.ANCHOR_BOTH, null, 0));
+      utf8Slice("xabbbbbc"), 0, ANCHOR_BOTH, null, 0));
   }
 
   @Test
   public void testFindEnd() {
     RE2 r = new RE2("abc.*def");
     assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),
-                               0, RE2.UNANCHORED, null, 0));
+                               0, UNANCHORED, null, 0));
     assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),
-                               3, RE2.UNANCHORED, null, 0));
+                               3, UNANCHORED, null, 0));
     assertEquals(false, r.match(utf8Slice("yyyabcxxxdefzzz"),
-                                4, RE2.UNANCHORED, null, 0));
+                                4, UNANCHORED, null, 0));
     assertEquals(false, r.match(utf8Slice("abcxxxde"),
-                                3, RE2.UNANCHORED, null, 0));
+                                3, UNANCHORED, null, 0));
   }
 }

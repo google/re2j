@@ -231,7 +231,7 @@ public class MatcherTest {
     String pattern = "[" + string + "]";
     RE2 re = new RE2(pattern) {
         @Override
-        public boolean match(Slice input, int start, int anchor,
+        public boolean match(Slice input, int start, Anchor anchor,
                              int[] group, int ngroup) {
           assertEquals(input.length(), end);
           return super.match(input, start, anchor, group, ngroup);

@@ -6,6 +6,8 @@ import java.io.Serializable;
 
 import io.airlift.slice.Slice;
 
+import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
+
 /**
  * A compiled representation of an RE2 regular expression, mimicking the
  * {@code java.util.regex.Pattern} API.
@@ -125,7 +127,7 @@ public final class Pattern implements Serializable {
     if ((flags & DISABLE_UNICODE_GROUPS) != 0) {
       re2Flags &= ~RE2.UNICODE_GROUPS;
     }
-    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, /*longest=*/false));
+    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, FIRST_MATCH));
   }
 
   /**

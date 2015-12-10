@@ -12,6 +12,7 @@ import com.google.re2j.RE2.Anchor;
 import java.util.Arrays;
 
 import static com.google.re2j.MachineInput.EOF;
+import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
 import static com.google.re2j.Utils.emptyOpContext;
 import static com.google.re2j.Utils.isRuneStart;
 import static java.lang.System.arraycopy;
@@ -253,7 +254,7 @@ class NFAMachine implements Machine {
   // the input string.
   private void step(Queue runq, Queue nextq, int pos, int nextPos, byte b,
                     int nextCond, Anchor anchor, boolean atEnd) {
-    boolean longest = re2.longest;
+    boolean longest = re2.matchKind == LONGEST_MATCH;
     for (int j = 0; j < runq.size; ++j) {
       Queue.Entry entry = runq.dense[j];
       if (entry == null) {

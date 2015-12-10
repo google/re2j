@@ -9,6 +9,8 @@ package com.google.re2j;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.re2j.ApiTestUtils.slicesToStrings;
+import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
+import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
 import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -206,7 +208,7 @@ public class ExecTest {
           boolean partial = (i & 1) != 0, longest = (i & 2) != 0;
           RE2 regexp = partial ? re : refull;
 
-          regexp.longest = longest;
+          regexp.matchKind = longest ? LONGEST_MATCH : FIRST_MATCH;
           int[] have = regexp.findSubmatchIndex(utf8Slice(text));  // UTF-8 indices
           int[] want = parseResult(file, lineno, res[i]);  // UTF-8 indices
           if (!Arrays.equals(want, have)) {
@@ -222,7 +224,7 @@ public class ExecTest {
             continue;
           }
 
-          regexp.longest = longest;
+          regexp.matchKind = longest ? LONGEST_MATCH : FIRST_MATCH;
           boolean b = regexp.match(utf8Slice(text));
           if (b != (want != null)) {
             System.err.format(
@@ -545,7 +547,7 @@ public class ExecTest {
 
         RE2 re = null;
         try {
-          re = RE2.compileImpl(pattern, flags, true);
+          re = RE2.compileImpl(pattern, flags, LONGEST_MATCH);
         } catch (PatternSyntaxException e) {
           if (shouldCompileMatch[0]) {
             System.err.format("%s:%d: %s did not compile\n",

@@ -29,6 +29,8 @@ import io.airlift.slice.Slices;
 
 import static com.google.re2j.MachineInput.EOF;
 import static com.google.re2j.RE2.Anchor.UNANCHORED;
+import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
+import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular
@@ -120,6 +122,18 @@ class RE2 {
     }
   }
 
+  // Kind of match to look for (for anchor != ANCHOR_BOTH)
+  //
+  // LONGEST_MATCH mode finds the overall longest
+  // match but still makes its submatch choices the way
+  // Perl would, not in the way prescribed by POSIX.
+  // The POSIX rules are much more expensive to implement,
+  // and no one has needed them.
+  enum MatchKind {
+    FIRST_MATCH,    // like Perl, PCRE
+    LONGEST_MATCH   // like egrep or POSIX
+  }
+
   //// RE2 instance members.
 
   final String expr;            // as passed to Compile
@@ -128,7 +142,7 @@ class RE2 {
   final int cond;               // EMPTY_* bitmask: empty-width conditions
                                 // required at start of match
   final int numSubexp;
-  boolean longest;
+  MatchKind matchKind;
 
   Slice prefixUTF8;             // required UTF-8 prefix in unanchored matches
   boolean prefixComplete;       // true iff prefix is the entire regexp
@@ -150,18 +164,18 @@ class RE2 {
     this.reverseProg = re2.reverseProg;
     this.cond = re2.cond;
     this.numSubexp = re2.numSubexp;
-    this.longest = re2.longest;
+    this.matchKind = re2.matchKind;
     this.prefixUTF8 = re2.prefixUTF8;
     this.prefixComplete = re2.prefixComplete;
   }
 
-  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, boolean longest) {
+  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind) {
     this.expr = expr;
     this.prog = prog;
     this.reverseProg = reverseProg;
     this.numSubexp = numSubexp;
     this.cond = prog.startCond();
-    this.longest = longest;
+    this.matchKind = matchKind;
   }
 
   /**
@@ -177,7 +191,7 @@ class RE2 {
    * For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
    */
   static RE2 compile(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, PERL, /*longest=*/false);
+    return compileImpl(expr, PERL, FIRST_MATCH);
   }
 
   /**
@@ -202,18 +216,18 @@ class RE2 {
    * See http://swtch.com/~rsc/regexp/regexp2.html#posix
    */
   static RE2 compilePOSIX(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, POSIX, /*longest=*/true);
+    return compileImpl(expr, POSIX, LONGEST_MATCH);
   }
 
   // Exposed to ExecTests.
-  static RE2 compileImpl(String expr, int mode, boolean longest)
+  static RE2 compileImpl(String expr, int mode, MatchKind matchKind)
       throws PatternSyntaxException {
     Regexp re = Parser.parse(expr, mode);
     int maxCap = re.maxCap();  // (may shrink during simplify)
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re, false);
     Prog reverseProg = Compiler.compileRegexp(re, true);
-    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, longest);
+    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind);
     SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
     re2.prefixComplete = prog.prefix(prefixBuilder);
     re2.prefixUTF8 = prefixBuilder.slice();

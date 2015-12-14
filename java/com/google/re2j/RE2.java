@@ -148,12 +148,13 @@ class RE2 {
   boolean prefixComplete;       // true iff prefix is the entire regexp
 
   // Cache of machines for running regexp.
-  private final ThreadLocal<NFAMachine> nfaMachine = new ThreadLocal<NFAMachine>() {
+  final ThreadLocal<NFAMachine> nfaMachine = new ThreadLocal<NFAMachine>() {
     @Override
     protected NFAMachine initialValue() {
       return new NFAMachine(RE2.this);
     }
   };
+  final DFAMachine dfaMachine;
 
   // This is visible for testing.
   RE2(String expr) {
@@ -167,6 +168,7 @@ class RE2 {
     this.matchKind = re2.matchKind;
     this.prefixUTF8 = re2.prefixUTF8;
     this.prefixComplete = re2.prefixComplete;
+    this.dfaMachine = new DFAMachine(this);
   }
 
   private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind) {
@@ -176,6 +178,7 @@ class RE2 {
     this.numSubexp = numSubexp;
     this.cond = prog.startCond();
     this.matchKind = matchKind;
+    this.dfaMachine = new DFAMachine(this);
   }
 
   /**
@@ -251,9 +254,9 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, Anchor anchor, int ncap) {
-    Machine m = nfaMachine.get();
     int[] submatches = new int[ncap];
-    return m.match(in, pos, anchor, submatches) ? submatches : null;
+    boolean match = dfaMachine.match(in, pos, anchor, submatches);
+    return match ? submatches : null;
   }
 
   /**
@@ -391,10 +394,6 @@ class RE2 {
 
       // Advance past this match
       if (searchPos + 1 > a[1]) {
-        searchPos++;
-      } else if (searchPos + 1 > a[1]) {
-        // This clause is only needed at the end of the input
-        // string.  In that case, DecodeRuneInString returns width=0.
         searchPos++;
       } else {
         searchPos = a[1];

@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 import io.airlift.slice.Slice;
 
+import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
 
 /**
@@ -45,11 +46,18 @@ public final class Pattern implements Serializable {
   // The flags at construction time.
   private final int flags;
 
+  // The options at construction time.
+  private final Options options;
+
   // The compiled RE2 regexp.
   private transient final RE2 re2;
 
   // This is visible for testing.
   Pattern(String pattern, int flags, RE2 re2) {
+    this(pattern, flags, re2, DEFAULT_OPTIONS);
+  }
+
+  Pattern(String pattern, int flags, RE2 re2, Options options) {
     if (pattern == null) {
       throw new NullPointerException("pattern is null");
     }
@@ -58,6 +66,7 @@ public final class Pattern implements Serializable {
     }
     this.pattern = pattern;
     this.flags = flags;
+    this.options = options;
     this.re2 = re2;
   }
 
@@ -66,6 +75,13 @@ public final class Pattern implements Serializable {
    */
   public int flags() {
     return flags;
+  }
+
+  /**
+   * Returns the options used in the constructor.
+   */
+  public Options options() {
+    return options;
   }
 
   /**
@@ -87,7 +103,11 @@ public final class Pattern implements Serializable {
    * @throws PatternSyntaxException if the pattern is malformed
    */
   public static Pattern compile(String regex) {
-    return compile(regex, regex, 0);
+    return compile(regex, DEFAULT_OPTIONS);
+  }
+
+  public static Pattern compile(String regex, Options options) {
+    return compile(regex, regex, 0, options);
   }
 
   /**
@@ -101,6 +121,10 @@ public final class Pattern implements Serializable {
    * @throws IllegalArgumentException if an unknown flag is given
    */
   public static Pattern compile(String regex, int flags) {
+    return compile(regex, flags, DEFAULT_OPTIONS);
+  }
+
+  public static Pattern compile(String regex, int flags, Options options) {
     String flregex = regex;
     if ((flags & CASE_INSENSITIVE) != 0) {
       flregex = "(?i)" + flregex;
@@ -115,19 +139,19 @@ public final class Pattern implements Serializable {
       throw new IllegalArgumentException("Flags should only be a combination " +
           "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS");
     }
-    return compile(flregex, regex, flags);
+    return compile(flregex, regex, flags, options);
   }
 
   /**
    * Helper: create new Pattern with given regex and flags.
    * Flregex is the regex with flags applied.
    */
-  private static Pattern compile(String flregex, String regex, int flags) {
+  private static Pattern compile(String flregex, String regex, int flags, Options options) {
     int re2Flags = RE2.PERL;
     if ((flags & DISABLE_UNICODE_GROUPS) != 0) {
       re2Flags &= ~RE2.UNICODE_GROUPS;
     }
-    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, FIRST_MATCH));
+    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, FIRST_MATCH, options), options);
   }
 
   /**
@@ -139,7 +163,11 @@ public final class Pattern implements Serializable {
    * @throws PatternSyntaxException if the regular expression is malformed
    */
   public static boolean matches(String regex, Slice input) {
-    return compile(regex).matcher(input).matches();
+    return matches(regex, input, DEFAULT_OPTIONS);
+  }
+
+  public static boolean matches(String regex, Slice input, Options options) {
+    return compile(regex, options).matcher(input).matches();
   }
 
   public boolean matches(Slice input) {
@@ -257,7 +285,7 @@ public final class Pattern implements Serializable {
   Object readResolve() {
     // The deserialized version will be missing the RE2 instance, so we need to create a new,
     // compiled version.
-    return Pattern.compile(pattern, flags);
+    return Pattern.compile(pattern, flags, options);
   }
 
   private static final long serialVersionUID = 0;

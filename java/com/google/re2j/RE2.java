@@ -28,6 +28,9 @@ import io.airlift.slice.SliceOutput;
 import io.airlift.slice.Slices;
 
 import static com.google.re2j.MachineInput.EOF;
+import static com.google.re2j.Options.Algorithm.DFA;
+import static com.google.re2j.Options.Algorithm.NFA;
+import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static com.google.re2j.RE2.Anchor.UNANCHORED;
 import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
 import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
@@ -142,6 +145,7 @@ class RE2 {
   final int cond;               // EMPTY_* bitmask: empty-width conditions
                                 // required at start of match
   final int numSubexp;
+  final Options options;
   MatchKind matchKind;
 
   Slice prefixUTF8;             // required UTF-8 prefix in unanchored matches
@@ -158,24 +162,30 @@ class RE2 {
 
   // This is visible for testing.
   RE2(String expr) {
-    RE2 re2 = RE2.compile(expr);
+    this(expr, DEFAULT_OPTIONS);
+  }
+
+  RE2(String expr, Options options) {
+    RE2 re2 = RE2.compile(expr, options);
     // Copy everything.
     this.expr = re2.expr;
     this.prog = re2.prog;
     this.reverseProg = re2.reverseProg;
     this.cond = re2.cond;
     this.numSubexp = re2.numSubexp;
+    this.options = re2.options;
     this.matchKind = re2.matchKind;
     this.prefixUTF8 = re2.prefixUTF8;
     this.prefixComplete = re2.prefixComplete;
     this.dfaMachine = new DFAMachine(this);
   }
 
-  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind) {
+  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind, Options options) {
     this.expr = expr;
     this.prog = prog;
     this.reverseProg = reverseProg;
     this.numSubexp = numSubexp;
+    this.options = options;
     this.cond = prog.startCond();
     this.matchKind = matchKind;
     this.dfaMachine = new DFAMachine(this);
@@ -194,7 +204,11 @@ class RE2 {
    * For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
    */
   static RE2 compile(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, PERL, FIRST_MATCH);
+    return compile(expr, DEFAULT_OPTIONS);
+  }
+
+  static RE2 compile(String expr, Options options) throws PatternSyntaxException {
+    return compileImpl(expr, PERL, FIRST_MATCH, options);
   }
 
   /**
@@ -219,18 +233,26 @@ class RE2 {
    * See http://swtch.com/~rsc/regexp/regexp2.html#posix
    */
   static RE2 compilePOSIX(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, POSIX, LONGEST_MATCH);
+    return compilePOSIX(expr, DEFAULT_OPTIONS);
+  }
+
+  static RE2 compilePOSIX(String expr, Options options) throws PatternSyntaxException {
+    return compileImpl(expr, POSIX, LONGEST_MATCH, options);
   }
 
   // Exposed to ExecTests.
-  static RE2 compileImpl(String expr, int mode, MatchKind matchKind)
+  static RE2 compileImpl(String expr, int mode, MatchKind matchKind) {
+    return compileImpl(expr, mode, matchKind, DEFAULT_OPTIONS);
+  }
+
+  static RE2 compileImpl(String expr, int mode, MatchKind matchKind, Options options)
       throws PatternSyntaxException {
     Regexp re = Parser.parse(expr, mode);
     int maxCap = re.maxCap();  // (may shrink during simplify)
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re, false);
     Prog reverseProg = Compiler.compileRegexp(re, true);
-    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind);
+    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind, options);
     SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
     re2.prefixComplete = prog.prefix(prefixBuilder);
     re2.prefixUTF8 = prefixBuilder.slice();
@@ -255,7 +277,14 @@ class RE2 {
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, Anchor anchor, int ncap) {
     int[] submatches = new int[ncap];
-    boolean match = dfaMachine.match(in, pos, anchor, submatches);
+    boolean match;
+    if (options.getAlgorithm() == DFA) {
+      match = dfaMachine.match(in, pos, anchor, submatches);
+    } else if (options.getAlgorithm() == NFA){
+      match = nfaMachine.get().match(in, pos, anchor, submatches);
+    } else {
+      throw new IllegalArgumentException("Algorithm: " + options.getAlgorithm() + " is not supported");
+    }
     return match ? submatches : null;
   }
 
@@ -315,7 +344,11 @@ class RE2 {
    */
   // This is visible for testing.
   static boolean match(String pattern, Slice s) throws PatternSyntaxException {
-    return compile(pattern).match(s);
+    return match(pattern, s, DEFAULT_OPTIONS);
+  }
+
+  static boolean match(String pattern, Slice s, Options options) throws PatternSyntaxException {
+    return compile(pattern, options).match(s);
   }
 
   // This is visible for testing.

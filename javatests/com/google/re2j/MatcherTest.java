@@ -246,7 +246,7 @@ public class MatcherTest {
 
     void helperTestMatchEndUTF8(String string, int num, final int end) {
       String pattern = "[" + string + "]";
-      RE2 re = new RE2(pattern, options) {
+      RE2 re = new RE2(RE2.compile(pattern, options)) {
         @Override
         public boolean match(Slice input, int start, Anchor anchor,
                              int[] group, int ngroup) {

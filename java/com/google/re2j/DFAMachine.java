@@ -4,6 +4,7 @@ import com.google.re2j.RE2.Anchor;
 import com.google.re2j.RE2.MatchKind;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.re2j.DFA.NO_MATCH;
 import static com.google.re2j.RE2.Anchor.ANCHOR_START;
@@ -19,12 +20,14 @@ class DFAMachine implements Machine {
 
   @SuppressWarnings("unchecked")
   private final ConcurrentHashMap<DFAStateKey, DFAState>[] stateCache = new ConcurrentHashMap[MAX_DFA_KEY];
+  private final AtomicInteger availableStates;
   @SuppressWarnings("unchecked")
   private final ThreadLocal<DFA>[] dfaCache = new ThreadLocal[MAX_DFA_KEY];
   private final RE2 re2;
 
-  DFAMachine(RE2 re2) {
+  DFAMachine(RE2 re2, int maximumNumberOfDFAStates) {
     this.re2 = re2;
+    this.availableStates = new AtomicInteger(maximumNumberOfDFAStates);
 
     for (int i = 0; i < MAX_DFA_KEY; ++i) {
       stateCache[i] = new ConcurrentHashMap<>();
@@ -146,7 +149,7 @@ class DFAMachine implements Machine {
     dfaCache[dfaKey] = new ThreadLocal<DFA>() {
       @Override
       public DFA initialValue() {
-        return new DFA(prog, matchKind, reversed, stateCache[dfaKey]);
+        return new DFA(prog, matchKind, reversed, stateCache[dfaKey], availableStates);
       }
     };
   }

@@ -8,6 +8,7 @@ package com.google.re2j;
 import com.google.re2j.RE2.MatchKind;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.re2j.DFAState.DEAD_STATE;
 import static com.google.re2j.Inst.Op.EMPTY_WIDTH;
@@ -25,6 +26,15 @@ import static com.google.re2j.Utils.isWordByte;
 import static java.util.Arrays.sort;
 
 class DFA {
+
+  /**
+   * An exception thrown when DFA has reached a number of {@link DFAState}s limit.
+   */
+  static class DFATooManyStatesException extends RuntimeException {
+    private DFATooManyStatesException() {
+      super("DFA has reached a number of states limit");
+    }
+  }
 
   static final int NO_MATCH = -1;
 
@@ -62,13 +72,16 @@ class DFA {
 
   private final StartParams[] startParamsCache = new StartParams[START_PARAMS_CACHE_SIZE];
   private final ConcurrentHashMap<DFAStateKey, DFAState> statesCache;
+  private final AtomicInteger availableStates;
 
-  public DFA(Prog prog, MatchKind matchKind, boolean reversed, ConcurrentHashMap<DFAStateKey, DFAState> statesCache) {
+  public DFA(Prog prog, MatchKind matchKind, boolean reversed,
+             ConcurrentHashMap<DFAStateKey, DFAState> statesCache, AtomicInteger availableStates) {
     this.prog = prog;
     this.instructions = prog.getInst();
     this.matchKind = matchKind;
     this.runForward = !reversed;
     this.statesCache = statesCache;
+    this.availableStates = availableStates;
 
     int progSize = prog.numInst();
     int nMarks = 0;
@@ -179,6 +192,10 @@ class DFA {
       // it is possible that somebody simultaneously inserted state for the same key
       if (previousState != null) {
         return previousState;
+      }
+
+      if (availableStates.decrementAndGet() < 0) {
+        throw new DFATooManyStatesException();
       }
     }
 

@@ -43,15 +43,15 @@ public class RE2Test {
 
     @Test
     public void testFullMatch() {
-      assertEquals(true, new RE2("ab+c", options).match(
+      assertEquals(true, RE2.compile("ab+c", options).match(
           utf8Slice("abbbbbc"), 0, ANCHOR_BOTH, null, 0));
-      assertEquals(false, new RE2("ab+c", options).match(
+      assertEquals(false, RE2.compile("ab+c", options).match(
           utf8Slice("xabbbbbc"), 0, ANCHOR_BOTH, null, 0));
     }
 
     @Test
     public void testFindEnd() {
-      RE2 r = new RE2("abc.*def", options);
+      RE2 r = RE2.compile("abc.*def", options);
       assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),
           0, UNANCHORED, null, 0));
       assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),

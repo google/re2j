@@ -18,9 +18,12 @@
 
 package com.google.re2j;
 
+import com.google.re2j.DFA.DFATooManyStatesException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.airlift.slice.DynamicSliceOutput;
 import io.airlift.slice.Slice;
@@ -29,7 +32,7 @@ import io.airlift.slice.Slices;
 
 import static com.google.re2j.MachineInput.EOF;
 import static com.google.re2j.Options.Algorithm.DFA;
-import static com.google.re2j.Options.Algorithm.NFA;
+import static com.google.re2j.Options.Algorithm.DFA_FALLBACK_TO_NFA;
 import static com.google.re2j.RE2.Anchor.UNANCHORED;
 import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
 import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
@@ -145,8 +148,8 @@ class RE2 {
                                 // required at start of match
   final int numSubexp;
   final Options options;
-  MatchKind matchKind;
 
+  MatchKind matchKind;
   Slice prefixUTF8;             // required UTF-8 prefix in unanchored matches
   boolean prefixComplete;       // true iff prefix is the entire regexp
 
@@ -157,25 +160,18 @@ class RE2 {
       return new NFAMachine(RE2.this);
     }
   };
-  final DFAMachine dfaMachine;
+  volatile DFAMachine dfaMachine;
+  AtomicInteger numberOfDFARetriesLeft;
 
   // This is visible for testing.
-  RE2(String expr, Options options) {
-    RE2 re2 = RE2.compile(expr, options);
+  RE2(RE2 re2) {
     // Copy everything.
-    this.expr = re2.expr;
-    this.prog = re2.prog;
-    this.reverseProg = re2.reverseProg;
-    this.cond = re2.cond;
-    this.numSubexp = re2.numSubexp;
-    this.options = re2.options;
-    this.matchKind = re2.matchKind;
-    this.prefixUTF8 = re2.prefixUTF8;
-    this.prefixComplete = re2.prefixComplete;
-    this.dfaMachine = new DFAMachine(this);
+    this(re2.expr, re2.prog, re2.reverseProg, re2.numSubexp, re2.matchKind,re2.options,
+        re2.prefixComplete, re2.prefixUTF8);
   }
 
-  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind, Options options) {
+  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind,
+              Options options, boolean prefixComplete, Slice prefixUTF8) {
     this.expr = expr;
     this.prog = prog;
     this.reverseProg = reverseProg;
@@ -183,7 +179,12 @@ class RE2 {
     this.options = options;
     this.cond = prog.startCond();
     this.matchKind = matchKind;
-    this.dfaMachine = new DFAMachine(this);
+    this.prefixComplete = prefixComplete;
+    this.prefixUTF8 = prefixUTF8;
+    if (options.getAlgorithm() == DFA || options.getAlgorithm() == DFA_FALLBACK_TO_NFA) {
+      this.dfaMachine = new DFAMachine(this, options.getMaximumNumberOfDFAStates());
+      this.numberOfDFARetriesLeft = new AtomicInteger(options.getNumberOfDFARetries());
+    }
   }
 
   /**
@@ -235,10 +236,10 @@ class RE2 {
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re, false);
     Prog reverseProg = Compiler.compileRegexp(re, true);
-    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind, options);
     SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
-    re2.prefixComplete = prog.prefix(prefixBuilder);
-    re2.prefixUTF8 = prefixBuilder.slice();
+    boolean prefixComplete = prog.prefix(prefixBuilder);
+    Slice prefixUTF8 = prefixBuilder.slice();
+    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind, options, prefixComplete, prefixUTF8);
     return re2;
   }
 
@@ -259,16 +260,41 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, Anchor anchor, int ncap) {
-    int[] submatches = new int[ncap];
-    boolean match;
-    if (options.getAlgorithm() == DFA) {
-      match = dfaMachine.match(in, pos, anchor, submatches);
-    } else if (options.getAlgorithm() == NFA){
-      match = nfaMachine.get().match(in, pos, anchor, submatches);
+    DFAMachine currentDFAMachine = dfaMachine;
+    if (currentDFAMachine == null) {
+      return doExecute(nfaMachine.get(), in, pos, anchor, ncap);
     } else {
-      throw new IllegalArgumentException("Algorithm: " + options.getAlgorithm() + " is not supported");
+      try {
+        return doExecute(currentDFAMachine, in, pos, anchor, ncap);
+      } catch (DFATooManyStatesException e) {
+        handleTooManyDFAStatesException(e, currentDFAMachine);
+        return doExecute(nfaMachine.get(), in, pos, anchor, ncap);
+      }
     }
-    return match ? submatches : null;
+  }
+
+  private int[] doExecute(Machine machine, MachineInput in, int pos, Anchor anchor, int ncap) {
+    int[] submatches = new int[ncap];
+    return machine.match(in, pos, anchor, submatches) ? submatches : null;
+  }
+
+  private synchronized void handleTooManyDFAStatesException(DFATooManyStatesException e, DFAMachine currentDFAMachine) {
+    // make sure we don't penalize new DFAMachine instance
+    if (currentDFAMachine == dfaMachine) {
+      if (numberOfDFARetriesLeft.decrementAndGet() < 0) {
+        if (options.getAlgorithm() == DFA_FALLBACK_TO_NFA) {
+          dfaMachine = null;
+          if (options.getEventsListener() != null) {
+            options.getEventsListener().fallbackToNFA();
+          }
+        } else {
+          // keep the old DFAMachine, so other threads can fail too
+          throw e;
+        }
+      } else {
+        dfaMachine = new DFAMachine(this, options.getMaximumNumberOfDFAStates());
+      }
+    }
   }
 
   /**

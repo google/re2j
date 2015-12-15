@@ -1,5 +1,6 @@
 package com.google.re2j;
 
+import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.fail;
 
@@ -54,7 +55,7 @@ public class RE2QuoteMetaTest {
     if (!pattern.isEmpty()) {
       RE2 re = null;
       try {
-        re = RE2.compile(quoted);
+        re = RE2.compile(quoted, DEFAULT_OPTIONS);
       } catch (PatternSyntaxException e) {
         fail(String.format("Unexpected error compiling quoteMeta(\"%s\"): %s", pattern,
             e.getMessage()));
@@ -73,7 +74,7 @@ public class RE2QuoteMetaTest {
   @Test
   public void testLiteralPrefix() throws PatternSyntaxException {
     // Literal method needs to scan the pattern.
-    RE2 re = RE2.compile(pattern);
+    RE2 re = RE2.compile(pattern, DEFAULT_OPTIONS);
     if (re.prefixComplete != isLiteral) {
       fail(String.format("literalPrefix(\"%s\") = %s; want %s", pattern, re.prefixComplete, isLiteral));
     }

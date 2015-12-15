@@ -53,10 +53,6 @@ public final class Pattern implements Serializable {
   private transient final RE2 re2;
 
   // This is visible for testing.
-  Pattern(String pattern, int flags, RE2 re2) {
-    this(pattern, flags, re2, DEFAULT_OPTIONS);
-  }
-
   Pattern(String pattern, int flags, RE2 re2, Options options) {
     if (pattern == null) {
       throw new NullPointerException("pattern is null");

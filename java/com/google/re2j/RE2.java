@@ -30,7 +30,6 @@ import io.airlift.slice.Slices;
 import static com.google.re2j.MachineInput.EOF;
 import static com.google.re2j.Options.Algorithm.DFA;
 import static com.google.re2j.Options.Algorithm.NFA;
-import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static com.google.re2j.RE2.Anchor.UNANCHORED;
 import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
 import static com.google.re2j.RE2.MatchKind.LONGEST_MATCH;
@@ -161,10 +160,6 @@ class RE2 {
   final DFAMachine dfaMachine;
 
   // This is visible for testing.
-  RE2(String expr) {
-    this(expr, DEFAULT_OPTIONS);
-  }
-
   RE2(String expr, Options options) {
     RE2 re2 = RE2.compile(expr, options);
     // Copy everything.
@@ -203,10 +198,6 @@ class RE2 {
    * package implements it without the expense of backtracking.
    * For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
    */
-  static RE2 compile(String expr) throws PatternSyntaxException {
-    return compile(expr, DEFAULT_OPTIONS);
-  }
-
   static RE2 compile(String expr, Options options) throws PatternSyntaxException {
     return compileImpl(expr, PERL, FIRST_MATCH, options);
   }
@@ -232,19 +223,11 @@ class RE2 {
    * The POSIX rule is computationally prohibitive and not even well-defined.
    * See http://swtch.com/~rsc/regexp/regexp2.html#posix
    */
-  static RE2 compilePOSIX(String expr) throws PatternSyntaxException {
-    return compilePOSIX(expr, DEFAULT_OPTIONS);
-  }
-
   static RE2 compilePOSIX(String expr, Options options) throws PatternSyntaxException {
     return compileImpl(expr, POSIX, LONGEST_MATCH, options);
   }
 
   // Exposed to ExecTests.
-  static RE2 compileImpl(String expr, int mode, MatchKind matchKind) {
-    return compileImpl(expr, mode, matchKind, DEFAULT_OPTIONS);
-  }
-
   static RE2 compileImpl(String expr, int mode, MatchKind matchKind, Options options)
       throws PatternSyntaxException {
     Regexp re = Parser.parse(expr, mode);
@@ -343,10 +326,6 @@ class RE2 {
    * full {@code RE2} interface.
    */
   // This is visible for testing.
-  static boolean match(String pattern, Slice s) throws PatternSyntaxException {
-    return match(pattern, s, DEFAULT_OPTIONS);
-  }
-
   static boolean match(String pattern, Slice s, Options options) throws PatternSyntaxException {
     return compile(pattern, options).match(s);
   }

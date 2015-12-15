@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import io.airlift.slice.Slice;
 
+import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static io.airlift.slice.Slices.EMPTY_SLICE;
 import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.fail;
@@ -129,7 +130,7 @@ public class Benchmarks {
         }
       };
     } else { // com.google.re2
-      final RE2 r = RE2.compile(re);
+      final RE2 r = RE2.compile(re, DEFAULT_OPTIONS);
       return new Matcher() {
         public boolean match(String inputString, Slice inputSlice) {
           return r.match(inputSlice);

@@ -1051,18 +1051,22 @@ class Parser {
     // support all three as well.  EcmaScript 4 uses only the Python form.
     //
     // In both the open source world (via Code Search) and the
-    // Google source tree, (?P<expr>name) is the dominant form,
-    // so that's the one we implement.  One is enough.
+    // Google source tree, (?P<name>expr) is the dominant form.
+    // Java Pattern uses (?<name>expr), so we implement both.
     String s = t.rest();
-    if (s.startsWith("(?P<")) {
+    if (s.startsWith("(?P<") || s.startsWith("(?<")) {
       // Pull out name.
+      int startLength = 4;
+      if(s.startsWith("(?<")) {
+        startLength = 3;
+      }
       int end = s.indexOf('>');
       if (end < 0) {
         throw new PatternSyntaxException(ERR_INVALID_NAMED_CAPTURE, s);
       }
-      String name = s.substring(4, end);  // "name"
+      String name = s.substring(startLength, end);  // "name"
       t.skipString(name);
-      t.skip(5);  // "(?P<>"
+      t.skip(startLength + 1);  // "(?P<>" or "(?<>"
       if (!isValidCaptureName(name)) {
         throw new PatternSyntaxException(
             ERR_INVALID_NAMED_CAPTURE, s.substring(0, end));  // "(?P<name>"

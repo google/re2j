@@ -8,6 +8,8 @@
 package com.google.re2j;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Regular expression abstract syntax tree.
@@ -275,6 +277,24 @@ class Regexp {
       }
     }
     return m;
+  }
+
+  // namedGroupIndexes() walks the regexp to build a map of indexes for named groups.
+  Map<String, Integer> namedGroupIndexes() {
+    Map<String, Integer> indexes = new HashMap<>();
+    putNamedGroupIndexes(indexes);
+    return indexes;
+  }
+
+  private void putNamedGroupIndexes(Map<String, Integer> indexes) {
+    if (op == Op.CAPTURE && name != null) {
+      indexes.put(name, cap);
+    }
+    if (subs != null) {
+      for (Regexp sub: subs) {
+        sub.putNamedGroupIndexes(indexes);
+      }
+    }
   }
 
   // equals() returns true if this and that have identical structure.

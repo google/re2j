@@ -334,6 +334,7 @@ public final class Matcher {
    * @return the {@code Matcher} itself, for chained method calls
    * @throws IllegalStateException if there was no most recent match
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
+   * @throws IllegalArgumentException if replacement has incorrect format
    */
   public Matcher appendReplacement(SliceOutput so, Slice replacement) {
     int s = start();
@@ -342,47 +343,76 @@ public final class Matcher {
       so.writeBytes(input, appendPos, s - appendPos);
     }
     appendPos = e;
-    int last = 0;
-    int i = 0;
-    int m = replacement.length();
-    for (; i < m - 1; i++) {
-      if (replacement.getByte(i) == '\\') {
-        if (last < i) {
-          so.writeBytes(replacement, last, i - last);
+    int idx = 0;
+
+    // Handle the following items:
+    // 1. ${name};
+    // 2. $0, $1, $123 (group 123, if exists; or group 12, if exists; or group 1);
+    // 3. \\, \$, \t (literal 't').
+    // 4. Anything that doesn't starts with \ or $ is considered regular bytes
+    while (idx < replacement.length()) {
+      byte nextByte = replacement.getByte(idx);
+      if (nextByte == '$') {
+        idx++;
+        if (idx == replacement.length()) {
+          throw new IllegalArgumentException("Illegal replacement sequence: " + replacement.toStringUtf8());
         }
-        i++;
-        last = i;
-        continue;
-      }
-      if (replacement.getByte(i) == '$') {
-        int c = replacement.getByte(i + 1);
-        if ('0' <= c && c <= '9') {
-          int n = c - '0';
-          if (last < i) {
-            so.writeBytes(replacement, last, i - last);
-          }
-          for (i += 2; i < m; i++) {
-            c = replacement.getByte(i);
-            if (c < '0' || c > '9' || n * 10 + c - '0' > groupCount) {
+        nextByte = replacement.getByte(idx);
+        int backref;
+        if (nextByte == '{') { // case 1 in the above comment
+          idx++;
+          int startCursor = idx;
+          while (idx < replacement.length()) {
+            nextByte = replacement.getByte(idx);
+            if (nextByte == '}') {
               break;
             }
-            n = n * 10 + c - '0';
+            idx++;
           }
-          if (n > groupCount) {
-            throw new IndexOutOfBoundsException("n > number of groups: " + n);
+          String groupName = replacement.slice(startCursor, idx - startCursor).toStringUtf8();
+          Integer namedGroupIndex = pattern.re2().namedGroupIndexes.get(groupName);
+          if (namedGroupIndex == null) {
+            throw new IndexOutOfBoundsException("Illegal replacement sequence: unknown group " + groupName);
           }
-          Slice group = group(n);
-          if (group != null) {
-            so.writeBytes(group);
+          backref = namedGroupIndex;
+          idx++;
+        } else { // case 2 in the above comment
+          backref = nextByte - '0';
+          if (backref < 0 || backref > 9) {
+            throw new IllegalArgumentException("Illegal replacement sequence: " + replacement.toStringUtf8());
           }
-          last = i;
-          i--;
-          continue;
+          if (groupCount < backref) {
+            throw new IndexOutOfBoundsException("Illegal replacement sequence: unknown group " + backref);
+          }
+          idx++;
+          while (idx < replacement.length()) { // Adaptive group number: find largest group num that is not greater than actual number of groups
+            int nextDigit = replacement.getByte(idx) - '0';
+            if (nextDigit < 0 || nextDigit > 9) {
+              break;
+            }
+            int newBackref = (backref * 10) + nextDigit;
+            if (groupCount < newBackref) {
+              break;
+            }
+            backref = newBackref;
+            idx++;
+          }
         }
+        Slice group = group(backref);
+        if (group != null) {
+          so.writeBytes(group);
+        }
+      } else { // case 3 and 4 in the above comment
+        if (nextByte == '\\') {
+          idx++;
+          if (idx == replacement.length()) {
+            throw new IllegalArgumentException("Illegal replacement sequence: " + replacement.toStringUtf8());
+          }
+          nextByte = replacement.getByte(idx);
+        }
+        so.appendByte(nextByte);
+        idx++;
       }
-    }
-    if (last < m) {
-      so.writeBytes(replacement, last, m - last);
     }
     return this;
   }

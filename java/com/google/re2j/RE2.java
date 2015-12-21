@@ -23,6 +23,7 @@ import com.google.re2j.DFA.DFATooManyStatesException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.airlift.slice.DynamicSliceOutput;
@@ -147,6 +148,7 @@ class RE2 {
   final int cond;               // EMPTY_* bitmask: empty-width conditions
                                 // required at start of match
   final int numSubexp;
+  final Map<String, Integer> namedGroupIndexes;
   final Options options;
 
   MatchKind matchKind;
@@ -166,16 +168,18 @@ class RE2 {
   // This is visible for testing.
   RE2(RE2 re2) {
     // Copy everything.
-    this(re2.expr, re2.prog, re2.reverseProg, re2.numSubexp, re2.matchKind,re2.options,
-        re2.prefixComplete, re2.prefixUTF8);
+    this(re2.expr, re2.prog, re2.reverseProg, re2.numSubexp, re2.namedGroupIndexes, re2.matchKind,
+        re2.options, re2.prefixComplete, re2.prefixUTF8);
   }
 
-  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp, MatchKind matchKind,
+  private RE2(String expr, Prog prog, Prog reverseProg, int numSubexp,
+              Map<String, Integer> namedGroupIndexes, MatchKind matchKind,
               Options options, boolean prefixComplete, Slice prefixUTF8) {
     this.expr = expr;
     this.prog = prog;
     this.reverseProg = reverseProg;
     this.numSubexp = numSubexp;
+    this.namedGroupIndexes = namedGroupIndexes;
     this.options = options;
     this.cond = prog.startCond();
     this.matchKind = matchKind;
@@ -239,8 +243,7 @@ class RE2 {
     SliceOutput prefixBuilder = new DynamicSliceOutput(prog.numInst());
     boolean prefixComplete = prog.prefix(prefixBuilder);
     Slice prefixUTF8 = prefixBuilder.slice();
-    RE2 re2 = new RE2(expr, prog, reverseProg, maxCap, matchKind, options, prefixComplete, prefixUTF8);
-    return re2;
+    return new RE2(expr, prog, reverseProg, maxCap, re.namedGroupIndexes(), matchKind, options,prefixComplete, prefixUTF8);
   }
 
   /**

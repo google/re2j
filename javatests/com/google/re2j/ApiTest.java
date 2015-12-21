@@ -136,15 +136,21 @@ public class ApiTest extends OptionsTest {
 
   // Tests that both RE2 and JDK's Matchers do the same replaceFist.
   public void testReplaceAll(String orig, String regex, String repl, String actual) {
+    testReplaceAllRE2J(orig, regex, repl, actual);
+    testReplaceAllJDK(orig, regex, repl, actual);
+  }
+
+  public void testReplaceAllRE2J(String orig, String regex, String repl, String actual) {
     Pattern p = Pattern.compile(regex, options);
     Matcher m = p.matcher(utf8Slice(orig));
     String replaced = m.replaceAll(utf8Slice(repl)).toStringUtf8();
     assertEquals(actual, replaced);
+  }
 
-    // JDK's
+  public void testReplaceAllJDK(String orig, String regex, String repl, String actual) {
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regex);
     java.util.regex.Matcher mj = pj.matcher(orig);
-    replaced = mj.replaceAll(repl);
+    String replaced = mj.replaceAll(repl);
     assertEquals(actual, replaced);
   }
 

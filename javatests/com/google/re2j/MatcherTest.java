@@ -66,6 +66,12 @@ public class MatcherTest {
       testReplaceAll("What the Frog's Eye Tells the Frog's Brain",
           "F(rog)", "\\$Liza\\rd$1",
           "What the $Lizardrog's Eye Tells the $Lizardrog's Brain");
+      testReplaceAll("What the Frog's Eye Tells the Frog's Brain",
+          "F(?<group>rog)", "\\$Liza\\rd${group}",
+          "What the $Lizardrog's Eye Tells the $Lizardrog's Brain");
+      testReplaceAllRE2J("What the Frog's Eye Tells the Frog's Brain",
+          "F(?P<group>rog)", "\\$Liza\\rd${group}",
+          "What the $Lizardrog's Eye Tells the $Lizardrog's Brain");
       testReplaceAll("abcdefghijklmnopqrstuvwxyz123",
           "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)", "$10$20", "jb0wo0123");
       testReplaceAll("\u00e1\u0062\u00e7\u2655", "(.)", "<$1>",
@@ -152,6 +158,17 @@ public class MatcherTest {
     public void testInvalidReplacement() {
       try {
         testReplaceFirst("abc", "abc", "$4", "xxx");
+        fail();
+      } catch (IndexOutOfBoundsException e) {
+      /* ok */
+        assertTrue(true);
+      }
+    }
+
+    @Test
+    public void testInvalidGroupNameReplacement() {
+      try {
+        testReplaceFirst("abc", "abc", "${name}", "xxx");
         fail();
       } catch (IndexOutOfBoundsException e) {
       /* ok */

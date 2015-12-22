@@ -45,13 +45,11 @@ class DFA {
 
   private static final int MARK = -1;       // Separates priorities of items in a WorkQueue
 
-  // Do we have the first byte that will get us out of the start state
-  private static final byte FIRST_BYTE_MANY = -1;    // there are several such possibilities
-  private static final byte FIRST_BYTE_NONE = -2;    // There are no such bytes
-
   // Total number of start parameters (total number of empty flag combinations plus anchored flag)
   private static final int START_PARAMS_CACHE_SIZE = 1 << 13;
   private static final int START_PARAMS_CACHE_SHIFT = 12;
+
+  private static final StartParams DEAD_START_PARAMS = new StartParams(DEAD_STATE, new boolean[256]);
 
   // Info for the search
   private final Prog prog;
@@ -401,24 +399,24 @@ class DFA {
   // Analyzes the search to build the SearchParams
   private StartParams analyzeSearch(MachineInput in, int startPos, int endPos, boolean anchored) {
     if (startPos < 0 || startPos > in.endPos()) {
-      return new StartParams(DEAD_STATE, FIRST_BYTE_NONE);
+      return DEAD_START_PARAMS;
     }
 
     int flags = 0;
     if (runForward) {
       if (startPos == 0) {
         flags = EMPTY_BEGIN_TEXT | EMPTY_BEGIN_LINE;
-      } else if (in.getByte(startPos - 1) == '\n') {
+      } else if (in.getByteUnchecked(startPos - 1) == '\n') {
         flags = EMPTY_BEGIN_LINE;
-      } else if (isWordByte(in.getByte(startPos - 1))) {
+      } else if (isWordByte(in.getByteUnchecked(startPos - 1))) {
         flags = FLAG_LAST_WORD;
       }
     } else {
       if (endPos == in.endPos()) {
         flags = EMPTY_BEGIN_TEXT | EMPTY_BEGIN_LINE;
-      } else if (in.getByte(endPos) == '\n') {
+      } else if (in.getByteUnchecked(endPos) == '\n') {
         flags = EMPTY_BEGIN_LINE;
-      } else if (isWordByte(in.getByte(endPos))) {
+      } else if (isWordByte(in.getByteUnchecked(endPos))) {
         flags = FLAG_LAST_WORD;
       }
     }
@@ -450,25 +448,26 @@ class DFA {
 
     DFAState startState = workQueueToCachedState(currentWorkQ, flags);
     if (startState.isDead()) {
-      return new StartParams(DEAD_STATE, FIRST_BYTE_NONE);
+      return DEAD_START_PARAMS;
     }
 
     // compute the first byte by running over all possible bytes and
     // seeing if there is exactly one that changes the state.
-    int firstByte = FIRST_BYTE_NONE;
+    boolean firstByte[] = new boolean[256];
     for (int i = 0; i < 256; i++) {
       DFAState state = runStateOnByte(startState, (byte) i);
       if (state == startState) {
         continue;
       }
 
-      // This byte brought us to a new state
-      if (firstByte == FIRST_BYTE_NONE) {  //first time that happened
-        firstByte = i;
-      } else {  //too many
-        firstByte = FIRST_BYTE_MANY;
-        break;
+      // in forward search make sure we don't start in a middle of rune
+      // (backward search starts correctly because it is anchored at match end)
+      if (runForward && !isRuneStart((byte) i)) {
+        continue;
       }
+
+      // This byte brought us to a new state
+      firstByte[i] = true;
     }
 
     return new StartParams(startState, firstByte);
@@ -484,31 +483,25 @@ class DFA {
 
     if (runForward) {
       currentIndex = startPos;
-      endIndex = in.endPos();
+      endIndex = endPos;
     } else {
       currentIndex = endPos;
       endIndex = startPos;
     }
 
     while (currentIndex != endIndex) {
-      byte b;
-      if (runForward) {
-        b = in.getByte(currentIndex++);
-      } else {
-        b = in.getByte(--currentIndex);
+      if (currentState == startParams.startState) {
+        currentIndex = findFirstByte(in, currentIndex, endIndex, startParams.firstByte);
+        if (currentIndex == endIndex) {
+          break;
+        }
       }
 
-      if (currentState == startParams.startState) {
-        // in start state we can skip bytes that don't match first byte
-        if (startParams.firstByte >= 0 && ((b & 0xff) != startParams.firstByte)) {
-          continue;
-        }
-
-        // in forward search make sure we don't start in a middle of rune
-        // (backward search starts correctly because it is anchored at match end)
-        if (runForward && !isRuneStart(b)) {
-          continue;
-        }
+      byte b;
+      if (runForward) {
+        b = in.getByteUnchecked(currentIndex++);
+      } else {
+        b = in.getByteUnchecked(--currentIndex);
       }
 
       currentState = getNextState(currentState, b);
@@ -534,13 +527,13 @@ class DFA {
       if (endPos == in.endPos()) {
         lastByte = EOF;
       } else {
-        lastByte = in.getByte(endPos);
+        lastByte = in.getByteUnchecked(endPos);
       }
     } else {
       if (startPos == 0) {
         lastByte = EOF;
       } else {
-        lastByte = in.getByte(startPos - 1);
+        lastByte = in.getByteUnchecked(startPos - 1);
       }
     }
 
@@ -551,6 +544,34 @@ class DFA {
     }
 
     return lastMatchIndex;
+  }
+
+  private int findFirstByte(MachineInput in, int currentIndex, int endIndex, boolean[] firstByte) {
+    if (runForward) {
+      return findFirstByteForward(in, currentIndex, endIndex, firstByte);
+    } else {
+      return findFirstByteBackward(in, currentIndex, endIndex, firstByte);
+    }
+  }
+
+  private int findFirstByteForward(MachineInput in, int currentIndex, int endIndex, boolean[] firstByte) {
+    for (int i = currentIndex; i < endIndex; ++i) {
+      if (firstByte[in.getByteUnchecked(i) & 0xff]) {
+        return i;
+      }
+    }
+
+    return endIndex;
+  }
+
+  private int findFirstByteBackward(MachineInput in, int currentIndex, int endIndex, boolean[] firstByte) {
+    for (int i = currentIndex - 1; i >= endIndex; --i) {
+      if (firstByte[in.getByteUnchecked(i) & 0xff]) {
+        return i + 1;
+      }
+    }
+
+    return endIndex;
   }
 
   private DFAState getNextState(DFAState currentState, byte currentByte) {
@@ -613,9 +634,9 @@ class DFA {
 
   private final static class StartParams {
     final DFAState startState;
-    final int firstByte; // a single byte that gets us out of the start state if one exists
+    final boolean[] firstByte; // if byte gets us out of the start state
 
-    StartParams(DFAState startState, int firstByte) {
+    StartParams(DFAState startState, boolean[] firstByte) {
       this.startState = startState;
       this.firstByte = firstByte;
     }

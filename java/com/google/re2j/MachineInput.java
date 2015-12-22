@@ -63,6 +63,10 @@ final class MachineInput {
       throw new IndexOutOfBoundsException("index less than zero (" + i + ")");
     }
 
+    return getByteUnchecked(i);
+  }
+
+  byte getByteUnchecked(int i) {
     return unsafe.getByte(base, address + i);
   }
 

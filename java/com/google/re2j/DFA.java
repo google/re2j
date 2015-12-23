@@ -1,7 +1,9 @@
-//This is a modified version of RE2.
-// Original RE2 code can be found here:
-// https://github.com/google/re2/blob/master/re2/dfa.cc
+// Copyright 2015 The RE2 Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
+// Original RE2 source here:
+// https://github.com/google/re2/blob/master/re2/dfa.cc
 
 package com.google.re2j;
 

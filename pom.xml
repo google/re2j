@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.teradata</groupId>
   <artifactId>re2j-td</artifactId>
-  <version>1.3</version>
+  <version>1.4-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>re2j-td</name>
   <url>http://github.com/google/re2j</url>

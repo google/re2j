@@ -214,11 +214,9 @@ public class ApiTest extends OptionsTest {
     // RE2
     Pattern p = Pattern.compile(regexp, options);
     Matcher matchString = p.matcher(utf8Slice(text));
-    // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
     assertTrue(matchString.find(start));
-    // assertTrue(matchBytes.find(start));
     assertEquals(utf8Slice(output), matchString.group());
-    // assertEquals(output, matchBytes.group());
+    assertTrue(p.find(utf8Slice(text)));
 
     // JDK
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regexp);

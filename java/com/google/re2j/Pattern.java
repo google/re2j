@@ -7,6 +7,8 @@ import java.io.Serializable;
 import io.airlift.slice.Slice;
 
 import static com.google.re2j.Options.DEFAULT_OPTIONS;
+import static com.google.re2j.RE2.Anchor.ANCHOR_BOTH;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
 import static com.google.re2j.RE2.MatchKind.FIRST_MATCH;
 
 /**
@@ -163,11 +165,31 @@ public final class Pattern implements Serializable {
   }
 
   public static boolean matches(String regex, Slice input, Options options) {
-    return compile(regex, options).matcher(input).matches();
+    return compile(regex, options).matches(input);
   }
 
   public boolean matches(Slice input) {
-    return this.matcher(input).matches();
+    return re2.match(input, 0, ANCHOR_BOTH, null, 0);
+  }
+
+  /**
+   * Matches a {@link Slice} against a regular expression (unanchored).
+   *
+   * @param regex the regular expression
+   * @param input the input
+   * @return true if the regular expression matches the entire input
+   * @throws PatternSyntaxException if the regular expression is malformed
+   */
+  public static boolean find(String regex, Slice input) {
+    return find(regex, input, DEFAULT_OPTIONS);
+  }
+
+  public static boolean find(String regex, Slice input, Options options) {
+    return compile(regex, options).find(input);
+  }
+
+  public boolean find(Slice input) {
+    return re2.match(input, 0, UNANCHORED, null, 0);
   }
 
   /**

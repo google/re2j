@@ -24,7 +24,7 @@ pass over the input data by using a _nondeterministic_ finite automaton.
 
 There are certain features of PCRE or Perl regular expressions that cannot be
 implemented in linear time, for example, backreferences, but the vast majority
-of regular expressions patterns in practise avoid such features.
+of regular expressions patterns in practice avoid such features.
 
 # Why should I switch?
 

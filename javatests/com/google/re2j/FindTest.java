@@ -20,6 +20,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.google.common.base.Charsets;
+
 @RunWith(Parameterized.class)
 public class FindTest {
 
@@ -172,7 +174,48 @@ public class FindTest {
              25, 26, 26, 27, 27, 28, 28, 29, 29, 30,
              30, 31, 31, 32, 32, 33, 33, 34, 34, 35,
              35, 36),
+
+    // Java identifier tests
+    javaTest("javaJavaIdentifierStart",
+             JavaCategoryTables.CATEGORIES.get("javaJavaIdentifierStart"),
+             false),
+    javaTest("javaJavaIdentifierStart",
+             JavaCategoryTables.CATEGORIES.get("javaJavaIdentifierStart"),
+             true),
+    javaTest("javaJavaIdentifierPart",
+             JavaCategoryTables.CATEGORIES.get("javaJavaIdentifierPart"),
+             false),
+    javaTest("javaJavaIdentifierPart",
+             JavaCategoryTables.CATEGORIES.get("javaJavaIdentifierPart"),
+             true),
   };
+
+  static Test javaTest(String categoryName, int[][] category, boolean isNegative) {
+    String pattern = (isNegative ? "\\P{" + categoryName + "}+"
+                                 : "\\p{" + categoryName + "}+");
+
+    // For positive cases, create a string from the first and last codepoint in each range.
+    // For negative cases, use the codepoint previous to the first and the codepoint subsequent
+    // to the last in each range.
+    StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < category.length; i++) {
+      int lower = category[i][0];
+      int upper = category[i][1];
+
+      if (isNegative) lower--;
+      if (isNegative) upper++;
+      if (lower >= 0) {
+        buffer.append(Character.toChars(lower));
+      }
+      if (upper <= Character.MAX_CODE_POINT) {
+        buffer.append(Character.toChars(upper));
+      }
+    }
+
+    String testText = buffer.toString();
+    return new Test(pattern, testText, 1, 0, testText.getBytes(Charsets.UTF_8).length);
+  }
+
 
   @Parameters
   public static Test[] testCases() {

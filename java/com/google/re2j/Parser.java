@@ -1495,7 +1495,7 @@ class Parser {
     String name = cls.substring(0, i + 2);  // "[:alnum:]"
     t.skipString(name);
     CharGroup g = CharGroup.POSIX_GROUPS.get(name);
-    if (g.sign == 0) {
+    if (g == null) {
       throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, name);
     }
     cc.appendGroup(g, (flags & RE2.FOLD_CASE) != 0);

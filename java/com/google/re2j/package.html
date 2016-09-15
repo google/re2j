@@ -2,7 +2,7 @@
   <p>
     This package provides an implementation of regular expression
     matching based on Russ Cox's linear-time <a
-    href='http://code.google.com/p/re2/'>RE2 algorithm</a>.
+    href='https://github.com/google/re2'>RE2 algorithm</a>.
   </p>
   <p>
     The API presented by {@code com.google.re2j} mimics that of {@code
@@ -15,7 +15,7 @@
     syntax used by Perl, Python, and other languages.  More precisely,
     it is the syntax accepted by the C++ and Go implementations of RE2
     described at <a
-    href='http://code.google.com/p/re2/wiki/Syntax'>http://code.google.com/p/re2/wiki/Syntax</a>,
+    href='https://github.com/google/re2/wiki/Syntax'>https://github.com/google/re2/wiki/Syntax</a>,
     except for <code>\C</code> (match any byte), which is not
     supported because in this implementation, the matcher's input is
     conceptually a stream of Unicode code points, not bytes.

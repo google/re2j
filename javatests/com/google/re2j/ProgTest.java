@@ -10,7 +10,10 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class ProgTest {
   private static final String[][] COMPILE_TESTS = {
     {"a",
@@ -108,13 +111,24 @@ public class ProgTest {
     },
   };
 
+  private final String input;
+  private final String expected;
+
+  @Parameterized.Parameters
+  public static Object[] getParameters() {
+    return COMPILE_TESTS;
+  }
+
+  public ProgTest(String input, String expected) {
+    this.input = input;
+    this.expected = expected;
+  }
+
   @Test
   public void testCompile() throws Exception {
-    for (String[] test : COMPILE_TESTS) {
-      Regexp re = Parser.parse(test[0], RE2.PERL);
-      Prog p = Compiler.compileRegexp(re);
-      String s = p.toString();
-      assertEquals("compiled: " + test[0], test[1], s);
-    }
+    Regexp re = Parser.parse(input, RE2.PERL);
+    Prog p = Compiler.compileRegexp(re);
+    String s = p.toString();
+    assertEquals("compiled: " + input, expected, s);
   }
 }

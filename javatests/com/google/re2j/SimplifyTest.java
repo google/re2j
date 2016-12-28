@@ -10,7 +10,10 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class SimplifyTest {
 
   private static final String[][] SIMPLIFY_TESTS = {
@@ -141,14 +144,25 @@ public class SimplifyTest {
     {"(?:(a){0})", "(?:)"},
   };
 
+  @Parameterized.Parameters
+  public static Object[] getParameters() {
+    return SIMPLIFY_TESTS;
+  }
+
+  private final String input;
+  private final String expected;
+
+  public SimplifyTest(String input, String expected) {
+    this.input = input;
+    this.expected = expected;
+  }
+
   @Test
   public void testSimplify() throws PatternSyntaxException {
-    for (String[] test : SIMPLIFY_TESTS) {
-      Regexp re = Parser.parse(test[0],
-                               RE2.MATCH_NL | RE2.PERL & ~RE2.ONE_LINE);
-      String s = Simplify.simplify(re).toString();
-      assertEquals(String.format("simplify(%s)", test[0]),
-                   test[1], s);
-    }
+    Regexp re = Parser.parse(input,
+                             RE2.MATCH_NL | RE2.PERL & ~RE2.ONE_LINE);
+    String s = Simplify.simplify(re).toString();
+    assertEquals(String.format("simplify(%s)", input),
+                 expected, s);
   }
 }

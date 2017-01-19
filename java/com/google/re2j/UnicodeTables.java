@@ -1629,7 +1629,7 @@ class UnicodeTables {
   private static final int[][] _Cc = make_Cc();
   private static int[][] make_Cc() {
     return new int[][] {
-		{0x0001, 0x001f, 1},
+		{0x0000, 0x001f, 1},
 		{0x007f, 0x009f, 1},
     };
   }

@@ -14,6 +14,7 @@ import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.api.VmOptions;
+import com.google.caliper.runner.CaliperMain;
 
 import java.util.regex.Pattern;
 
@@ -23,9 +24,8 @@ import static org.junit.Assert.fail;
  * Benchmarks for common RE2J operations. The easiest way to run these benchmarks is probably to do:
  *
  * <pre>
- *   mvn exec:java -Dexec.mainClass=com.google.caliper.runner.CaliperMain \
- *       -Dexec.args=com.google.re2j.Benchmarks \
- *       -Dexec.classpathScope=test
+ *   mvn test-compile
+ *   mvn exec:java -Dexec.mainClass=com.google.re2j.Benchmarks -Dexec.classpathScope=test
  * </pre>
  */
 @VmOptions({"-XX:-TieredCompilation", // http://stackoverflow.com/questions/29199509
@@ -200,5 +200,9 @@ public class Benchmarks {
     for (int i = 0; i < nreps; i++) {
       anchoredMatchingMatcher.match(LONG_DATA);
     }
+  }
+
+  public static void main(String[] args) {
+    CaliperMain.main(Benchmarks.class, args);
   }
 }

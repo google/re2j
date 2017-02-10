@@ -223,6 +223,7 @@ public class ParserTest {
 
     // Test named captures
     {"(?P<name>a)", "cap{name:lit{a}}"},
+    {"(?<name>a)", "cap{name:lit{a}}"},
 
     // Case-folded literals
     {"[Aa]", "litfold{A}"},

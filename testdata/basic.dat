@@ -77,7 +77,7 @@ E	a?(ab|ba)*	abababababababababababababababababababababababababababababababababa
 E	abaa|abbaa|abbbaa|abbbbaa	ababbabbbabbbabbbbabbbbaa	(18,25)
 E	abaa|abbaa|abbbaa|abbbbaa	ababbabbbabbbabbbbabaa	(18,22)
 E	aaac|aabc|abac|abbc|baac|babc|bbac|bbbc	baaabbbabac	(7,11)
-BE$	.*			\x01\xff	(0,2)
+BE$	.*			\x01\xff	(0,3)
 E	aaaa|bbbb|cccc|ddddd|eeeeee|fffffff|gggg|hhhh|iiiii|jjjjj|kkkkk|llll		XaaaXbbbXcccXdddXeeeXfffXgggXhhhXiiiXjjjXkkkXlllXcbaXaaaa	(53,57)
 L	aaaa\nbbbb\ncccc\nddddd\neeeeee\nfffffff\ngggg\nhhhh\niiiii\njjjjj\nkkkkk\nllll		XaaaXbbbXcccXdddXeeeXfffXgggXhhhXiiiXjjjXkkkXlllXcbaXaaaa	NOMATCH
 E	a*a*a*a*a*b		aaaaaaaaab	(0,10)

@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
-    <version>7</version>
+    <version>9</version>
   </parent>
-  <groupId>com.google.re2j</groupId>
-  <artifactId>re2j</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <groupId>com.teradata</groupId>
+  <artifactId>re2j-td</artifactId>
+  <version>1.4-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>re2j</name>
+  <name>re2j-td</name>
   <url>http://github.com/google/re2j</url>
   <issueManagement>
     <system>github</system>
@@ -27,10 +27,20 @@
     <maven>3.0.3</maven>
   </prerequisites>
   <scm>
-    <connection>scm:git:https://github.com/google/re2j.git</connection>
-    <developerConnection>scm:git:https://github.com/google/re2j.git</developerConnection>
-    <url>http://github.com/google/re2j.git</url>
+    <connection>scm:git:https://github.com/Teradata/re2j.git</connection>
+    <developerConnection>scm:git:https://github.com/Teradata/re2j.git</developerConnection>
+    <url>https://github.com/Teradata/re2j.git</url>
   </scm>
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
   <build>
     <sourceDirectory>java</sourceDirectory>
     <testSourceDirectory>javatests</testSourceDirectory>
@@ -42,7 +52,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-gpg-plugin</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -60,8 +70,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.3.2</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>1.8</source>
+            <target>1.8</target>
           </configuration>
         </plugin>
         <plugin>
@@ -104,6 +114,11 @@
   </build>
   <dependencies>
     <dependency>
+      <groupId>io.airlift</groupId>
+      <artifactId>slice</artifactId>
+      <version>0.16</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
@@ -113,6 +128,12 @@
       <groupId>com.google.caliper</groupId>
       <artifactId>caliper</artifactId>
       <version>1.0-beta-2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -1,5 +1,6 @@
 package com.google.re2j;
 
+import static com.google.re2j.Options.DEFAULT_OPTIONS;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -58,7 +59,7 @@ public class RE2CompileTest {
   @Test
   public void testCompile() {
     try {
-      RE2.compile(input);
+      RE2.compile(input, DEFAULT_OPTIONS);
       if (expectedError != null) {
         fail("RE2.compile(" + input + ") was successful, expected " + expectedError);
       }

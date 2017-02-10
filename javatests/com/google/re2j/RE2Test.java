@@ -7,35 +7,59 @@
 
 package com.google.re2j;
 
+import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+
+import static com.google.re2j.RE2.Anchor.ANCHOR_BOTH;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
+import static io.airlift.slice.Slices.utf8Slice;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
 
-
-/** Tests of RE2 API. */
+/**
+ * Tests of RE2 API.
+ */
+@RunWith(Enclosed.class)
 public class RE2Test {
-  @Test
-  public void testFullMatch() {
-    assertEquals(true, new RE2("ab+c").match(
-        "abbbbbc", 0, 7, RE2.ANCHOR_BOTH, null, 0));
-    assertEquals(false, new RE2("ab+c").match(
-      "xabbbbbc", 0, 8, RE2.ANCHOR_BOTH, null, 0));
+
+  public static class DFA extends RE2TestBase {
+    public DFA() {
+      super(RUN_WITH_DFA);
+    }
   }
 
-  @Test
-  public void testFindEnd() {
-    RE2 r = new RE2("abc.*def");
-    assertEquals(true, r.match("yyyabcxxxdefzzz",
-                               0, 15, RE2.UNANCHORED, null, 0));
-    assertEquals(true, r.match("yyyabcxxxdefzzz",
-                               0, 12, RE2.UNANCHORED, null, 0));
-    assertEquals(true, r.match("yyyabcxxxdefzzz",
-                               3, 15, RE2.UNANCHORED, null, 0));
-    assertEquals(true, r.match("yyyabcxxxdefzzz",
-                               3, 12, RE2.UNANCHORED, null, 0));
-    assertEquals(false, r.match("yyyabcxxxdefzzz",
-                                4, 12, RE2.UNANCHORED, null, 0));
-    assertEquals(false, r.match("yyyabcxxxdefzzz",
-                                3, 11, RE2.UNANCHORED, null, 0));
+  public static class NFA extends RE2TestBase {
+    public NFA() {
+      super(RUN_WITH_NFA);
+    }
+  }
+
+  public static abstract class RE2TestBase extends OptionsTest {
+
+    protected RE2TestBase(Options options) {
+      super(options);
+    }
+
+    @Test
+    public void testFullMatch() {
+      assertEquals(true, RE2.compile("ab+c", options).match(
+          utf8Slice("abbbbbc"), 0, ANCHOR_BOTH, null, 0));
+      assertEquals(false, RE2.compile("ab+c", options).match(
+          utf8Slice("xabbbbbc"), 0, ANCHOR_BOTH, null, 0));
+    }
+
+    @Test
+    public void testFindEnd() {
+      RE2 r = RE2.compile("abc.*def", options);
+      assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),
+          0, UNANCHORED, null, 0));
+      assertEquals(true, r.match(utf8Slice("yyyabcxxxdefzzz"),
+          3, UNANCHORED, null, 0));
+      assertEquals(false, r.match(utf8Slice("yyyabcxxxdefzzz"),
+          4, UNANCHORED, null, 0));
+      assertEquals(false, r.match(utf8Slice("abcxxxde"),
+          3, UNANCHORED, null, 0));
+    }
   }
 }

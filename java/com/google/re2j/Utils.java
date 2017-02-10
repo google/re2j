@@ -4,6 +4,10 @@
 
 package com.google.re2j;
 
+import io.airlift.slice.Slice;
+
+import static com.google.re2j.MachineInput.EOF;
+
 /**
  * Various constants and helper utilities.
  */
@@ -109,30 +113,30 @@ abstract class Utils {
 
   // Returns the index of the first occurrence of array |target| within
   // array |source| after |fromIndex|, or -1 if not found.
-  static int indexOf(byte[] source, byte[] target, int fromIndex) {
-    if (fromIndex >= source.length) {
-      return target.length == 0 ? source.length : -1;
+  static int indexOf(Slice source, Slice target, int fromIndex) {
+    if (fromIndex >= source.length()) {
+      return target.length() == 0 ? source.length() : -1;
     }
     if (fromIndex < 0) {
       fromIndex = 0;
     }
-    if (target.length == 0) {
+    if (target.length() == 0) {
       return fromIndex;
     }
 
-    byte first = target[0];
-    for (int i = fromIndex, max = source.length - target.length; i <= max;
+    byte first = target.getByte(0);
+    for (int i = fromIndex, max = source.length() - target.length(); i <= max;
          i++) {
       // Look for first byte.
-      if (source[i] != first) {
-        while (++i <= max && source[i] != first) {}
+      if (source.getByte(i) != first) {
+        while (++i <= max && source.getByte(i) != first) {}
       }
 
       // Found first byte, now look at the rest of v2.
       if (i <= max) {
         int j = i + 1;
-        int end = j + target.length - 1;
-        for (int k = 1; j < end && source[j] == target[k]; j++, k++) {}
+        int end = j + target.length() - 1;
+        for (int k = 1; j < end && source.getByte(j) == target.getByte(k); j++, k++) {}
 
         if (j == end) {
           return i;  // found whole array
@@ -142,14 +146,18 @@ abstract class Utils {
     return -1;
   }
 
-  // isWordRune reports whether r is consider a ``word character''
+  // isWordByte reports whether b is consider a ``word character''
   // during the evaluation of the \b and \B zero-width assertions.
   // These assertions are ASCII-only: the word characters are [A-Za-z0-9_].
-  static boolean isWordRune(int r)  {
-    return ('A' <= r && r <= 'Z' ||
-            'a' <= r && r <= 'z' ||
-            '0' <= r && r <= '9' ||
-            r == '_');
+  static boolean isWordByte(byte b)  {
+    return ('A' <= b && b <= 'Z' ||
+            'a' <= b && b <= 'z' ||
+            '0' <= b && b <= '9' ||
+            b == '_');
+  }
+
+  static boolean isRuneStart(byte b) {
+    return (b & 0xC0) != 0x80;  // 10xxxxxx
   }
 
   //// EMPTY_* flags
@@ -163,31 +171,50 @@ abstract class Utils {
   static final int EMPTY_ALL              = -1;  // (impossible)
 
   // emptyOpContext returns the zero-width assertions satisfied at the position
-  // between the runes r1 and r2, a bitmask of EMPTY_* flags.
-  // Passing r1 == -1 indicates that the position is at the beginning of the
-  // text.
-  // Passing r2 == -1 indicates that the position is at the end of the text.
+  // between the bytes b1 and b2, a bitmask of EMPTY_* flags.
+  // Passing b1 == -1 indicates that the position is at the beginning of the text.
+  // Passing b2 == -1 indicates that the position is at the end of the text.
   // TODO(adonovan): move to Machine.
-  static int emptyOpContext(int r1, int r2) {
+  static int emptyOpContext(byte b1, byte b2) {
     int op = 0;
-    if (r1 < 0) {
+    if (b1 == EOF) {
       op |= EMPTY_BEGIN_TEXT | EMPTY_BEGIN_LINE;
     }
-    if (r1 == '\n') {
+    if (b1 == '\n') {
       op |= EMPTY_BEGIN_LINE;
     }
-    if (r2 < 0) {
+    if (b2 == EOF) {
       op |= EMPTY_END_TEXT | EMPTY_END_LINE;
     }
-    if (r2 == '\n') {
+    if (b2 == '\n') {
       op |= EMPTY_END_LINE;
     }
-    if (isWordRune(r1) != isWordRune(r2)) {
+    if (isWordByte(b1) != isWordByte(b2)) {
       op |= EMPTY_WORD_BOUNDARY;
     } else {
       op |= EMPTY_NO_WORD_BOUNDARY;
     }
     return op;
+  }
+
+  static boolean arrayFirstElementsEqual(int[] a, int[] a2, int length) {
+    if (a == a2) {
+      return true;
+    }
+
+    if (a == null || a2 == null) {
+      return false;
+    }
+
+    if (a.length < length || a2.length < length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++)
+      if (a[i] != a2[i])
+        return false;
+
+    return true;
   }
 
   private Utils() {}  // uninstantiable

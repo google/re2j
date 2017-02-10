@@ -2,6 +2,16 @@
 
 package com.google.re2j;
 
+import com.google.re2j.RE2.Anchor;
+
+import io.airlift.slice.DynamicSliceOutput;
+import io.airlift.slice.Slice;
+import io.airlift.slice.SliceOutput;
+
+import static com.google.re2j.RE2.Anchor.ANCHOR_BOTH;
+import static com.google.re2j.RE2.Anchor.ANCHOR_START;
+import static com.google.re2j.RE2.Anchor.UNANCHORED;
+
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a
  * specific input.  Its interface mimics the JDK 1.4.2
@@ -41,10 +51,7 @@ public final class Matcher {
   // The number of submatches (groups) in the pattern.
   private final int groupCount;
 
-  private CharSequence inputSequence;
-
-  // The input length in UTF16 codes.
-  private int inputLength;
+  private Slice input;
 
   // The append position: where the next append should start.
   private int appendPos;
@@ -57,7 +64,7 @@ public final class Matcher {
   private boolean hasGroups;
 
   // The anchor flag to use when repeating the match to find subgroups.
-  private int anchorFlag;
+  private Anchor anchorFlag;
 
   private Matcher(Pattern pattern) {
     if (pattern == null) {
@@ -70,7 +77,7 @@ public final class Matcher {
   }
 
   /** Creates a new {@code Matcher} with the given pattern and input. */
-  Matcher(Pattern pattern, CharSequence input) {
+  Matcher(Pattern pattern, Slice input) {
     this(pattern);
     reset(input);
   }
@@ -96,16 +103,15 @@ public final class Matcher {
   /**
    * Resets the {@code Matcher} and changes the input.
    *
-   * @param input the new input string
+   * @param input the new input {@link Slice}
    * @return the {@code Matcher} itself, for chained method calls
    */
-  public Matcher reset(CharSequence input) {
+  public Matcher reset(Slice input) {
     if (input == null) {
       throw new NullPointerException("input is null");
     }
     reset();
-    inputSequence = input;
-    inputLength = input.length();
+    this.input = input;
     return this;
   }
 
@@ -158,7 +164,7 @@ public final class Matcher {
    *
    * @throws IllegalStateException if there is no match
    */
-  public String group() {
+  public Slice group() {
     return group(0);
   }
 
@@ -169,14 +175,14 @@ public final class Matcher {
    * @throws IndexOutOfBoundsException if {@code group < 0}
    *   or {@code group > groupCount()}
    */
-  public String group(int group) {
+  public Slice group(int group) {
     int start = start(group);
     int end = end(group);
     if (start < 0 && end < 0) {
       // Means the subpattern didn't get matched at all.
       return null;
     }
-    return substring(start, end);
+    return input.slice(start, end - start);
   }
 
   /**
@@ -209,11 +215,11 @@ public final class Matcher {
     // We know it won't affect the total matched because the previous call
     // to match included the extra character, and it was not matched then.
     int end = groups[1] + 1;
-    if (end > inputLength) {
-      end = inputLength;
+    if (end > input.length()) {
+      end = input.length();
     }
 
-    boolean ok = pattern.re2().match(inputSequence, groups[0], end,
+    boolean ok = pattern.re2().match(input.slice(0, end), groups[0],
       anchorFlag, groups, 1 + groupCount);
     // Must match - hasMatch says that the last call with these
     // parameters worked just fine.
@@ -230,7 +236,7 @@ public final class Matcher {
    * @return true if the entire input matches the pattern
    */
   public boolean matches() {
-    return genMatch(0, RE2.ANCHOR_BOTH);
+    return genMatch(0, ANCHOR_BOTH);
   }
 
   /**
@@ -240,7 +246,7 @@ public final class Matcher {
    * @return true if the beginning of the input matches the pattern
    */
   public boolean lookingAt() {
-    return genMatch(0, RE2.ANCHOR_START);
+    return genMatch(0, ANCHOR_START);
   }
 
   /**
@@ -259,7 +265,7 @@ public final class Matcher {
         start++;
       }
     }
-    return genMatch(start, RE2.UNANCHORED);
+    return genMatch(start, UNANCHORED);
   }
 
   /**
@@ -272,19 +278,19 @@ public final class Matcher {
    * @throws IndexOutOfBoundsException if start is not a valid input position
    */
   public boolean find(int start) {
-    if (start < 0 || start > inputLength) {
+    if (start < 0 || start > input.length()) {
       throw new IndexOutOfBoundsException(
           "start index out of bounds: " + start);
     }
     reset();
-    return genMatch(start, 0);
+    return genMatch(start, UNANCHORED);
   }
 
   /** Helper: does match starting at start, with RE2 anchor flag. */
-  private boolean genMatch(int startByte, int anchor) {
+  private boolean genMatch(int startByte, Anchor anchor) {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
-    boolean ok = pattern.re2().match(inputSequence, startByte, inputLength,
+    boolean ok = pattern.re2().match(input, startByte,
         anchor, groups, 1);
     if (!ok) {
       return false;
@@ -297,18 +303,17 @@ public final class Matcher {
   }
 
   /** Helper: return substring for [start, end). */
-  String substring(int start, int end) {
-    // This is fast for both StringBuilder and String.
-    return inputSequence.subSequence(start, end).toString();
+  Slice substring(int start, int end) {
+    return input.slice(start, end - start);
   }
 
   /** Helper for Pattern: return input length. */
   int inputLength() {
-    return inputLength;
+    return input.length();
   }
 
   /**
-   * Appends to {@code sb} two strings: the text from the append position up
+   * Appends to {@code so} two slices: the text from the append position up
    * to the beginning of the most recent match, and then the replacement with
    * submatch groups substituted for references of the form {@code $n}, where
    * {@code n} is the group number in decimal.  It advances the append position
@@ -324,85 +329,45 @@ public final class Matcher {
    * valid group number for this pattern.  To cut it off earlier, escape the
    * first digit that should not be used.
    *
-   * @param sb the {@link StringBuffer} to append to
-   * @param replacement the replacement string
+   * @param so the {@link SliceOutput} to append to
+   * @param replacement the replacement {@link Slice}
    * @return the {@code Matcher} itself, for chained method calls
    * @throws IllegalStateException if there was no most recent match
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
+   * @throws IllegalArgumentException if replacement has incorrect format
    */
-  public Matcher appendReplacement(StringBuffer sb, String replacement) {
+  public Matcher appendReplacement(SliceOutput so, Slice replacement) {
     int s = start();
     int e = end();
     if (appendPos < s) {
-      sb.append(substring(appendPos, s));
+      so.writeBytes(input, appendPos, s - appendPos);
     }
     appendPos = e;
-    int last = 0;
-    int i = 0;
-    int m = replacement.length();
-    for (; i < m - 1; i++) {
-      if (replacement.charAt(i) == '\\') {
-        if (last < i) {
-          sb.append(replacement.substring(last, i));
-        }
-        i++;
-        last = i;
-        continue;
-      }
-      if (replacement.charAt(i) == '$') {
-        int c = replacement.charAt(i + 1);
-        if ('0' <= c && c <= '9') {
-          int n = c - '0';
-          if (last < i) {
-            sb.append(replacement.substring(last, i));
-          }
-          for (i += 2; i < m; i++) {
-            c = replacement.charAt(i);
-            if (c < '0' || c > '9' || n * 10 + c - '0' > groupCount) {
-              break;
-            }
-            n = n * 10 + c - '0';
-          }
-          if (n > groupCount) {
-            throw new IndexOutOfBoundsException("n > number of groups: " + n);
-          }
-          String group = group(n);
-          if (group != null) {
-            sb.append(group);
-          }
-          last = i;
-          i--;
-          continue;
-        }
-      }
-    }
-    if (last < m) {
-      sb.append(replacement.substring(last, m));
-    }
+    SliceUtils.appendReplacement(so, replacement, this);
     return this;
   }
 
   /**
-   * Appends to {@code sb} the substring of the input from the
+   * Appends to {@code so} the subslice of the input from the
    * append position to the end of the input.
    *
-   * @param sb the {@link StringBuffer} to append to
-   * @return the argument {@code sb}, for method chaining
+   * @param so the {@link SliceOutput} to append to
+   * @return the argument {@code so}, for method chaining
    */
-  public StringBuffer appendTail(StringBuffer sb) {
-    sb.append(substring(appendPos, inputLength));
-    return sb;
+  public SliceOutput appendTail(SliceOutput so) {
+    so.writeBytes(input, appendPos, input.length() - appendPos);
+    return so;
   }
 
   /**
    * Returns the input with all matches replaced by {@code replacement},
    * interpreted as for {@code appendReplacement}.
    *
-   * @param replacement the replacement string
-   * @return the input string with the matches replaced
+   * @param replacement the replacement {@link Slice}
+   * @return the input {@link Slice} with the matches replaced
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
    */
-  public String replaceAll(String replacement) {
+  public Slice replaceAll(Slice replacement) {
     return replace(replacement, true);
   }
 
@@ -410,25 +375,25 @@ public final class Matcher {
    * Returns the input with the first match replaced by {@code replacement},
    * interpreted as for {@code appendReplacement}.
    *
-   * @param replacement the replacement string
-   * @return the input string with the first match replaced
+   * @param replacement the replacement {@link Slice}
+   * @return the input {@link Slice} with the first match replaced
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
    */
-  public String replaceFirst(String replacement) {
+  public Slice replaceFirst(Slice replacement) {
     return replace(replacement, false);
   }
 
   /** Helper: replaceAll/replaceFirst hybrid. */
-  private String replace(String replacement, boolean all) {
+  private Slice replace(Slice replacement, boolean all) {
     reset();
-    StringBuffer sb = new StringBuffer();
+    SliceOutput so = new DynamicSliceOutput(input.length());
     while (find()) {
-      appendReplacement(sb, replacement);
+      appendReplacement(so, replacement);
       if (!all) {
         break;
       }
     }
-    appendTail(sb);
-    return sb.toString();
+    appendTail(so);
+    return so.slice();
   }
 }

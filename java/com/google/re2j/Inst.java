@@ -7,8 +7,11 @@
 
 package com.google.re2j;
 
+import static com.google.re2j.Inst.Op.BYTE;
+
 /**
  * A single instruction in the regular expression virtual machine.
+ *
  * @see http://swtch.com/~rsc/regexp/regexp2.html
  */
 class Inst {
@@ -21,82 +24,50 @@ class Inst {
     FAIL,
     MATCH,
     NOP,
-    RUNE,
-    RUNE1,
-    RUNE_ANY,
-    RUNE_ANY_NOT_NL,
+    BYTE,
+    BYTE1
   }
 
   Op op;
   int out;  // all but MATCH, FAIL
   int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
-  int[] runes;  // length==1 => exact match
-                // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
-                // REVIEWERS: why not half-open intervals?
+  byte[] byteRanges; // length==1 => exact match. Otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
 
   Inst(Op op) {
     this.op = op;
   }
 
-  // op() returns i.Op but merges all the rune special cases into RUNE
+  // op() returns i.Op but merges all the byte special cases into BYTE
   // Beware "op" is a public field.
   Op op() {
     switch (op) {
-      case RUNE1:
-      case RUNE_ANY:
-      case RUNE_ANY_NOT_NL:
-        return Op.RUNE;
+      case BYTE1:
+        return BYTE;
       default:
         return op;
     }
   }
 
-  // MatchRune returns true if the instruction matches (and consumes) r.
-  // It should only be called when op == InstRune.
-  boolean matchRune(int r) {
-    // Special case: single-rune slice is from literal string, not char
-    // class.
-    if (runes.length == 1) {
-      int r0 = runes[0];
-      if (r == r0) {
-        return true;
-      }
-      if ((arg & RE2.FOLD_CASE) != 0) {
-        for (int r1 = Unicode.simpleFold(r0);
-             r1 != r0;
-             r1 = Unicode.simpleFold(r1)) {
-          if (r == r1) {
-            return true;
-          }
-        }
-      }
-      return false;
+  // MatchByte returns true if the instruction matches (and consumes) b.
+  // It should only be called when op == InstByte.
+  boolean matchByte(byte b) {
+    // Special case: single-byte slice is from literal string, not byte range.
+    if (byteRanges.length == 1) {
+      int b0 = byteRanges[0];
+      return b == b0;
     }
 
-    // Peek at the first few pairs.
-    // Should handle ASCII well.
-    for (int j = 0; j < runes.length && j <= 8; j += 2) {
-      if (r < runes[j]) {
+    // Search through all pairs.
+    int byteInt = b & 0xff;
+    for (int j = 0; j < byteRanges.length; j += 2) {
+      if (byteInt < (byteRanges[j] & 0xff)) {
         return false;
       }
-      if (r <= runes[j + 1]) {
+      if (byteInt <= (byteRanges[j + 1] & 0xff)) {
         return true;
       }
     }
 
-    // Otherwise binary search.
-    for (int lo = 0, hi = runes.length / 2; lo < hi; ) {
-      int m = lo + (hi - lo) / 2;
-      int c = runes[2 * m];
-      if (c <= r) {
-        if (r <= runes[2 * m + 1]) {
-          return true;
-        }
-        lo = m + 1;
-      } else {
-        hi = m;
-      }
-    }
     return false;
   }
 
@@ -117,32 +88,31 @@ class Inst {
         return "fail";
       case NOP:
         return "nop -> " + out;
-      case RUNE:
-        if (runes == null) {
-          return "rune <null>";  // can't happen
-        }
-        return "rune " + escapeRunes(runes) +
-            (((arg & RE2.FOLD_CASE) != 0) ? "/i" : "") + " -> " + out;
-      case RUNE1:
-        return "rune1 " + escapeRunes(runes) + " -> " + out;
-      case RUNE_ANY:
-        return "any -> " + out;
-      case RUNE_ANY_NOT_NL:
-        return "anynotnl -> " + out;
+      case BYTE:
+        return "byte " + appendBytes() + " -> " + out;
+      case BYTE1:
+        return "byte1 " + appendBytes() + " -> " + out;
       default:
         throw new IllegalStateException("unhandled case in Inst.toString");
     }
   }
 
-  // Returns an RE2 expression matching exactly |runes|.
-  private static String escapeRunes(int[] runes) {
+  private String appendBytes() {
     StringBuilder out = new StringBuilder();
-    out.append('"');
-    for (int rune : runes) {
-      Utils.escapeRune(out, rune);
+    if (byteRanges.length == 1) {
+      out.append(byteRanges[0] & 0xff);
+    } else {
+      for (int i = 0; i < byteRanges.length; i += 2) {
+        out.append("[")
+            .append(byteRanges[i] & 0xff)
+            .append(",")
+            .append(byteRanges[i + 1] & 0xff)
+            .append("]");
+        if (i < byteRanges.length - 2) {
+          out.append(";");
+        }
+      }
     }
-    out.append('"');
     return out.toString();
   }
-
 }

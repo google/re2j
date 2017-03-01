@@ -308,6 +308,28 @@ public final class Matcher {
   }
 
   /**
+   * Quotes '\' and '$' in {@code s}, so that the returned string could be
+   * used in {@link #appendReplacement} as a literal replacement of {@code s}.
+   *
+   * @param s the string to be quoted
+   * @return the quoted string
+   */
+  public static String quoteReplacement(String s) {
+    if (s.indexOf('\\') < 0 && s.indexOf('$') < 0) {
+      return s;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < s.length(); ++i) {
+      char c = s.charAt(i);
+      if (c == '\\' || c == '$') {
+        sb.append('\\');
+      }
+      sb.append(c);
+    }
+    return sb.toString();
+  }
+
+  /**
    * Appends to {@code sb} two strings: the text from the append position up
    * to the beginning of the most recent match, and then the replacement with
    * submatch groups substituted for references of the form {@code $n}, where

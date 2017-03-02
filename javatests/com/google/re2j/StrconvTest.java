@@ -10,7 +10,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class StrconvTest {
 
   private static String rune(int r) {
@@ -54,42 +57,51 @@ public class StrconvTest {
     {"`\n`", "\n"},
     {"`\t`", "\t"},
     {"` `", " "},
+
+    // Misquoted strings, should produce an error.
+    {"", null},
+    {"\"", null},
+    {"\"a", null},
+    {"\"'", null},
+    {"b\"", null},
+    {"\"\\\"", null},
+    {"'\\'", null},
+    {"'ab'", null},
+    {"\"\\x1!\"", null},
+    {"\"\\U12345678\"", null},
+    {"\"\\z\"", null},
+    {"`", null},
+    {"`xxx", null},
+    {"`\"", null},
+    {"\"\\'\"", null},
+    {"'\\\"'", null},
+    {"\"\n\"", null},
+    {"\"\\n\n\"", null},
+    {"'\n'", null},
   };
 
-  private static final String[] MISQUOTED = {
-    "",
-    "\"",
-    "\"a",
-    "\"'",
-    "b\"",
-    "\"\\\"",
-    "'\\'",
-    "'ab'",
-    "\"\\x1!\"",
-    "\"\\U12345678\"",
-    "\"\\z\"",
-    "`",
-    "`xxx",
-    "`\"",
-    "\"\\'\"",
-    "'\\\"'",
-    "\"\n\"",
-    "\"\\n\n\"",
-    "'\n'",
-  };
+  @Parameterized.Parameters
+  public static Object[] testData() {
+    return UNQUOTE_TESTS;
+  }
+
+  private final String input;
+  private final String expected;
+
+  public StrconvTest(String input, String expected) {
+    this.input = input;
+    this.expected = expected;
+  }
 
   @Test
   public void testUnquote() {
-    for (String[] test : UNQUOTE_TESTS) {
-      // System.err.println(test[0]);
-      assertEquals(String.format("unquote(%s)", test[0]),
-                   test[1], Strconv.unquote(test[0]));
-    }
-    for (String s : MISQUOTED) {
+    if (expected != null) {
+      assertEquals(String.format("unquote(%s)", input),
+                   expected, Strconv.unquote(input));
+    } else {
       try {
-        // System.err.println(s);
-        Strconv.unquote(s);
-        fail(String.format("unquote(%s) succeeded unexpectedly", s));
+        Strconv.unquote(input);
+        fail(String.format("unquote(%s) succeeded unexpectedly", input));
       } catch (IllegalArgumentException e) {
         /* ok */
       } catch (StringIndexOutOfBoundsException e) {

@@ -95,7 +95,7 @@ class Machine {
   }
 
   // Corresponding compiled regexp.
-  private RE2 re2;
+  private final RE2 re2;
 
   // Compiled program.
   private final Prog prog;
@@ -105,7 +105,7 @@ class Machine {
 
   // pool of available threads
   // Really a stack:
-  private List<Thread> pool = new ArrayList<Thread>();
+  private final List<Thread> pool = new ArrayList<Thread>();
 
   // Whether a match was found.
   private boolean matched;

@@ -251,7 +251,7 @@ public final class Pattern implements Serializable {
 
   /**
    * Returns the number of capturing groups in this matcher's pattern.
-   * Group zero denotes the enture pattern and is excluded from this count.
+   * Group zero denotes the entire pattern and is excluded from this count.
    *
    * @return the number of capturing groups in this pattern
    */

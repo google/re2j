@@ -34,7 +34,7 @@ import java.util.List;
  * regular expression metacharacters in an arbitrary string.
  *
  * <p>See the {@code Matcher} and {@code Pattern} classes for the public
- * API, and the <a href='package-summary.html'>package-level
+ * API, and the <a href='package.html'>package-level
  * documentation</a> for an overview of how to use this API.
  */
 class RE2 {

@@ -11,7 +11,7 @@ package com.google.re2j;
  * A single instruction in the regular expression virtual machine.
  * @see http://swtch.com/~rsc/regexp/regexp2.html
  */
-class Inst {
+final class Inst {
   
   public static final int ALT = 1;
   public static final int ALT_MATCH = 2;

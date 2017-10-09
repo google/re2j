@@ -37,7 +37,7 @@ class Compiler {
     }
   }
 
-  private final Prog prog = new Prog();  // Program being built
+  private final ProgBuilder prog = new ProgBuilder();  // Program being built
 
   private Compiler() {
     newInst(Inst.FAIL);  // always the first instruction
@@ -48,7 +48,7 @@ class Compiler {
     Frag f = c.compile(re);
     c.prog.patch(f.out, c.newInst(Inst.MATCH).i);
     c.prog.start = f.i;
-    return c.prog;
+    return c.prog.build();
   }
 
   private Frag newInst(int op) {

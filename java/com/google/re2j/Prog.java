@@ -7,15 +7,16 @@
 
 package com.google.re2j;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * A Prog is a compiled regular expression program.
  */
 class Prog {
 
-  private final List<Inst> inst = new ArrayList<Inst>();
+  public static final Inst[] EMPTY = new Inst[0];
+  
+  private Inst[] inst = EMPTY;
   int start; // index of start instruction
   int numCap = 2; // number of CAPTURE insts in re
                   // 2 => implicit ( and ) for whole match $0
@@ -26,26 +27,27 @@ class Prog {
   // Returns the instruction at the specified pc.
   // Precondition: pc > 0 && pc < numInst().
   Inst getInst(int pc) {
-    return inst.get(pc);
+    return inst[pc];
   }
 
   // Returns the number of instructions in this program.
   int numInst() {
-    return inst.size();
+    return inst.length;
   }
 
   // Adds a new instruction to this program, with operator |op| and |pc| equal
   // to |numInst()|.
-  void addInst(Inst.Op op) {
-    inst.add(new Inst(op));
+  void addInst(int op) {
+    inst = Arrays.copyOf(inst, inst.length + 1);
+    inst[inst.length - 1] = new Inst(op);
   }
 
   // skipNop() follows any no-op or capturing instructions and returns the
   // resulting instruction.
   Inst skipNop(int pc) {
-    Inst i = inst.get(pc);
-    while (i.op == Inst.Op.NOP || i.op == Inst.Op.CAPTURE) {
-      i = inst.get(pc);
+    Inst i = inst[pc];
+    while (i.op == Inst.NOP || i.op == Inst.CAPTURE) {
+      i = inst[pc];
       pc = i.out;
     }
     return i;
@@ -58,18 +60,18 @@ class Prog {
     Inst i = skipNop(start);
 
     // Avoid allocation of buffer if prefix is empty.
-    if (i.op() != Inst.Op.RUNE || i.runes.length != 1) {
-      return i.op == Inst.Op.MATCH;  // (append "" to prefix)
+    if (i.op() != Inst.RUNE || i.runes.length != 1) {
+      return i.op == Inst.MATCH;  // (append "" to prefix)
     }
 
     // Have prefix; gather characters.
-    while (i.op() == Inst.Op.RUNE &&
+    while (i.op() == Inst.RUNE &&
            i.runes.length == 1 &&
            (i.arg & RE2.FOLD_CASE) == 0) {
       prefix.appendCodePoint(i.runes[0]);  // an int, not a byte.
       i = skipNop(i.out);
     }
-    return i.op == Inst.Op.MATCH;
+    return i.op == Inst.MATCH;
   }
 
   // startCond() returns the leading empty-width conditions that must be true
@@ -79,15 +81,15 @@ class Prog {
     int pc = start;
  loop:
     for (;;) {
-      Inst i = inst.get(pc);
+      Inst i = inst[pc];
       switch (i.op) {
-        case EMPTY_WIDTH:
+        case Inst.EMPTY_WIDTH:
           flag |= i.arg;
           break;
-        case FAIL:
+        case Inst.FAIL:
           return -1;
-        case CAPTURE:
-        case NOP:
+        case Inst.CAPTURE:
+        case Inst.NOP:
           break;  // skip
         default:
           break loop;
@@ -111,7 +113,7 @@ class Prog {
   // at its output link.
 
   int next(int l) {
-    Inst i = inst.get(l >> 1);
+    Inst i = inst[l >> 1];
     if ((l & 1) == 0) {
       return i.out;
     }
@@ -120,7 +122,7 @@ class Prog {
 
   void patch(int l, int val) {
     while (l != 0) {
-      Inst i = inst.get(l >> 1);
+      Inst i = inst[l >> 1];
       if ((l & 1) == 0) {
         l = i.out;
         i.out = val;
@@ -146,7 +148,7 @@ class Prog {
       }
       last = next;
     }
-    Inst i = inst.get(last>>1);
+    Inst i = inst[last>>1];
     if ((last & 1) == 0) {
       i.out = l2;
     } else {
@@ -160,7 +162,7 @@ class Prog {
   @Override
   public String toString() {
     StringBuilder out = new StringBuilder();
-    for (int pc = 0; pc < inst.size(); ++pc) {
+    for (int pc = 0; pc < inst.length; ++pc) {
       int len = out.length();
       out.append(pc);
       if (pc == start) {
@@ -169,7 +171,7 @@ class Prog {
       // Use spaces not tabs since they're not always preserved in
       // Google Java source, such as our tests.
       out.append("        ".substring(out.length() - len)).
-          append(inst.get(pc)).append('\n');
+          append(inst[pc]).append('\n');
     }
     return out.toString();
   }

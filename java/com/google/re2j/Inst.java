@@ -12,40 +12,38 @@ package com.google.re2j;
  * @see http://swtch.com/~rsc/regexp/regexp2.html
  */
 class Inst {
+  
+  public static final int ALT = 1;
+  public static final int ALT_MATCH = 2;
+  public static final int CAPTURE = 3;
+  public static final int EMPTY_WIDTH = 4;
+  public static final int FAIL = 5;
+  public static final int MATCH = 6;
+  public static final int NOP = 7;
+  public static final int RUNE = 8;
+  public static final int RUNE1 = 9;
+  public static final int RUNE_ANY = 10;
+  public static final int RUNE_ANY_NOT_NL = 11;
 
-  enum Op {
-    ALT,
-    ALT_MATCH,
-    CAPTURE,
-    EMPTY_WIDTH,
-    FAIL,
-    MATCH,
-    NOP,
-    RUNE,
-    RUNE1,
-    RUNE_ANY,
-    RUNE_ANY_NOT_NL,
-  }
-
-  Op op;
+  int op;
   int out;  // all but MATCH, FAIL
   int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
   int[] runes;  // length==1 => exact match
                 // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
                 // REVIEWERS: why not half-open intervals?
 
-  Inst(Op op) {
+  Inst(int op) {
     this.op = op;
   }
 
   // op() returns i.Op but merges all the rune special cases into RUNE
   // Beware "op" is a public field.
-  Op op() {
+  int op() {
     switch (op) {
       case RUNE1:
       case RUNE_ANY:
       case RUNE_ANY_NOT_NL:
-        return Op.RUNE;
+        return RUNE;
       default:
         return op;
     }

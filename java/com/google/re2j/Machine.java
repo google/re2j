@@ -141,9 +141,6 @@ class Machine {
       return Utils.EMPTY_INTS;
     }
     return Arrays.copyOf(matchcap, ncap);
-//    int[] cap = new int[matchcap.length];
-//    System.arraycopy(matchcap, 0, cap, 0, matchcap.length);
-//    return cap;
   }
 
   // alloc() allocates a new thread with the given instruction.

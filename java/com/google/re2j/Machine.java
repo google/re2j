@@ -28,6 +28,8 @@ class Machine {
 
   // A queue is a 'sparse array' holding pending threads of execution.  See:
   // research.swtch.com/2008/03/using-uninitialized-memory-for-fun-and.html
+  
+  // order matters
   private static class Queue {
 
     static class Entry {
@@ -105,7 +107,7 @@ class Machine {
 
   // pool of available threads
   // Really a stack:
-  private List<Thread> pool = new ArrayList<Thread>();
+  private ArrayList<Thread> pool = new ArrayList<Thread>();
 
   // Whether a match was found.
   private boolean matched;
@@ -278,7 +280,7 @@ class Machine {
       Inst i = t.inst;
       boolean add = false;
       switch (i.op) {
-        case MATCH:
+        case Inst.MATCH:
           if (anchor == RE2.ANCHOR_BOTH && !atEnd) {
             // Don't match if we anchor at both start and end and those
             // expectations aren't met.
@@ -302,19 +304,19 @@ class Machine {
           matched = true;
           break;
 
-        case RUNE:
+        case Inst.RUNE:
           add = i.matchRune(c);
           break;
 
-        case RUNE1:
+        case Inst.RUNE1:
           add = c == i.runes[0];
           break;
 
-        case RUNE_ANY:
+        case Inst.RUNE_ANY:
           add = true;
           break;
 
-        case RUNE_ANY_NOT_NL:
+        case Inst.RUNE_ANY_NOT_NL:
           add = c != '\n';
           break;
 
@@ -327,6 +329,7 @@ class Machine {
       if (t != null) {
         // free(t)
         pool.add(t);
+        runq.dense[j] = null;
       }
     }
     runq.size = 0;
@@ -350,26 +353,26 @@ class Machine {
       default:
         throw new IllegalStateException("unhandled");
 
-      case FAIL:
+      case Inst.FAIL:
         break;  // nothing
 
-      case ALT:
-      case ALT_MATCH:
+      case Inst.ALT:
+      case Inst.ALT_MATCH:
         t = add(q, inst.out, pos, cap, cond, t);
         t = add(q, inst.arg, pos, cap, cond, t);
         break;
 
-      case EMPTY_WIDTH:
+      case Inst.EMPTY_WIDTH:
         if ((inst.arg & ~cond) == 0) {
           t = add(q, inst.out, pos, cap, cond, t);
         }
         break;
 
-      case NOP:
+      case Inst.NOP:
         t = add(q, inst.out, pos, cap, cond, t);
         break;
 
-      case CAPTURE:
+      case Inst.CAPTURE:
         if (inst.arg < cap.length) {
           int opos = cap[inst.arg];
           cap[inst.arg] = pos;
@@ -380,11 +383,11 @@ class Machine {
         }
         break;
 
-      case MATCH:
-      case RUNE:
-      case RUNE1:
-      case RUNE_ANY:
-      case RUNE_ANY_NOT_NL:
+      case Inst.MATCH:
+      case Inst.RUNE:
+      case Inst.RUNE1:
+      case Inst.RUNE_ANY:
+      case Inst.RUNE_ANY_NOT_NL:
         if (t == null) {
           t = alloc(inst);
         } else {

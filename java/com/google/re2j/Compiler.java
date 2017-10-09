@@ -40,18 +40,18 @@ class Compiler {
   private final Prog prog = new Prog();  // Program being built
 
   private Compiler() {
-    newInst(Inst.Op.FAIL);  // always the first instruction
+    newInst(Inst.FAIL);  // always the first instruction
   }
 
   static Prog compileRegexp(Regexp re) {
     Compiler c = new Compiler();
     Frag f = c.compile(re);
-    c.prog.patch(f.out, c.newInst(Inst.Op.MATCH).i);
+    c.prog.patch(f.out, c.newInst(Inst.MATCH).i);
     c.prog.start = f.i;
     return c.prog;
   }
 
-  private Frag newInst(Inst.Op op) {
+  private Frag newInst(int op) {
     // TODO(rsc): impose length limit.
     prog.addInst(op);
     return new Frag(prog.numInst() - 1);
@@ -59,7 +59,7 @@ class Compiler {
 
   // Returns a no-op fragment.  Sometimes unavoidable.
   private Frag nop() {
-    Frag f = newInst(Inst.Op.NOP);
+    Frag f = newInst(Inst.NOP);
     f.out = f.i << 1;
     return f;
   }
@@ -71,7 +71,7 @@ class Compiler {
   // Given fragment a, returns (a) capturing as \n.
   // Given a fragment a, returns a fragment with capturing parens around a.
   private Frag cap(int arg) {
-    Frag f = newInst(Inst.Op.CAPTURE);
+    Frag f = newInst(Inst.CAPTURE);
     f.out = f.i << 1;
     prog.getInst(f.i).arg = arg;
     if (prog.numCap < arg + 1) {
@@ -100,7 +100,7 @@ class Compiler {
     if (f2.i == 0) {
       return f1;
     }
-    Frag f = newInst(Inst.Op.ALT);
+    Frag f = newInst(Inst.ALT);
     Inst i = prog.getInst(f.i);
     i.out = f1.i;
     i.arg = f2.i;
@@ -110,7 +110,7 @@ class Compiler {
 
   // Given a fragment for a, returns a fragment for a? or a?? (if nongreedy)
   private Frag quest(Frag f1, boolean nongreedy) {
-    Frag f = newInst(Inst.Op.ALT);
+    Frag f = newInst(Inst.ALT);
     Inst i = prog.getInst(f.i);
     if (nongreedy) {
       i.arg = f1.i;
@@ -125,7 +125,7 @@ class Compiler {
 
   // Given a fragment a, returns a fragment for a* or a*? (if nongreedy)
   private Frag star(Frag f1, boolean nongreedy) {
-    Frag f = newInst(Inst.Op.ALT);
+    Frag f = newInst(Inst.ALT);
     Inst i = prog.getInst(f.i);
     if (nongreedy) {
       i.arg = f1.i;
@@ -145,7 +145,7 @@ class Compiler {
 
   // op is a bitmask of EMPTY_* flags.
   private Frag empty(int op) {
-    Frag f = newInst(Inst.Op.EMPTY_WIDTH);
+    Frag f = newInst(Inst.EMPTY_WIDTH);
     prog.getInst(f.i).arg = op;
     f.out = f.i << 1;
     return f;
@@ -157,7 +157,7 @@ class Compiler {
 
   // flags : parser flags
   private Frag rune(int[] runes, int flags) {
-    Frag f = newInst(Inst.Op.RUNE);
+    Frag f = newInst(Inst.RUNE);
     Inst i = prog.getInst(f.i);
     i.runes = runes;
     flags &= RE2.FOLD_CASE;  // only relevant flag is FoldCase
@@ -170,17 +170,17 @@ class Compiler {
     if ((flags & RE2.FOLD_CASE) == 0 && runes.length == 1 ||
         runes.length == 2 &&
         runes[0] == runes[1]) {
-      i.op = Inst.Op.RUNE1;
+      i.op = Inst.RUNE1;
     } else if (runes.length == 2 &&
                runes[0] == 0 &&
                runes[1] == Unicode.MAX_RUNE) {
-      i.op = Inst.Op.RUNE_ANY;
+      i.op = Inst.RUNE_ANY;
     } else if (runes.length == 4 &&
                runes[0] == 0 &&
                runes[1] == '\n' - 1 &&
                runes[2] == '\n'+1 &&
                runes[3] == Unicode.MAX_RUNE) {
-      i.op = Inst.Op.RUNE_ANY_NOT_NL;
+      i.op = Inst.RUNE_ANY_NOT_NL;
     }
     return f;
   }

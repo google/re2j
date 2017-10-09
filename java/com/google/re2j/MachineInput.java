@@ -185,9 +185,7 @@ abstract class MachineInput {
       pos += start;
       if (pos < end) {
         int rune = Character.codePointAt(str, pos);
-        int nextPos = pos + Character.charCount(rune);
-        int width = nextPos - pos;
-        return rune << 3 | width;
+        return rune << 3 | Character.charCount(rune);
       } else {
         return EOF;
       }

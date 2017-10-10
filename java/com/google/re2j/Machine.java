@@ -28,18 +28,20 @@ class Machine {
   // research.swtch.com/2008/03/using-uninitialized-memory-for-fun-and.html
   private static class Queue {
 
-    final Thread[] dense; // may contain stale Entries in slots >= size
+    final Thread[] denseThreads; // may contain stale Entries in slots >= size
+    final int[] densePcs;  // may contain stale Entries in slots >= size
     final int[] sparse;  // may contain stale but in-bounds values.
     int size;  // of prefix of |dense| that is logically populated
 
     Queue(int n) {
       this.sparse = new int[n];
-      Arrays.fill(sparse, Integer.MAX_VALUE);
-      this.dense = new Thread[n];
+      this.densePcs = new int[n];
+      this.denseThreads = new Thread[n];
     }
 
     boolean contains(int pc) {
-      return sparse[pc] < size;
+      int j = sparse[pc];
+      return j < size && densePcs[j] == pc;
     }
 
     boolean isEmpty() { return size == 0; }
@@ -47,28 +49,24 @@ class Machine {
     int add(int pc) {
       int j = size++;
       sparse[pc] = j;
-      dense[j] = null;
+      denseThreads[j] = null;
+      densePcs[j] = pc;
       return j;
     }
 
 
     void clear() {
-      Arrays.fill(sparse, Integer.MAX_VALUE);
       size = 0;
     }
 
     @Override public String toString() {
       StringBuilder out = new StringBuilder();
       out.append('{');
-      int j = 0;
-      for (int i = 0; i < sparse.length; ++i) {
-        if (contains(i)) {
-          if (j != 0) {
-            out.append(", ");
-          }
-          out.append(i);
-          j++;
+      for (int i = 0; i < size; ++i) {
+        if (i != 0) {
+          out.append(", ");
         }
+        out.append(densePcs[i]);
       }
       out.append('}');
       return out.toString();
@@ -169,7 +167,7 @@ class Machine {
     }
     
     for(int i = from; i < queue.size; ++i) {
-      Thread t = queue.dense[i];
+      Thread t = queue.denseThreads[i];
       if (t != null) {
         pool[poolSize] = t;
         poolSize++;
@@ -292,7 +290,7 @@ class Machine {
             int nextCond, int anchor, boolean atEnd) {
     boolean longest = re2.longest;
     for (int j = 0; j < runq.size; ++j) {
-      Thread t = runq.dense[j];
+      Thread t = runq.denseThreads[j];
       if (t == null) {
         continue;
       }
@@ -343,7 +341,7 @@ class Machine {
       }
       if (t != null) {
         free(t);
-        runq.dense[j] = null;
+        runq.denseThreads[j] = null;
       }
     }
     runq.clear();
@@ -411,7 +409,7 @@ class Machine {
         if (ncap > 0 && t.cap != cap) {
           System.arraycopy(cap, 0, t.cap, 0, ncap);
         }
-        q.dense[d] = t;
+        q.denseThreads[d] = t;
         t = null;
         break;
     }

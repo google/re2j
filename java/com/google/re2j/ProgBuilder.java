@@ -14,7 +14,6 @@ import java.util.List;
  * A ProgBuilder is a builder for a Prog.
  */
 final class ProgBuilder {
-
   
   final List<Inst> inst = new ArrayList<Inst>();
   int start; // index of start instruction

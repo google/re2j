@@ -125,7 +125,6 @@ class Machine {
       Thread t = pool[i];
       Arrays.fill(t.cap, 0, ncap, 0);
     }
-    //Arrays.fill(matchcap, 0, ncap, 0);
   }
 
   private void initNewCap(int ncap) {

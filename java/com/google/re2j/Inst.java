@@ -25,20 +25,25 @@ final class Inst {
   public static final int RUNE_ANY = 10;
   public static final int RUNE_ANY_NOT_NL = 11;
 
-  int op;
-  int out;  // all but MATCH, FAIL
-  int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
-  int[] runes;  // length==1 => exact match
+  final int op;
+  final int mergedOp; // merges all the rune special cases into RUNE
+  final int out;  // all but MATCH, FAIL
+  final int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
+  final int[] runes;  // length==1 => exact match
                 // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
                 // REVIEWERS: why not half-open intervals?
 
-  Inst(int op) {
+  Inst(int op, int out, int arg, int[] runes) {
     this.op = op;
+    this.out = out;
+    this.arg = arg;
+    this.runes = runes;
+    this.mergedOp = mergedOp(op);
   }
-
+  
   // op() returns i.Op but merges all the rune special cases into RUNE
   // Beware "op" is a public field.
-  int op() {
+  private static int mergedOp(int op) {
     switch (op) {
       case RUNE1:
       case RUNE_ANY:

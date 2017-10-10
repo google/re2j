@@ -28,8 +28,8 @@ class Machine {
   // research.swtch.com/2008/03/using-uninitialized-memory-for-fun-and.html
   private static class Queue {
 
-    final Thread[] denseThreads; // may contain stale Entries in slots >= size
-    final int[] densePcs;  // may contain stale Entries in slots >= size
+    final Thread[] denseThreads; // may contain stale Thread in slots >= size
+    final int[] densePcs;  // may contain stale pc in slots >= size
     final int[] sparse;  // may contain stale but in-bounds values.
     int size;  // of prefix of |dense| that is logically populated
 
@@ -362,7 +362,7 @@ class Machine {
     }
     int d = q.add(pc);
     Inst inst = prog.inst[pc];
-    switch (inst.op()) {
+    switch (inst.mergedOp) {
       default:
         throw new IllegalStateException("unhandled");
 

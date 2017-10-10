@@ -4,6 +4,7 @@
 
 package com.google.re2j;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -38,4 +39,24 @@ public class UnicodeTest {
   // int toLower(int r);
   // int simpleFold(int r);
 
+  @Test
+  public void testOptimizedFold() {
+    // check that the new optimized fold alg will have the same result as using simple fold
+    for (int i = 0; i <= Unicode.MAX_RUNE; i++) {
+      int[] orbit = Unicode.optimizedFoldOrbit(i);
+      if (orbit != null) {
+        int r = Unicode.simpleFold(i);
+        int j = 0;
+        while (r != i) {
+          assertEquals(r, orbit[j]);
+          j++;
+          r = Unicode.simpleFold(r);
+        }
+      } else {
+        int r = Unicode.simpleFold(i);
+        assertEquals(r, Unicode.optimizedFoldNonOrbit(i)); // first fold map the same
+        assertEquals(i, Unicode.simpleFold(r)); // second fold always go back to first
+      }
+    }
+  }
 }

@@ -13,6 +13,8 @@ package com.google.re2j;
  */
 class Inst {
 
+  private static final int RUNES_LINER_SEARCH_SIZE = 10;
+
   enum Op {
     ALT,
     ALT_MATCH,
@@ -57,25 +59,37 @@ class Inst {
     // Special case: single-rune slice is from literal string, not char
     // class.
     if (runes.length == 1) {
-      int r0 = runes[0];
-      if (r == r0) {
-        return true;
-      }
-      if ((arg & RE2.FOLD_CASE) != 0) {
-        for (int r1 = Unicode.simpleFold(r0);
-             r1 != r0;
-             r1 = Unicode.simpleFold(r1)) {
-          if (r == r1) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return singleMatchRune(r);
+    }
+    
+    return multiMatchRune(r);
+  }
+
+  private boolean singleMatchRune(int r) {
+    int r0 = runes[0];
+    if (r == r0) {
+      return true;
     }
 
-    // Peek at the first few pairs.
+    if ((arg & RE2.FOLD_CASE) != 0) {
+      int[] folds = Unicode.optimizedFoldOrbit(r0);
+
+      if (folds == null) {
+        return (r == Unicode.optimizedFoldNonOrbit(r0));
+      } else {
+        for(int i = 0; i < folds.length; i++) {
+          if (folds[i] == r) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean multiMatchRune(int r) {
+    // Peek at the first 5 pairs.
     // Should handle ASCII well.
-    for (int j = 0; j < runes.length && j <= 8; j += 2) {
+    int length = Math.min(runes.length, RUNES_LINER_SEARCH_SIZE);
+    for (int j = 0; j < length; j += 2) {
       if (r < runes[j]) {
         return false;
       }
@@ -84,12 +98,12 @@ class Inst {
       }
     }
 
-    // Otherwise binary search.
-    for (int lo = 0, hi = runes.length / 2; lo < hi; ) {
+    // Otherwise binary search on rest of the array
+    for (int lo = 0, hi = (runes.length - RUNES_LINER_SEARCH_SIZE) / 2; lo < hi; ) {
       int m = lo + (hi - lo) / 2;
-      int c = runes[2 * m];
+      int c = runes[2 * m + RUNES_LINER_SEARCH_SIZE];
       if (c <= r) {
-        if (r <= runes[2 * m + 1]) {
+        if (r <= runes[2 * m + 1 + RUNES_LINER_SEARCH_SIZE]) {
           return true;
         }
         lo = m + 1;

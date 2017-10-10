@@ -7,6 +7,8 @@
 
 package com.google.re2j;
 
+import java.util.Arrays;
+
 /**
  * Utilities for dealing with Unicode better than Java does.
  *
@@ -225,6 +227,99 @@ class Unicode {
       return l;
     }
     return toUpper(r);
+  }
+
+  static int[] optimizedFoldOrbit(int r) {
+    if (r >= ORBIT_MIN_VALUE) {
+      return FOLD_MAP.get(r);
+    } else return null;
+  }
+
+  static int optimizedFoldNonOrbit(int r) {
+    int l = toLower(r);
+    if (l != r) {
+      return l;
+    }
+    return toUpper(r);
+  }
+  
+  private static final FoldMap FOLD_MAP = new FoldMap(UnicodeTables.CASE_ORBIT.length * 4);
+  private static final int ORBIT_MIN_VALUE = UnicodeTables.CASE_ORBIT[0][0];
+  
+  static {
+    for(int i = 0; i < UnicodeTables.CASE_ORBIT.length; i++) {
+      int r0 = UnicodeTables.CASE_ORBIT[i][0];
+      int[] folds = new int[0];
+      int r1 = r0;
+      while((r1 = simpleFold(r1)) != r0) {
+        folds = Arrays.copyOf(folds, folds.length + 1);
+        folds[folds.length - 1] = r1;
+      }
+      FOLD_MAP.put(r0, folds);
+    }
+  }
+
+  /*
+    associate a rune to it's unfolded case equivalent
+   */
+  private static class FoldMap {
+    private static final int MAX_DISTANCE = 4;
+    private final int[] keys;
+    private final int[][] values;
+    private final int mask;
+    private final int maxDistance;
+
+    FoldMap(int size) {
+      int s = findNextPositivePowerOfTwo(size);
+      keys = new int[s];
+      Arrays.fill(keys, -1);
+      values = new int[s][];
+      mask = s - 1;
+      maxDistance = Math.min(keys.length, MAX_DISTANCE);
+    }
+
+    public void put(int k, int[] fold) {
+      if (k == -1) throw new IllegalArgumentException("-1 is the empty marker");
+
+      int hash = hashCode(k);
+      int i = 0;
+      do {
+        int index = (hash + i)  & mask;
+        if (keys[index] ==  -1) { // empty slot
+          values[index] = fold;
+          keys[index] = k;
+          return;
+        }
+        i++;
+      } while (i < maxDistance);
+
+      throw new IllegalStateException("Map is full");
+    }
+
+    public int[] get(int k) {
+      int hash = hashCode(k);
+
+      int i = 0;
+      do {
+        int index = (hash + i)  & mask;
+        int key = keys[index];
+        if (key == -1) return null; // empty slot
+        if (key == k) return values[index];
+        i++;
+      } while (i < maxDistance);
+
+      return null;
+    }
+    private static final int INT_PHI = 0x9E3779B9;
+
+    private int hashCode(int k) {
+      final int h = k * INT_PHI;
+      return h ^ (h >> 16);
+    }
+
+    public static int findNextPositivePowerOfTwo(final int value) {
+      return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+    }
   }
 
   private Unicode() {}  // uninstantiable

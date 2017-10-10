@@ -12,7 +12,6 @@ package com.google.re2j;
  * @see http://swtch.com/~rsc/regexp/regexp2.html
  */
 final class InstBuilder {
-  
 
   int op;
   int out;  // all but MATCH, FAIL
@@ -24,8 +23,6 @@ final class InstBuilder {
   InstBuilder(int op) {
     this.op = op;
   }
-
-
 
   Inst build() {
     return new Inst(op, out, arg, runes);

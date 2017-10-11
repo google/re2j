@@ -37,7 +37,7 @@ public class RunesTest {
         Pattern pattern = Pattern.compile("ak", Pattern.CASE_INSENSITIVE);
         String upperCase = "AK";
         String withKelvin = "AK";
-        assertFalse(withKelvin.equals(upperCase));// check we use the kelvin sign 
+        assertFalse(withKelvin.equals(upperCase)); // check we use the kelvin sign 
         
         assertTrue(pattern.matches("ak"));
         assertTrue(pattern.matches(upperCase));

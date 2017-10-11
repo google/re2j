@@ -5,6 +5,7 @@
 package com.google.re2j;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -41,22 +42,33 @@ public class UnicodeTest {
 
   @Test
   public void testOptimizedFold() {
-    // check that the new optimized fold alg will have the same result as using simple fold
+    // Check that the new optimized fold algorithm gives the same result as using simple fold.
     for (int i = 0; i <= Unicode.MAX_RUNE; i++) {
       int[] orbit = Unicode.optimizedFoldOrbit(i);
       if (orbit != null) {
-        int r = Unicode.simpleFold(i);
-        int j = 0;
-        while (r != i) {
-          assertEquals(r, orbit[j]);
-          j++;
-          r = Unicode.simpleFold(r);
-        }
+        testOptimizedFoldOrbitCase(i, orbit);
       } else {
-        int r = Unicode.simpleFold(i);
-        assertEquals(r, Unicode.optimizedFoldNonOrbit(i)); // first fold map the same
-        assertEquals(i, Unicode.simpleFold(r)); // second fold always go back to first
+        testOptimizedFoldNonOrbitCase(i);
       }
+    }
+  }
+
+  private void testOptimizedFoldNonOrbitCase(int i) {
+    int r = Unicode.simpleFold(i);
+    assertEquals(i, Unicode.simpleFold(r)); // second fold always go back to first
+    assertTrue(Unicode.areEqualsCaseInsensitive(i, i));
+    assertTrue(Unicode.areEqualsCaseInsensitive(i, r));
+    assertTrue(Unicode.areEqualsCaseInsensitive(r, i));
+    assertTrue(Unicode.areEqualsCaseInsensitive(r, r));
+  }
+
+  private void testOptimizedFoldOrbitCase(int i, int[] orbit) {
+    int r = Unicode.simpleFold(i);
+    int j = 0;
+    while (r != i) {
+      assertEquals(r, orbit[j]);
+      j++;
+      r = Unicode.simpleFold(r);
     }
   }
 }

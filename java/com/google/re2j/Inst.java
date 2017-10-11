@@ -13,8 +13,6 @@ package com.google.re2j;
  */
 class Inst {
 
-  private static final int RUNES_LINER_SEARCH_SIZE = 10;
-
   enum Op {
     ALT,
     ALT_MATCH,
@@ -75,7 +73,7 @@ class Inst {
       int[] folds = Unicode.optimizedFoldOrbit(r0);
 
       if (folds == null) {
-        return (r == Unicode.optimizedFoldNonOrbit(r0));
+        return Unicode.areEqualsCaseInsensitive(r, r0);
       } else {
         for(int i = 0; i < folds.length; i++) {
           if (folds[i] == r) return true;
@@ -85,10 +83,11 @@ class Inst {
     return false;
   }
 
+
   private boolean multiMatchRune(int r) {
     // Peek at the first 5 pairs.
     // Should handle ASCII well.
-    int length = Math.min(runes.length, RUNES_LINER_SEARCH_SIZE);
+    int length = Math.min(runes.length, 10);
     for (int j = 0; j < length; j += 2) {
       if (r < runes[j]) {
         return false;
@@ -98,12 +97,13 @@ class Inst {
       }
     }
 
-    // Otherwise binary search on rest of the array
-    for (int lo = 0, hi = (runes.length - RUNES_LINER_SEARCH_SIZE) / 2; lo < hi; ) {
+    // Otherwise binary search
+    // Invariant: lo, hi, m are even.
+    for (int lo = 0, hi = runes.length / 2; lo < hi; ) {
       int m = lo + (hi - lo) / 2;
-      int c = runes[2 * m + RUNES_LINER_SEARCH_SIZE];
+      int c = runes[2 * m];
       if (c <= r) {
-        if (r <= runes[2 * m + 1 + RUNES_LINER_SEARCH_SIZE]) {
+        if (r <= runes[2 * m + 1]) {
           return true;
         }
         lo = m + 1;

@@ -26,7 +26,6 @@ final class Inst {
   public static final int RUNE_ANY_NOT_NL = 11;
 
   final int op;
-  final int mergedOp; // merges all the rune special cases into RUNE
   final int out;  // all but MATCH, FAIL
   final int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
   final int[] runes;  // length==1 => exact match
@@ -38,21 +37,9 @@ final class Inst {
     this.out = out;
     this.arg = arg;
     this.runes = runes;
-    this.mergedOp = mergedOp(op);
   }
-  
-  // op() returns i.Op but merges all the rune special cases into RUNE
-  // Beware "op" is a public field.
-  private static int mergedOp(int op) {
-    switch (op) {
-      case RUNE1:
-      case RUNE_ANY:
-      case RUNE_ANY_NOT_NL:
-        return RUNE;
-      default:
-        return op;
-    }
-  }
+
+  static boolean isRuneOp(int op) { return RUNE <= op && op <= RUNE_ANY_NOT_NL; }
 
   // MatchRune returns true if the instruction matches (and consumes) r.
   // It should only be called when op == InstRune.

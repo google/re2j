@@ -25,18 +25,15 @@ final class Inst {
   public static final int RUNE_ANY = 10;
   public static final int RUNE_ANY_NOT_NL = 11;
 
-  final int op;
-  final int out;  // all but MATCH, FAIL
-  final int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
-  final int[] runes;  // length==1 => exact match
+  int op;
+  int out;  // all but MATCH, FAIL
+  int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
+  int[] runes;  // length==1 => exact match
                 // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
                 // REVIEWERS: why not half-open intervals?
 
-  Inst(int op, int out, int arg, int[] runes) {
+  Inst(int op) {
     this.op = op;
-    this.out = out;
-    this.arg = arg;
-    this.runes = runes;
   }
 
   static boolean isRuneOp(int op) { return RUNE <= op && op <= RUNE_ANY_NOT_NL; }

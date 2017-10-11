@@ -15,7 +15,7 @@ import java.util.List;
  */
 final class ProgBuilder {
   
-  final List<InstBuilder> inst = new ArrayList<InstBuilder>();
+  final List<Inst> inst = new ArrayList<Inst>();
   int start; // index of start instruction
   int numCap = 2; // number of CAPTURE insts in re
                   // 2 => implicit ( and ) for whole match $0
@@ -25,7 +25,7 @@ final class ProgBuilder {
 
   // Returns the instruction at the specified pc.
   // Precondition: pc > 0 && pc < numInst().
-  InstBuilder getInst(int pc) {
+  Inst getInst(int pc) {
     return inst.get(pc);
   }
 
@@ -37,12 +37,12 @@ final class ProgBuilder {
   // Adds a new instruction to this program, with operator |op| and |pc| equal
   // to |numInst()|.
   void addInst(int op) {
-    inst.add(new InstBuilder(op));
+    inst.add(new Inst(op));
   }
 
 
   int next(int l) {
-    InstBuilder i = inst.get(l >> 1);
+    Inst i = inst.get(l >> 1);
     if ((l & 1) == 0) {
       return i.out;
     }
@@ -51,7 +51,7 @@ final class ProgBuilder {
 
   void patch(int l, int val) {
     while (l != 0) {
-      InstBuilder i = inst.get(l >> 1);
+      Inst i = inst.get(l >> 1);
       if ((l & 1) == 0) {
         l = i.out;
         i.out = val;
@@ -77,7 +77,7 @@ final class ProgBuilder {
       }
       last = next;
     }
-    InstBuilder i = inst.get(last>>1);
+    Inst i = inst.get(last>>1);
     if ((last & 1) == 0) {
       i.out = l2;
     } else {
@@ -106,13 +106,6 @@ final class ProgBuilder {
   }
 
   public Prog build() {
-    Inst[] insts = new Inst[inst.size()];
-    
-    int i = 0;
-    for(InstBuilder instBuilder : inst) {
-      insts[i] = instBuilder.build();
-      i++;
-    }
-    return new Prog(insts, start, numCap);
+    return new Prog(inst.toArray(new Inst[0]), start, numCap);
   }
 }

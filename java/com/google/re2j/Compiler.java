@@ -101,7 +101,7 @@ class Compiler {
       return f1;
     }
     Frag f = newInst(Inst.ALT);
-    InstBuilder i = prog.getInst(f.i);
+    Inst i = prog.getInst(f.i);
     i.out = f1.i;
     i.arg = f2.i;
     f.out = prog.append(f1.out, f2.out);
@@ -111,7 +111,7 @@ class Compiler {
   // Given a fragment for a, returns a fragment for a? or a?? (if nongreedy)
   private Frag quest(Frag f1, boolean nongreedy) {
     Frag f = newInst(Inst.ALT);
-    InstBuilder i = prog.getInst(f.i);
+    Inst i = prog.getInst(f.i);
     if (nongreedy) {
       i.arg = f1.i;
       f.out = f.i << 1;
@@ -126,7 +126,7 @@ class Compiler {
   // Given a fragment a, returns a fragment for a* or a*? (if nongreedy)
   private Frag star(Frag f1, boolean nongreedy) {
     Frag f = newInst(Inst.ALT);
-    InstBuilder i = prog.getInst(f.i);
+    Inst i = prog.getInst(f.i);
     if (nongreedy) {
       i.arg = f1.i;
       f.out = f.i << 1;
@@ -158,7 +158,7 @@ class Compiler {
   // flags : parser flags
   private Frag rune(int[] runes, int flags) {
     Frag f = newInst(Inst.RUNE);
-    InstBuilder i = prog.getInst(f.i);
+    Inst i = prog.getInst(f.i);
     i.runes = runes;
     flags &= RE2.FOLD_CASE;  // only relevant flag is FoldCase
     if (runes.length != 1 || Unicode.simpleFold(runes[0]) == runes[0]) {

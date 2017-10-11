@@ -362,7 +362,7 @@ class Machine {
     }
     int d = q.add(pc);
     Inst inst = prog.inst[pc];
-    switch (inst.mergedOp) {
+    switch (inst.op) {
       default:
         throw new IllegalStateException("unhandled");
 

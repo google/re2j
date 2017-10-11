@@ -37,7 +37,7 @@ class Compiler {
     }
   }
 
-  private final ProgBuilder prog = new ProgBuilder();  // Program being built
+  private final Prog prog = new Prog();  // Program being built
 
   private Compiler() {
     newInst(Inst.FAIL);  // always the first instruction
@@ -48,7 +48,7 @@ class Compiler {
     Frag f = c.compile(re);
     c.prog.patch(f.out, c.newInst(Inst.MATCH).i);
     c.prog.start = f.i;
-    return c.prog.build();
+    return c.prog;
   }
 
   private Frag newInst(int op) {
@@ -59,7 +59,7 @@ class Compiler {
 
   // Returns a no-op fragment.  Sometimes unavoidable.
   private Frag nop() {
-    Frag f = newInst(Inst.NOP);
+    Frag f = newInst(Inst.NOP); 
     f.out = f.i << 1;
     return f;
   }

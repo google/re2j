@@ -110,8 +110,13 @@ class RE2 {
   int prefixRune;               // first rune in prefix
 
   // Cache of machines for running regexp.
-  // Accesses must be serialized using |this| monitor.
-  private final List<Machine> machine = new ArrayList<Machine>();
+  private final ThreadLocal<Machine> machineThreadLocal =
+      new ThreadLocal<Machine>() {
+        @Override
+        protected Machine initialValue() {
+          return new Machine(RE2.this);
+        }
+      };
 
   // This is visible for testing.
   RE2(String expr) {
@@ -207,29 +212,6 @@ class RE2 {
     return numSubexp;
   }
 
-  // get() returns a machine to use for matching |this|.  It uses |this|'s
-  // machine cache if possible, to avoid unnecessary allocation.
-  synchronized Machine get() {
-    int n = machine.size();
-    if (n > 0) {
-      return machine.remove(n - 1);
-    }
-    return new Machine(this);
-  }
-
-  // Clears the memory associated with this machine.
-  synchronized void reset() {
-    machine.clear();
-  }
-
-  // put() returns a machine to |this|'s machine cache.  There is no attempt to
-  // limit the size of the cache, so it will grow to the maximum number of
-  // simultaneous matches run using |this|.  (The cache empties when |this|
-  // gets garbage collected.)
-  synchronized void put(Machine m) {
-    machine.add(m);
-  }
-
   @Override
   public String toString() {
     return expr;
@@ -239,11 +221,9 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
-    Machine m = get();
+    Machine m = machineThreadLocal.get();
     m.init(ncap);
-    int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
-    put(m);
-    return cap;
+    return m.match(in, pos, anchor) ? m.submatches() : null;
   }
 
   /**

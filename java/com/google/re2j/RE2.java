@@ -110,13 +110,8 @@ class RE2 {
   int prefixRune;               // first rune in prefix
 
   // Cache of machines for running regexp.
-  private final ThreadLocal<Machine> machineThreadLocal =
-      new ThreadLocal<Machine>() {
-        @Override
-        protected Machine initialValue() {
-          return new Machine(RE2.this);
-        }
-      };
+  // Warning: Don't use initialValue, GWT doesn't have that method.
+  private final ThreadLocal<Machine> machineThreadLocal = new ThreadLocal<Machine>();
 
   // This is visible for testing.
   RE2(String expr) {
@@ -227,6 +222,10 @@ class RE2 {
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
     Machine m = machineThreadLocal.get();
+    if (m == null) {
+      m = new Machine(this);
+      machineThreadLocal.set(m);
+    }
     m.init(ncap);
     return m.match(in, pos, anchor) ? m.submatches() : null;
   }

@@ -204,6 +204,11 @@ class RE2 {
     return re2;
   }
 
+  // Clears the memory associated with this machine for the current thread.
+  void reset() {
+    machineThreadLocal.remove();
+  }
+
   /**
    * Returns the number of parenthesized subexpressions in this regular
    * expression.

@@ -58,7 +58,7 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Releases current thread memory used by internal caches associated with this pattern. Does
+   * Releases memory used by internal caches associated with this pattern. Does
    * not change the observable behaviour. Useful for tests that detect memory
    * leaks via allocation tracking.
    */

@@ -1,0 +1,5 @@
+<module rename-to="re2j">
+    <inherits name="com.google.gwt.user.User" />
+    <entry-point class="com.google.re2j.FakeGWTEntryPoint" />
+    <source path=""/>
+</module>

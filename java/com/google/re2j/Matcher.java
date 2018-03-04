@@ -87,6 +87,7 @@ public final class Matcher {
    * @return the {@code Matcher} itself, for chained method calls
    */
   public Matcher reset() {
+    inputLength = inputSequence.length();
     appendPos = 0;
     hasMatch = false;
     hasGroups = false;
@@ -103,9 +104,8 @@ public final class Matcher {
     if (input == null) {
       throw new NullPointerException("input is null");
     }
-    reset();
     inputSequence = input;
-    inputLength = input.length();
+    reset();
     return this;
   }
 

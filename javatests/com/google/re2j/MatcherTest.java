@@ -412,4 +412,14 @@ public class MatcherTest {
     assertFalse(m.find());
   }
 
+  @Test
+  public void testMutableCharSequence() {
+    Pattern p = Pattern.compile("b(an)*(.)");
+    StringBuilder b = new StringBuilder("by, band, banana");
+    Matcher m = p.matcher(b);
+    assertTrue(m.find(0));
+    int start = b.indexOf("ban");
+    b.replace(b.indexOf("ban"), start + 3, "b");
+    assertTrue(m.find(b.indexOf("ban")));
+  }
 }

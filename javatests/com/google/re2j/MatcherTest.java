@@ -453,6 +453,7 @@ public class MatcherTest {
     assertEquals(null, m.group("nomatch"));
     assertEquals(-1, m.start("nomatch"));
     assertEquals(-1, m.end("nomatch"));
+    assertEquals("whatbbarrrrreverbag", appendReplacement(m, "what$2ever${bag}"));
 
     try {
       m.group("nonexistent");
@@ -460,5 +461,11 @@ public class MatcherTest {
     } catch (IllegalArgumentException expected) {
       // Expected
     }
+  }
+
+  private String appendReplacement(Matcher m, String replacement) {
+    StringBuilder b = new StringBuilder();
+    m.appendReplacement(b, replacement);
+    return b.toString();
   }
 }

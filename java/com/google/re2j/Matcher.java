@@ -2,6 +2,8 @@
 
 package com.google.re2j;
 
+import java.util.Map;
+
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a specific input. Its interface
  * mimics the JDK 1.4.2 {@code java.util.regex.Matcher}.
@@ -37,6 +39,8 @@ public final class Matcher {
   // The group indexes, in [start, end) pairs.  Zeroth pair is overall match.
   private final int[] groups;
 
+  private final Map<String, Integer> namedGroups;
+
   // The number of submatches (groups) in the pattern.
   private final int groupCount;
 
@@ -66,6 +70,7 @@ public final class Matcher {
     RE2 re2 = pattern.re2();
     groupCount = re2.numberOfCapturingGroups();
     groups = new int[2 + 2 * groupCount];
+    namedGroups = re2.namedGroups;
   }
 
   /** Creates a new {@code Matcher} with the given pattern and input. */
@@ -138,6 +143,21 @@ public final class Matcher {
   }
 
   /**
+   * Returns the start of the named group of the most recent match, or -1 if the group was not
+   * matched.
+   *
+   * @param group the group name
+   * @throws IllegalArgumentException if no group with that name exists
+   */
+  public int start(String group) {
+    Integer g = namedGroups.get(group);
+    if (g == null) {
+      throw new IllegalArgumentException("group '" + group + "' not found");
+    }
+    return start(g);
+  }
+
+  /**
    * Returns the end position of a subgroup of the most recent match.
    *
    * @param group the group index; 0 is the overall match
@@ -147,6 +167,21 @@ public final class Matcher {
   public int end(int group) {
     loadGroup(group);
     return groups[2 * group + 1];
+  }
+
+  /**
+   * Returns the end of the named group of the most recent match, or -1 if the group was not
+   * matched.
+   *
+   * @param group the group name
+   * @throws IllegalArgumentException if no group with that name exists
+   */
+  public int end(String group) {
+    Integer g = namedGroups.get(group);
+    if (g == null) {
+      throw new IllegalArgumentException("group '" + group + "' not found");
+    }
+    return end(g);
   }
 
   /**
@@ -172,6 +207,20 @@ public final class Matcher {
       return null;
     }
     return substring(start, end);
+  }
+
+  /**
+   * Returns the named group of the most recent match, or {@code null} if the group was not matched.
+   *
+   * @param group the group name
+   * @throws IllegalArgumentException if no group with that name exists
+   */
+  public String group(String group) {
+    Integer g = namedGroups.get(group);
+    if (g == null) {
+      throw new IllegalArgumentException("group '" + group + "' not found");
+    }
+    return group(g);
   }
 
   /**

@@ -528,6 +528,8 @@ public class ParserTest {
     "(?i)[a-Z]",
     "a{100000}",
     "a{100000,}",
+    // Group names may not be repeated
+    "(?P<foo>bar)(?P<foo>baz)",
   };
 
   private static final String[] ONLY_PERL = {

@@ -13,7 +13,9 @@ package com.google.re2j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A parser of regular expression patterns.
@@ -38,6 +40,7 @@ class Parser {
   private static final String ERR_MISSING_REPEAT_ARGUMENT =
       "missing argument to repetition operator";
   private static final String ERR_TRAILING_BACKSLASH = "trailing backslash at end of expression";
+  private static final String ERR_DUPLICATE_NAMED_CAPTURE = "duplicate capture group name";
 
   // Hack to expose ArrayList.removeRange().
   private static class Stack extends ArrayList<Regexp> {
@@ -56,6 +59,7 @@ class Parser {
   private final Stack stack = new Stack();
   private Regexp free;
   private int numCap = 0; // number of capturing groups seen
+  private Map<String, Integer> namedGroups = new HashMap<String, Integer>();
 
   Parser(String wholeRegexp, int flags) {
     this.wholeRegexp = wholeRegexp;
@@ -972,6 +976,7 @@ class Parser {
     if (n != 1) {
       throw new PatternSyntaxException(ERR_MISSING_PAREN, wholeRegexp);
     }
+    stack.get(0).namedGroups = namedGroups;
     return stack.get(0);
   }
 
@@ -1062,6 +1067,9 @@ class Parser {
       // Like ordinary capture, but named.
       Regexp re = op(Regexp.Op.LEFT_PAREN);
       re.cap = ++numCap;
+      if (namedGroups.put(name, numCap) != null) {
+        throw new PatternSyntaxException(ERR_DUPLICATE_NAMED_CAPTURE, name);
+      }
       re.name = name;
       return;
     }

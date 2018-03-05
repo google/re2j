@@ -391,14 +391,8 @@ public final class Matcher {
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
    */
   public Matcher appendReplacement(StringBuffer sb, String replacement) {
-    int s = start();
-    int e = end();
-    if (appendPos < s) {
-      sb.append(substring(appendPos, s));
-    }
-    appendPos = e;
     StringBuilder result = new StringBuilder();
-    appendReplacementInternal(result, replacement);
+    appendReplacement(result, replacement);
     sb.append(result);
     return this;
   }

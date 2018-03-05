@@ -8,6 +8,7 @@
 package com.google.re2j;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * Regular expression abstract syntax tree. Produced by parser, used by compiler. NB, this
@@ -56,6 +57,7 @@ class Regexp {
   int min, max; // min, max for REPEAT
   int cap; // capturing index, for CAPTURE
   String name; // capturing name, for CAPTURE
+  Map<String, Integer> namedGroups; // map of group name -> capturing index
   // Do update copy ctor when adding new fields!
 
   Regexp(Op op) {
@@ -72,6 +74,7 @@ class Regexp {
     this.max = that.max;
     this.cap = that.cap;
     this.name = that.name;
+    this.namedGroups = that.namedGroups;
   }
 
   void reinit() {

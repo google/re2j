@@ -431,4 +431,34 @@ public class MatcherTest {
     b.replace(b.indexOf("ban"), start + 3, "b");
     assertTrue(m.find(b.indexOf("ban")));
   }
+
+  @Test
+  public void testNamedGroups() {
+    Pattern p =
+        Pattern.compile(
+            "(?P<baz>f(?P<foo>b*a(?P<another>r+)){0,10})" + "(?P<bag>bag)?(?P<nomatch>zzz)?");
+    Matcher m = p.matcher("fbbarrrrrbag");
+    assertTrue(m.matches());
+    assertEquals("fbbarrrrr", m.group("baz"));
+    assertEquals("bbarrrrr", m.group("foo"));
+    assertEquals("rrrrr", m.group("another"));
+    assertEquals(0, m.start("baz"));
+    assertEquals(1, m.start("foo"));
+    assertEquals(4, m.start("another"));
+    assertEquals(9, m.end("baz"));
+    assertEquals(9, m.end("foo"));
+    assertEquals("bag", m.group("bag"));
+    assertEquals(9, m.start("bag"));
+    assertEquals(12, m.end("bag"));
+    assertEquals(null, m.group("nomatch"));
+    assertEquals(-1, m.start("nomatch"));
+    assertEquals(-1, m.end("nomatch"));
+
+    try {
+      m.group("nonexistent");
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+      // Expected
+    }
+  }
 }

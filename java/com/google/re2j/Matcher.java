@@ -467,6 +467,23 @@ public final class Matcher {
           last = i;
           i--;
           continue;
+        } else if (c == '{') {
+          if (last < i) {
+            sb.append(replacement.substring(last, i));
+          }
+          i++; // skip {
+          int j = i + 1;
+          while (j < replacement.length()
+              && replacement.charAt(j) != '}'
+              && replacement.charAt(j) != ' ') {
+            j++;
+          }
+          if (j == replacement.length() || replacement.charAt(j) != '}') {
+            throw new IllegalArgumentException("named capture group is missing trailing '}'");
+          }
+          String groupName = replacement.substring(i + 1, j);
+          sb.append(group(groupName));
+          last = j + 1;
         }
       }
     }

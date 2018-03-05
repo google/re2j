@@ -44,7 +44,6 @@ different package name, it doesn't support the following parts of the
 interface:
 
 * the MatchResult class
-* Matcher.group(String)
 * Matcher.hasAnchoringBounds()
 * Matcher.hasTransparentBounds()
 * Matcher.hitEnd()

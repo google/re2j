@@ -23,6 +23,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 /**
@@ -116,6 +117,7 @@ class RE2 {
   // Accesses must be serialized using |this| monitor.
   // @GuardedBy("this")
   private final Queue<Machine> machine = new ArrayDeque<Machine>();
+  public Map<String, Integer> namedGroups;
 
   // This is visible for testing.
   RE2(String expr) {
@@ -195,6 +197,7 @@ class RE2 {
     if (!re2.prefix.isEmpty()) {
       re2.prefixRune = re2.prefix.codePointAt(0);
     }
+    re2.namedGroups = re.namedGroups;
     return re2;
   }
 

@@ -39,7 +39,7 @@ public class GWTTest {
     addFile(
         jar,
         "com/google/re2j",
-        new File(projectRoot, "/target/test-classes/com/google/re2j/RE2J.gwt.xml"));
+        new File(projectRoot, "/build/resources/test/com/google/re2j/RE2J.gwt.xml"));
     jar.finish();
     jar.close();
 

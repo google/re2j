@@ -1,0 +1,56 @@
+plugins {
+  id 'java-library'
+  id 'wrapper'
+}
+
+wrapper {
+  gradleVersion '4.6'
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+sourceSets {
+  main {
+    java {
+      srcDir 'java'
+    }
+  }
+  test {
+    java {
+      srcDir 'javatests'
+    }
+    resources {
+      srcDir 'testdata'
+    }
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  testCompile 'junit:junit:4.12'
+  testCompile 'com.google.caliper:caliper:1.0-beta-2'
+  testCompile 'com.google.gwt:gwt-dev:2.8.2'
+  testCompile 'com.google.gwt:gwt-user:2.8.2'
+  testCompile 'com.google.truth:truth:0.36'
+}
+
+configurations.testCompile {
+  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+    if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+      // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings
+      // in a later version. This override can be removed when caliper is
+      // updated to a newer version.
+      details.useVersion '18.0'
+    }
+  }
+}
+
+task benchmarks(type: JavaExec) {
+  classpath = sourceSets.test.runtimeClasspath
+  main = 'com.google.re2j.Benchmarks'
+  args = []
+}

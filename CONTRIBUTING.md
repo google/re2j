@@ -26,3 +26,22 @@ use Github pull requests for this purpose.
 Contributions made by corporations are covered by a different agreement than
 the one above, the Software Grant and Corporate Contributor License Agreement.
 
+# Building
+
+The following commands will clone the GitHub repository and run all the RE2/J
+tests:
+
+```
+$ git clone https://github.com/google/re2j.git
+$ cd re2j
+$ ./gradlew check
+```
+
+# Running the benchmarks
+
+You can run the benchmarks by checking out the GitHub repository and then
+running the following command:
+
+```
+$ ./gradlew benchmarks
+```

@@ -6,83 +6,46 @@ Maven Central and to the RE2/J GitHub site.
 
 # Prerequisites
 
-You must have:
+The following are one-time setup steps. You must have:
 
 * git
-* [Apache Maven](http://maven.apache.org/), at least version 3.0.3
 * an account on OSSRH, see the [initial setup section](http://central.sonatype.org/pages/ossrh-guide.html#initial-setup) of the OSSRH guide
 * access to the `com.google.re2` OSSRH repository. For this, you should
   request access by [filing a JIRA ticket](https://issues.sonatype.org/secure/CreateIssue!default.jspa)
   with the OSSRH folks
-* the following `$HOME/.m2/settings.xml` file:
-```xml
-<settings>
-  <servers>
-    <server>
-      <id>sonatype-nexus-staging</id>
-      <username>YourOssrhUsername</username>
-      <password>YourOssrhPassword</password>
-    </server>
-  </servers>
-</settings>
-```
-* a GPG key that is published to a public keyserver such as
-  [the MIT PGP keyserver](http://pgp.mit.edu/). For detailed instructions, see
-  [the GNU Privacy Handbook](https://www.gnupg.org/gph/en/manual.html),
-  specifically the sections on [generating a new keypair](https://www.gnupg.org/gph/en/manual.html#AEN26)
-  and [distributing keys](https://www.gnupg.org/gph/en/manual.html#AEN464)
+* an Open Source account on [JFrog Bintray](https://bintray.com/signup/oss)
+* access to the Bintray [RE2/J organization](https://bintray.com/re2j/). To get
+  this, follow the link and click 'Join'. Your request will be moderated by
+  somebody already in the organization.
+* an [API key](https://www.jfrog.com/confluence/display/RTF/Updating+Your+Profile#UpdatingYourProfile-APIKey) for Bintray
 
 # Making the release
 
 In a shell, change into the RE2/J source code root directory (the one
-containing `pom.xml`), and then run
+containing `build.gradle`). Then:
+
+* edit `build.gradle` and set `versionName` to the name of the next release
+  (e.g. "1.3").
+* `git commit` the version name change
+* `git tag re2j-<versionName>`, e.g. `git tag re2j-1.3`
+* `git push --tags`
+
+Now you're ready to build and push the release.
 
 ```
-mvn release:clean
-mvn release:prepare
-mvn release:perform
+BINTRAY_USER=<your bintray username> BINTRAY_KEY=<your bintray API key> ./gradlew bintrayUpload
 ```
 
-You may be asked for your GitHub credentials several times. If your account
-uses two-factor authentication (2FA), then you will need to generate a
-temporary [access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/)
-and then use that access token in place of your normal password. You may delete
-the access token from your account once the release is done.
+Once successful, the new version needs to be published. Log into Bintray, find
+the new version you have uploaded, then click 'Publish'. People may now use
+JCenter to get RE2/J.
 
-Once you've done these steps, you'll have to
-[login to OSSRH](https://oss.sonatype.org) (look for the Log-In button in the 
-top-right). Once you are logged in, follow these steps:
-
-* click on "Staging Repositories"
-* locate the repository that was created for you when you ran 
-  `mvn release:perform`. It will contain re2j in its name
-* click the checkbox near the repository's name, then click "Close" in the
-  top menubar
-* OSSRH will perform some validation on the repository. You may need to hit the
-  refresh button a few times before you see the repository enter the "closed"
-  state. Once this happens, make sure the repository is checked, then click
-  "Release". For the comment, enter "RE2/J release 1.0" (replace "1.0" with
-  the actual release number)
-
-At this point, the release will be synced to Maven Central within a few minutes.
-You can take this time to update the Maven XML snippet on the RE2/J GitHub page
-to mention the new release number.
-
-Some people don't use Maven, so we can upload binaries to the GitHub site for
-manual download. To do this, follow the instructions for
-[creating releases](https://help.github.com/articles/creating-releases/). For
-the Git tag, use the tag that was created as a result of the
-`mvn release:prepare` command that you ran earlier.
-
-Before you publish the release, attach the following binaries to the release:
-
-* `target/re2j-(releaseNumber).jar`
-* `target/re2j-(releaseNumber)-javadoc.jar`
-* `target/re2j-(releaseNumber)-sources.jar`
-
-Once you publish this release, the process is complete!
+Some people still use Maven Central, so we push the artifact there as well.
+Click on "Maven Central", enter your OSSRH username and password, ensure the
+"Close and release" checkbox is selected and click "Sync". RE2/J will be synced
+to Maven Central after some time (usually around 10 minutes).
 
 # Problems
 
-If you encounter issues, please reach out to the mailing
-list at re2j-discuss@googlegroups.com.
+If you encounter issues, please reach out to the mailing list at
+re2j-discuss@googlegroups.com.

@@ -47,7 +47,6 @@ interface:
 * Matcher.hasAnchoringBounds()
 * Matcher.hasTransparentBounds()
 * Matcher.hitEnd()
-* Matcher.quoteReplacement(String)
 * Matcher.region(int, int)
 * Matcher.regionEnd()
 * Matcher.regionStart()

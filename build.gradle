@@ -1,7 +1,12 @@
 plugins {
   id 'java-library'
   id 'wrapper'
+  id 'com.jfrog.bintray' version '1.7.3'
+  id 'maven-publish'
 }
+
+// The name of the release we're working on. See RELEASING.md for details.
+def versionName = '1.2'
 
 wrapper {
   gradleVersion '4.6'
@@ -53,4 +58,60 @@ task benchmarks(type: JavaExec) {
   classpath = sourceSets.test.runtimeClasspath
   main = 'com.google.re2j.Benchmarks'
   args = []
+}
+
+def releaseVersion = '1.2'
+
+task sourceJar(type: Jar) {
+    baseName 'sources'
+
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    baseName 'javadoc'
+
+    from javadoc.destinationDir
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      from components.java
+
+      artifact sourceJar {
+        classifier 'sources'
+      }
+
+      artifact javadocJar {
+        classifier 'javadoc'
+      }
+
+      groupId 'com.google.re2j'
+      artifactId 're2j'
+      version releaseVersion
+    }
+  }
+}
+
+bintray {
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+
+  pkg {
+    repo = 'maven'
+    name = 're2j'
+    userOrg = 're2j'
+    licenses = ['Go']
+    vcsUrl = 'https://github.com/google/re2j.git'
+
+    version {
+      name = versionName
+      desc = "RE2/J ${versionName}"
+      released = new Date()
+      vcsTag = "re2j-${versionName}"
+    }
+  }
+
+  publications = ['mavenJava']
 }

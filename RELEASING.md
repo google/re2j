@@ -26,6 +26,8 @@ containing `build.gradle`). Then:
 
 * edit `build.gradle` and set `versionName` to the name of the next release
   (e.g. "1.3").
+* change the download instructions in `README.md` to reflect the new version
+  number
 * `git commit` the version name change
 * `git tag re2j-<versionName>`, e.g. `git tag re2j-1.3`
 * `git push --tags`

@@ -74,6 +74,24 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+def appendMavenCentralMetadata(Node node) {
+    node.appendNode('name', 'RE2/J')
+    node.appendNode('description', 'Linear time regular expressions for Java')
+    node.appendNode('url', 'http://github.com/google/re2j')
+
+    def license = node.appendNode('licenses').appendNode('license')
+    license.appendNode('name', 'Go License')
+    license.appendNode('url', 'https://golang.org/LICENSE')
+    license.appendNode('distribution', 'repo')
+
+    node.appendNode('scm').appendNode('url', 'https://github.com/google/re2j.git')
+
+    def developerInfo = node.appendNode('developers').appendNode('developer')
+    developerInfo.appendNode('id', 'dev')
+    developerInfo.appendNode('name', 'The RE2/J Contributors')
+    developerInfo.appendNode('email', 're2j-discuss@googlegroups.com')
+}
+
 publishing {
   publications {
     mavenJava(MavenPublication) {
@@ -90,6 +108,10 @@ publishing {
       groupId 'com.google.re2j'
       artifactId 're2j'
       version releaseVersion
+
+      pom.withXml {
+        appendMavenCentralMetadata(asNode())
+      }
     }
   }
 }

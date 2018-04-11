@@ -1524,6 +1524,10 @@ class Parser {
     if (table != null) {
       return Pair.of(table, UnicodeTables.FOLD_SCRIPT.get(name));
     }
+    table = JavaCategoryTables.CATEGORIES.get(name);
+    if (table != null) {
+      return Pair.of(table, null);
+    }
     return null;
   }
 

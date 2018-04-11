@@ -33,6 +33,8 @@ public class RE2CompileTest {
       {"\\!\\\\", null},
       {"abc]",  null}, // Matches the closing bracket literally.
       {"a??", null},
+      {"\\p{javaJavaIdentifierStart}", null},
+      {"\\p{javaJavaIdentifierPart}", null},
       {"*", "missing argument to repetition operator: `*`"},
       {"+", "missing argument to repetition operator: `+`"},
       {"?", "missing argument to repetition operator: `?`"},

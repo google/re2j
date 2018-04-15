@@ -265,5 +265,25 @@ public final class Pattern implements Serializable {
     return Pattern.compile(pattern, flags);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Pattern other = (Pattern) o;
+    return flags == other.flags && pattern.equals(other.pattern);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = pattern.hashCode();
+    result = 31 * result + flags;
+    return result;
+  }
+
   private static final long serialVersionUID = 0;
 }

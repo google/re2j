@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import com.google.common.truth.Truth;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -187,5 +188,17 @@ public class PatternTest {
     assertSerializes(Pattern.compile("ab+c"));
     assertSerializes(Pattern.compile("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE));
     assertFalse(reserialize(Pattern.compile("abc")).matcher("def").find());
+  }
+
+  @Test
+  public void testEquals() {
+    Pattern pattern1 = Pattern.compile("abc");
+    Pattern pattern2 = Pattern.compile("abc");
+    Pattern pattern3 = Pattern.compile("def");
+    Pattern pattern4 = Pattern.compile("abc", Pattern.CASE_INSENSITIVE);
+    Truth.assertThat(pattern1).isEqualTo(pattern2);
+    Truth.assertThat(pattern1).isNotEqualTo(pattern3);
+    Truth.assertThat(pattern1.hashCode()).isEqualTo(pattern2.hashCode());
+    Truth.assertThat(pattern1).isNotEqualTo(pattern4);
   }
 }

@@ -5,6 +5,7 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -180,6 +181,7 @@ public class PatternTest {
     Pattern reserialized = reserialize(p);
     assertEquals(p.pattern(), reserialized.pattern());
     assertEquals(p.flags(), reserialized.flags());
+    assertNotNull(reserialized.re2());
   }
 
   @Test

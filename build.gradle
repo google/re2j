@@ -43,7 +43,7 @@ dependencies {
   testCompile 'com.google.truth:truth:0.36'
 }
 
-configurations.testCompile {
+configurations.all {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
       // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings

@@ -211,6 +211,7 @@ public class CharClassTest {
         cc().appendGroup(CharGroup.PERL_GROUPS.get("\\D"), false), 0, '/', ':', Unicode.MAX_RUNE);
   }
 
+  @Test
   public void testToString() {
     assertEquals("[0xa 0xc-0x14]", cc(10, 10, 12, 20).toString());
   }

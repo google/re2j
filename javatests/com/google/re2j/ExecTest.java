@@ -72,13 +72,10 @@ public class ExecTest {
   @Test
   public void testExamplesInDocumentation() throws PatternSyntaxException {
     RE2 re = RE2.compile("(?i:co(.)a)");
-    assertEquals(Arrays.asList("Copa", "coba"),
-                 re.findAll("Copacobana", 10));
+    assertEquals(Arrays.asList("Copa", "coba"), re.findAll("Copacobana", 10));
     List<String[]> x = re.findAllSubmatch("Copacobana", 100);
-    assertEquals(Arrays.asList("Copa", "p"),
-                 Arrays.asList(x.get(0)));
-    assertEquals(Arrays.asList("coba", "b"),
-                 Arrays.asList(x.get(1)));
+    assertEquals(Arrays.asList("Copa", "p"), Arrays.asList(x.get(0)));
+    assertEquals(Arrays.asList("coba", "b"), Arrays.asList(x.get(1)));
   }
 
   @Test
@@ -88,7 +85,7 @@ public class ExecTest {
 
   @Test
   public void testRE2Exhaustive() throws IOException {
-    testRE2("re2-exhaustive.txt.gz");  // takes about 30s
+    testRE2("re2-exhaustive.txt.gz"); // takes about 30s
   }
 
   public void testRE2(String file) throws IOException {
@@ -96,13 +93,12 @@ public class ExecTest {
     // TODO(adonovan): call in.close() on all paths.
     if (file.endsWith(".gz")) {
       in = new GZIPInputStream(in);
-      file = file.substring(0, file.length() - ".gz".length());  // for errors
+      file = file.substring(0, file.length() - ".gz".length()); // for errors
     }
     int lineno = 0;
-    UNIXBufferedReader r =
-        new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
+    UNIXBufferedReader r = new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
     ArrayList<String> strings = new ArrayList<String>();
-    int input = 0;  // next index within strings to read
+    int input = 0; // next index within strings to read
     boolean inStrings = false;
     RE2 re = null, refull = null;
     int nfail = 0, ncase = 0;
@@ -123,9 +119,12 @@ public class ExecTest {
         continue;
       } else if (line.equals("strings")) {
         if (input < strings.size()) {
-          fail(String.format(
-              "%s:%d: out of sync: have %d strings left",
-              file, lineno, strings.size() - input));
+          fail(
+              String.format(
+                  "%s:%d: out of sync: have %d strings left",
+                  file,
+                  lineno,
+                  strings.size() - input));
         }
         strings.clear();
         inStrings = true;
@@ -137,9 +136,8 @@ public class ExecTest {
           q = Strconv.unquote(line);
         } catch (Exception e) {
           // Fatal because we'll get out of sync.
-          fail(String.format("%s:%d: unquote %s: %s",
-                             file, lineno, line, e.getMessage()));
-          q = null;  // unreachable
+          fail(String.format("%s:%d: unquote %s: %s", file, lineno, line, e.getMessage()));
+          q = null; // unreachable
         }
         if (inStrings) {
           strings.add(q);
@@ -149,14 +147,12 @@ public class ExecTest {
         re = refull = null;
         try {
           re = RE2.compile(q);
-        } catch (Throwable e) {  // (handle compiler panic too)
-          if (e.getMessage().equals(
-                  "error parsing regexp: invalid escape sequence: `\\C`")) {
+        } catch (Throwable e) { // (handle compiler panic too)
+          if (e.getMessage().equals("error parsing regexp: invalid escape sequence: `\\C`")) {
             // We don't and likely never will support \C; keep going.
             continue;
           }
-          System.err.format("%s:%d: compile %s: %s\n", file, lineno, q,
-                            e.getMessage());
+          System.err.format("%s:%d: compile %s: %s\n", file, lineno, q, e.getMessage());
           if (++nfail >= 100) {
             fail("stopping after " + nfail + " errors");
           }
@@ -165,11 +161,9 @@ public class ExecTest {
         String full = "\\A(?:" + q + ")\\z";
         try {
           refull = RE2.compile(full);
-        } catch (Throwable e) {  // (handle compiler panic too)
+        } catch (Throwable e) { // (handle compiler panic too)
           // Fatal because q worked, so this should always work.
-          fail(String.format(
-              "%s:%d: compile full %s: %s",
-              file, lineno, full, e.getMessage()));
+          fail(String.format("%s:%d: compile full %s: %s", file, lineno, full, e.getMessage()));
         }
         input = 0;
       } else if (first == '-' || '0' <= first && first <= '9') {
@@ -180,8 +174,7 @@ public class ExecTest {
           continue;
         }
         if (input >= strings.size()) {
-          fail(String.format("%s:%d: out of sync: no input remaining",
-                             file, lineno));
+          fail(String.format("%s:%d: out of sync: no input remaining", file, lineno));
         }
         String text = strings.get(input++);
         boolean multibyte = !isSingleBytes(text);
@@ -194,26 +187,29 @@ public class ExecTest {
         }
         String[] res = line.split(";");
         if (res.length != 4) {
-          fail(String.format("%s:%d: have %d test results, want %d",
-                             file, lineno, res.length, 4));
+          fail(String.format("%s:%d: have %d test results, want %d", file, lineno, res.length, 4));
         }
         for (int i = 0; i < 4; ++i) {
           boolean partial = (i & 1) != 0, longest = (i & 2) != 0;
           RE2 regexp = partial ? re : refull;
 
           regexp.longest = longest;
-          int[] have = regexp.findSubmatchIndex(text);  // UTF-16 indices
+          int[] have = regexp.findSubmatchIndex(text); // UTF-16 indices
           if (multibyte && have != null) {
             // The testdata uses UTF-8 indices, but we're using the UTF-16 API.
             // Perhaps we should use the UTF-8 RE2 API?
             have = utf16IndicesToUtf8(have, text);
           }
-          int[] want = parseResult(file, lineno, res[i]);  // UTF-8 indices
+          int[] want = parseResult(file, lineno, res[i]); // UTF-8 indices
           if (!Arrays.equals(want, have)) {
             System.err.format(
-                "%s:%d: %s[partial=%b,longest=%b].findSubmatchIndex(%s) = " +
-                "%s, want %s\n",
-                file, lineno, re, partial, longest, text,
+                "%s:%d: %s[partial=%b,longest=%b].findSubmatchIndex(%s) = " + "%s, want %s\n",
+                file,
+                lineno,
+                re,
+                partial,
+                longest,
+                text,
                 Arrays.toString(have),
                 Arrays.toString(want));
             if (++nfail >= 100) {
@@ -226,9 +222,15 @@ public class ExecTest {
           boolean b = regexp.match(text);
           if (b != (want != null)) {
             System.err.format(
-                "%s:%d: %s[partial=%b,longest=%b].match(%s) = " +
-                "%b, want %b\n",
-                file, lineno, re, partial, longest, text, b, !b);
+                "%s:%d: %s[partial=%b,longest=%b].match(%s) = " + "%b, want %b\n",
+                file,
+                lineno,
+                re,
+                partial,
+                longest,
+                text,
+                b,
+                !b);
             if (++nfail >= 100) {
               fail("stopping after " + nfail + " errors");
             }
@@ -240,8 +242,12 @@ public class ExecTest {
       }
     }
     if (input < strings.size()) {
-      fail(String.format("%s:%d: out of sync: have %d strings left at EOF",
-                         file, lineno, strings.size() - input));
+      fail(
+          String.format(
+              "%s:%d: out of sync: have %d strings left at EOF",
+              file,
+              lineno,
+              strings.size() - input));
     }
 
     if (nfail > 0) {
@@ -331,10 +337,12 @@ public class ExecTest {
   public void testFowlerBasic() throws Exception {
     testFowler("basic.dat");
   }
+
   @Test
   public void testFowlerNullSubexpr() throws Exception {
     testFowler("nullsubexpr.dat");
   }
+
   @Test
   public void testFowlerRepetition() throws Exception {
     testFowler("repetition.dat");
@@ -345,8 +353,7 @@ public class ExecTest {
   private void testFowler(String file) throws IOException {
     InputStream in = ExecTest.class.getResourceAsStream("/" + file);
     // TODO(adonovan): call in.close() on all paths.
-    UNIXBufferedReader r =
-        new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
+    UNIXBufferedReader r = new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
     int lineno = 0;
     int nerr = 0;
     String line;
@@ -447,7 +454,12 @@ public class ExecTest {
       //     number           use number for nmatch (20 by default)
       String flag = field.get(0);
       switch (flag.charAt(0)) {
-        case '?': case '&': case '|': case ';': case '{': case '}':
+        case '?':
+        case '&':
+        case '|':
+        case ';':
+        case '{':
+        case '}':
           // Ignore all the control operators.
           // Just run everything.
           flag = flag.substring(1);
@@ -455,18 +467,29 @@ public class ExecTest {
             continue;
           }
           break;
-        case ':': {
-          int i = flag.indexOf(':', 1);
-          if (i < 0) {
-            System.err.format("skip: %s\n", line);
-            continue;
+        case ':':
+          {
+            int i = flag.indexOf(':', 1);
+            if (i < 0) {
+              System.err.format("skip: %s\n", line);
+              continue;
+            }
+            flag = flag.substring(1 + i + 1);
+            break;
           }
-          flag = flag.substring(1 + i + 1);
-          break;
-        }
-        case 'C': case 'N': case 'T':
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
+        case 'C':
+        case 'N':
+        case 'T':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
           System.err.format("skip: %s\n", line);
           continue;
       }
@@ -509,13 +532,12 @@ public class ExecTest {
       String text = field.get(2);
 
       //   Field 4: the test outcome...
-      boolean[] shouldCompileMatch = {false, false};  // in/out param to parser
+      boolean[] shouldCompileMatch = {false, false}; // in/out param to parser
       List<Integer> pos;
       try {
         pos = parseFowlerResult(field.get(3), shouldCompileMatch);
       } catch (Exception e) {
-        System.err.format("%s:%d: cannot parse result %s\n",
-                          file, lineno, field.get(3));
+        System.err.format("%s:%d: cannot parse result %s\n", file, lineno, field.get(3));
         nerr++;
         continue;
       }
@@ -534,7 +556,7 @@ public class ExecTest {
             break;
           case 'L':
             // literal
-              pattern = RE2.quoteMeta(pattern);
+            pattern = RE2.quoteMeta(pattern);
         }
 
         if (flag.indexOf('i') >= 0) {
@@ -546,34 +568,38 @@ public class ExecTest {
           re = RE2.compileImpl(pattern, flags, true);
         } catch (PatternSyntaxException e) {
           if (shouldCompileMatch[0]) {
-            System.err.format("%s:%d: %s did not compile\n",
-                              file, lineno, pattern);
+            System.err.format("%s:%d: %s did not compile\n", file, lineno, pattern);
             nerr++;
           }
           continue;
         }
         if (!shouldCompileMatch[0]) {
-          System.err.format("%s:%d: %s should not compile\n",
-                            file, lineno, pattern);
+          System.err.format("%s:%d: %s should not compile\n", file, lineno, pattern);
           nerr++;
           continue;
         }
         boolean match = re.match(text);
         if (match != shouldCompileMatch[1]) {
-          System.err.format("%s:%d: %s.match(%s) = %s, want %s\n",
-                            file, lineno, pattern, text, match, !match);
+          System.err.format(
+              "%s:%d: %s.match(%s) = %s, want %s\n", file, lineno, pattern, text, match, !match);
           nerr++;
           continue;
         }
         int[] haveArray = re.findSubmatchIndex(text);
         if (haveArray == null) {
-          haveArray = Utils.EMPTY_INTS;  // to make .length and printing safe
+          haveArray = Utils.EMPTY_INTS; // to make .length and printing safe
         }
         if ((haveArray.length > 0) != match) {
-          System.err.format("%s:%d: %s.match(%s) = %s, " +
-                            "but %s.findSubmatchIndex(%s) = %s\n",
-                            file, lineno, pattern, text, match, pattern, text,
-                            Arrays.toString(haveArray));
+          System.err.format(
+              "%s:%d: %s.match(%s) = %s, " + "but %s.findSubmatchIndex(%s) = %s\n",
+              file,
+              lineno,
+              pattern,
+              text,
+              match,
+              pattern,
+              text,
+              Arrays.toString(haveArray));
           nerr++;
           continue;
         }
@@ -583,8 +609,14 @@ public class ExecTest {
           have.add(haveArray[i]);
         }
         if (!have.equals(pos)) {
-          System.err.format("%s:%d: %s.findSubmatchIndex(%s) = %s, want %s\n",
-                            file, lineno, pattern, text, have, pos);
+          System.err.format(
+              "%s:%d: %s.findSubmatchIndex(%s) = %s, want %s\n",
+              file,
+              lineno,
+              pattern,
+              text,
+              have,
+              pos);
           nerr++;
           continue;
         }
@@ -595,8 +627,7 @@ public class ExecTest {
     }
   }
 
-  private static List<Integer> parseFowlerResult(String s,
-                                                 boolean[] shouldCompileMatch)
+  private static List<Integer> parseFowlerResult(String s, boolean[] shouldCompileMatch)
       throws RuntimeException {
     String olds = s;
     //   Field 4: the test outcome. This is either one of the posix error
@@ -642,12 +673,12 @@ public class ExecTest {
         end = ',';
       }
       int i = s.indexOf(end);
-      if (i <= 0) {  // [sic]
-        throw new RuntimeException("parse error: missing '" + end  + "'");
+      if (i <= 0) { // [sic]
+        throw new RuntimeException("parse error: missing '" + end + "'");
       }
       String num = s.substring(0, i);
       if (!num.equals("?")) {
-        result.add(Integer.valueOf(num));  // (may throw)
+        result.add(Integer.valueOf(num)); // (may throw)
       } else {
         result.add(-1);
       }

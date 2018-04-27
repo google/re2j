@@ -8,12 +8,14 @@ import java.io.Serializable;
  * A compiled representation of an RE2 regular expression, mimicking the
  * {@code java.util.regex.Pattern} API.
  *
- * <p>The matching functions take {@code String} arguments instead of
- * the more general Java {@code CharSequence} since the latter doesn't
- * provide UTF-16 decoding.
+ * <p>
+ * The matching functions take {@code String} arguments instead of the more general Java
+ * {@code CharSequence} since the latter doesn't provide UTF-16 decoding.
  *
- * <p>See the <a href='package.html'>package-level
- * documentation</a> for an overview of how to use this API.</p>
+ * <p>
+ * See the <a href='package.html'>package-level documentation</a> for an overview of how to use this
+ * API.
+ * </p>
  *
  * @author rsc@google.com (Russ Cox)
  */
@@ -25,13 +27,13 @@ public final class Pattern implements Serializable {
   public static final int DOTALL = 2;
 
   /**
-   * Flag: multiline matching: {@code ^} and {@code $} match at
-   * beginning and end of line, not just beginning and end of input.
+   * Flag: multiline matching: {@code ^} and {@code $} match at beginning and end of line, not just
+   * beginning and end of input.
    */
   public static final int MULTILINE = 4;
 
   /**
-   * Flag: Unicode groups (e.g. {@code \p\{Greek\}}) will be syntax errors.
+   * Flag: Unicode groups (e.g. {@code \p\ Greek\} ) will be syntax errors.
    */
   public static final int DISABLE_UNICODE_GROUPS = 8;
 
@@ -58,9 +60,8 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Releases memory used by internal caches associated with this pattern. Does
-   * not change the observable behaviour. Useful for tests that detect memory
-   * leaks via allocation tracking.
+   * Releases memory used by internal caches associated with this pattern. Does not change the
+   * observable behaviour. Useful for tests that detect memory leaks via allocation tracking.
    */
   public void reset() {
     re2.reset();
@@ -85,8 +86,8 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Creates and returns a new {@code Pattern} corresponding to
-   * compiling {@code regex} with the default flags (0).
+   * Creates and returns a new {@code Pattern} corresponding to compiling {@code regex} with the
+   * default flags (0).
    *
    * @param regex the regular expression
    * @throws PatternSyntaxException if the pattern is malformed
@@ -96,12 +97,12 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Creates and returns a new {@code Pattern} corresponding to
-   * compiling {@code regex} with the default flags (0).
+   * Creates and returns a new {@code Pattern} corresponding to compiling {@code regex} with the
+   * default flags (0).
    *
    * @param regex the regular expression
-   * @param flags bitwise OR of the flag constants {@code CASE_INSENSITIVE},
-   *    {@code DOTALL}, and {@code MULTILINE}
+   * @param flags bitwise OR of the flag constants {@code CASE_INSENSITIVE}, {@code DOTALL}, and
+   * {@code MULTILINE}
    * @throws PatternSyntaxException if the regular expression is malformed
    * @throws IllegalArgumentException if an unknown flag is given
    */
@@ -117,22 +118,22 @@ public final class Pattern implements Serializable {
       flregex = "(?m)" + flregex;
     }
     if ((flags & ~(MULTILINE | DOTALL | CASE_INSENSITIVE | DISABLE_UNICODE_GROUPS)) != 0) {
-      throw new IllegalArgumentException("Flags should only be a combination " +
-          "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS");
+      throw new IllegalArgumentException(
+          "Flags should only be a combination "
+              + "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS");
     }
     return compile(flregex, regex, flags);
   }
 
   /**
-   * Helper: create new Pattern with given regex and flags.
-   * Flregex is the regex with flags applied.
+   * Helper: create new Pattern with given regex and flags. Flregex is the regex with flags applied.
    */
   private static Pattern compile(String flregex, String regex, int flags) {
     int re2Flags = RE2.PERL;
     if ((flags & DISABLE_UNICODE_GROUPS) != 0) {
       re2Flags &= ~RE2.UNICODE_GROUPS;
     }
-    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, /*longest=*/false));
+    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, /*longest=*/ false));
   }
 
   /**
@@ -161,10 +162,9 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Splits input around instances of the regular expression.
-   * It returns an array giving the strings that occur before, between, and after instances
-   * of the regular expression.  Empty strings that would occur at the end
-   * of the array are omitted.
+   * Splits input around instances of the regular expression. It returns an array giving the strings
+   * that occur before, between, and after instances of the regular expression. Empty strings that
+   * would occur at the end of the array are omitted.
    *
    * @param input the input string to be split
    * @return the split strings
@@ -174,14 +174,14 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Splits input around instances of the regular expression.
-   * It returns an array giving the strings that occur before, between, and after instances
-   * of the regular expression.
+   * Splits input around instances of the regular expression. It returns an array giving the strings
+   * that occur before, between, and after instances of the regular expression.
    *
-   * <p>If {@code limit <= 0}, there is no limit on the size of the returned array.
-   * If {@code limit == 0}, empty strings that would occur at the end of the array are omitted.
-   * If {@code limit > 0}, at most limit strings are returned.  The final string contains
-   * the remainder of the input, possibly including additional matches of the pattern.
+   * <p>
+   * If {@code limit <= 0}, there is no limit on the size of the returned array. If
+   * {@code limit == 0}, empty strings that would occur at the end of the array are omitted. If
+   * {@code limit > 0}, at most limit strings are returned. The final string contains the remainder
+   * of the input, possibly including additional matches of the pattern.
    *
    * @param input the input string to be split
    * @param limit the limit
@@ -228,14 +228,13 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Returns a literal pattern string for the specified
-   * string.
+   * Returns a literal pattern string for the specified string.
    *
-   * <p>This method produces a string that can be used to
-   * create a <code>Pattern</code> that would match the string
-   * <code>s</code> as if it were a literal pattern.</p> Metacharacters
-   * or escape sequences in the input sequence will be given no special
-   * meaning.
+   * <p>
+   * This method produces a string that can be used to create a <code>Pattern</code> that would
+   * match the string <code>s</code> as if it were a literal pattern.
+   * </p>
+   * Metacharacters or escape sequences in the input sequence will be given no special meaning.
    *
    * @param s The string to be literalized
    * @return A literal string replacement
@@ -250,8 +249,8 @@ public final class Pattern implements Serializable {
   }
 
   /**
-   * Returns the number of capturing groups in this matcher's pattern.
-   * Group zero denotes the entire pattern and is excluded from this count.
+   * Returns the number of capturing groups in this matcher's pattern. Group zero denotes the entire
+   * pattern and is excluded from this count.
    *
    * @return the number of capturing groups in this pattern
    */

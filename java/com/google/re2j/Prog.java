@@ -18,7 +18,7 @@ final class Prog {
   int instSize = 0;
   int start; // index of start instruction
   int numCap = 2; // number of CAPTURE insts in re
-                  // 2 => implicit ( and ) for whole match $0
+  // 2 => implicit ( and ) for whole match $0
 
   // Constructs an empty program.
   Prog() {}
@@ -38,7 +38,7 @@ final class Prog {
   // to |numInst()|.
   void addInst(int op) {
     if (instSize >= inst.length) {
-      inst = Arrays.copyOf(inst, inst.length * 2); 
+      inst = Arrays.copyOf(inst, inst.length * 2);
     }
     inst[instSize] = new Inst(op);
     instSize++;
@@ -63,14 +63,12 @@ final class Prog {
 
     // Avoid allocation of buffer if prefix is empty.
     if (!Inst.isRuneOp(i.op) || i.runes.length != 1) {
-      return i.op == Inst.MATCH;  // (append "" to prefix)
+      return i.op == Inst.MATCH; // (append "" to prefix)
     }
 
     // Have prefix; gather characters.
-    while (Inst.isRuneOp(i.op) &&
-           i.runes.length == 1 &&
-           (i.arg & RE2.FOLD_CASE) == 0) {
-      prefix.appendCodePoint(i.runes[0]);  // an int, not a byte.
+    while (Inst.isRuneOp(i.op) && i.runes.length == 1 && (i.arg & RE2.FOLD_CASE) == 0) {
+      prefix.appendCodePoint(i.runes[0]); // an int, not a byte.
       i = skipNop(i.out);
     }
     return i.op == Inst.MATCH;
@@ -78,11 +76,11 @@ final class Prog {
 
   // startCond() returns the leading empty-width conditions that must be true
   // in any match.  It returns -1 (all bits set) if no matches are possible.
-  int startCond()  {
-    int flag = 0;  // bitmask of EMPTY_* flags
+  int startCond() {
+    int flag = 0; // bitmask of EMPTY_* flags
     int pc = start;
- loop:
-    for (;;) {
+    loop:
+    for (; ; ) {
       Inst i = inst[pc];
       switch (i.op) {
         case Inst.EMPTY_WIDTH:
@@ -92,7 +90,7 @@ final class Prog {
           return -1;
         case Inst.CAPTURE:
         case Inst.NOP:
-          break;  // skip
+          break; // skip
         default:
           break loop;
       }
@@ -143,14 +141,14 @@ final class Prog {
       return l1;
     }
     int last = l1;
-    for (;;) {
+    for (; ; ) {
       int next = next(last);
       if (next == 0) {
         break;
       }
       last = next;
     }
-    Inst i = inst[last>>1];
+    Inst i = inst[last >> 1];
     if ((last & 1) == 0) {
       i.out = l2;
     } else {
@@ -172,8 +170,7 @@ final class Prog {
       }
       // Use spaces not tabs since they're not always preserved in
       // Google Java source, such as our tests.
-      out.append("        ".substring(out.length() - len)).
-          append(inst[pc]).append('\n');
+      out.append("        ".substring(out.length() - len)).append(inst[pc]).append('\n');
     }
     return out.toString();
   }

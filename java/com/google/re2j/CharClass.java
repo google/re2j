@@ -8,17 +8,15 @@
 package com.google.re2j;
 
 /**
- * A "builder"-style helper class for manipulating character classes
- * represented as an array of pairs of runes [lo, hi], each denoting an
- * inclusive interval.
+ * A "builder"-style helper class for manipulating character classes represented as an array of
+ * pairs of runes [lo, hi], each denoting an inclusive interval.
  *
- * All methods mutate the internal state and return {@code this}, allowing
- * operations to be chained.
+ * All methods mutate the internal state and return {@code this}, allowing operations to be chained.
  */
 class CharClass {
 
-  private int[] r;  // inclusive ranges, pairs of [lo,hi].  r.length is even.
-  private int len;  // prefix of |r| that is defined.  Even.
+  private int[] r; // inclusive ranges, pairs of [lo,hi].  r.length is even.
+  private int len; // prefix of |r| that is defined.  Even.
 
   // Constructs a CharClass with initial ranges |r|.
   // The right to mutate |r| is passed to the callee.
@@ -95,9 +93,7 @@ class CharClass {
 
   // appendLiteral() appends the literal |x| to this CharClass.
   CharClass appendLiteral(int x, int flags) {
-    return ((flags & RE2.FOLD_CASE) != 0)
-        ? appendFoldedRange(x, x)
-        : appendRange(x, x);
+    return ((flags & RE2.FOLD_CASE) != 0) ? appendFoldedRange(x, x) : appendRange(x, x);
   }
 
   // appendRange() appends the range [lo-hi] (inclusive) to this CharClass.
@@ -107,7 +103,7 @@ class CharClass {
     // alphabets, so that one range can be expanding A-Z and the
     // other expanding a-z.
     if (len > 0) {
-      for (int i = 2; i <= 4; i += 2) {  // twice, using i=2, i=4
+      for (int i = 2; i <= 4; i += 2) { // twice, using i=2, i=4
         if (len >= i) {
           int rlo = r[len - i];
           int rhi = r[len - i + 1];
@@ -218,7 +214,7 @@ class CharClass {
   // appendNegatedTable() returns the result of appending the negation of range
   // table |table| to this CharClass.  Does not mutate |table|.
   CharClass appendNegatedTable(int[][] table) {
-    int nextLo = 0;  // lo end of next class to add
+    int nextLo = 0; // lo end of next class to add
     for (int[] triple : table) {
       int lo = triple[0], hi = triple[1], stride = triple[2];
       if (stride == 1) {
@@ -244,15 +240,13 @@ class CharClass {
   // appendTableWithSign() calls append{,Negated}Table depending on sign.
   // Does not mutate |table|.
   CharClass appendTableWithSign(int[][] table, int sign) {
-    return sign < 0
-        ? appendNegatedTable(table)
-        : appendTable(table);
+    return sign < 0 ? appendNegatedTable(table) : appendTable(table);
   }
 
   // negateClass() negates this CharClass, which must already be clean.
   CharClass negateClass() {
     int nextLo = 0; // lo end of next class to add
-    int w = 0;      // write index
+    int w = 0; // write index
     for (int i = 0; i < len; i += 2) {
       int lo = r[i], hi = r[i + 1];
       if (nextLo <= lo - 1) {
@@ -277,9 +271,7 @@ class CharClass {
   // appendClassWithSign() calls appendClass() if sign is +1 or
   // appendNegatedClass if sign is -1.  Does not mutate |x|.
   CharClass appendClassWithSign(int[] x, int sign) {
-    return sign < 0
-        ? appendNegatedClass(x)
-        : appendClass(x);
+    return sign < 0 ? appendNegatedClass(x) : appendClass(x);
   }
 
   // appendGroup() appends CharGroup |g| to this CharClass, folding iff
@@ -287,10 +279,7 @@ class CharClass {
   CharClass appendGroup(CharGroup g, boolean foldCase) {
     int[] cls = g.cls;
     if (foldCase) {
-      cls = new CharClass().
-          appendFoldedClass(cls).
-          cleanClass().
-          toArray();
+      cls = new CharClass().appendFoldedClass(cls).cleanClass().toArray();
     }
     return appendClassWithSign(cls, g.sign);
   }
@@ -300,9 +289,7 @@ class CharClass {
   // ordered naturally and the second component (hi) is in reverse order.
   private static int cmp(int[] array, int i, int pivotFrom, int pivotTo) {
     int cmp = array[i] - pivotFrom;
-    return cmp != 0
-        ? cmp
-        : pivotTo - array[i + 1];
+    return cmp != 0 ? cmp : pivotTo - array[i + 1];
   }
 
   // qsortIntPair() quicksorts pairs of ints in |array| according to lt().
@@ -365,8 +352,8 @@ class CharClass {
     return b.toString();
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return charClassToString(r, len);
   }
-
 }

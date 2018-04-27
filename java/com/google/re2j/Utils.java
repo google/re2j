@@ -44,26 +44,41 @@ abstract class Utils {
     }
 
     switch (rune) {
-      case '"':  out.append("\\\""); break;
-      case '\\': out.append("\\\\"); break;
-      case '\t': out.append("\\t");  break;
-      case '\n': out.append("\\n");  break;
-      case '\r': out.append("\\r");  break;
-      case '\b': out.append("\\b");  break;
-      case '\f': out.append("\\f");  break;
-      default: {
-        String s = Integer.toHexString(rune);
-        if (rune < 0x100) {
-          out.append("\\x");
-          if (s.length() == 1) {
-            out.append('0');
-          }
-          out.append(s);
-        } else {
-          out.append("\\x{").append(s).append('}');
-        }
+      case '"':
+        out.append("\\\"");
         break;
-      }
+      case '\\':
+        out.append("\\\\");
+        break;
+      case '\t':
+        out.append("\\t");
+        break;
+      case '\n':
+        out.append("\\n");
+        break;
+      case '\r':
+        out.append("\\r");
+        break;
+      case '\b':
+        out.append("\\b");
+        break;
+      case '\f':
+        out.append("\\f");
+        break;
+      default:
+        {
+          String s = Integer.toHexString(rune);
+          if (rune < 0x100) {
+            out.append("\\x");
+            if (s.length() == 1) {
+              out.append('0');
+            }
+            out.append(s);
+          } else {
+            out.append("\\x{").append(s).append('}');
+          }
+          break;
+        }
     }
   }
 
@@ -84,9 +99,7 @@ abstract class Utils {
   // Returns the Java UTF-16 string containing the single rune |r|.
   static String runeToString(int r) {
     char c = (char) r;
-    return r == c
-        ? String.valueOf(c)
-        : new String(Character.toChars(c));
+    return r == c ? String.valueOf(c) : new String(Character.toChars(c));
   }
 
   // Returns a new copy of the specified subarray.
@@ -121,8 +134,7 @@ abstract class Utils {
     }
 
     byte first = target[0];
-    for (int i = fromIndex, max = source.length - target.length; i <= max;
-         i++) {
+    for (int i = fromIndex, max = source.length - target.length; i <= max; i++) {
       // Look for first byte.
       if (source[i] != first) {
         while (++i <= max && source[i] != first) {}
@@ -135,7 +147,7 @@ abstract class Utils {
         for (int k = 1; j < end && source[j] == target[k]; j++, k++) {}
 
         if (j == end) {
-          return i;  // found whole array
+          return i; // found whole array
         }
       }
     }
@@ -145,22 +157,19 @@ abstract class Utils {
   // isWordRune reports whether r is consider a ``word character''
   // during the evaluation of the \b and \B zero-width assertions.
   // These assertions are ASCII-only: the word characters are [A-Za-z0-9_].
-  static boolean isWordRune(int r)  {
-    return ('A' <= r && r <= 'Z' ||
-            'a' <= r && r <= 'z' ||
-            '0' <= r && r <= '9' ||
-            r == '_');
+  static boolean isWordRune(int r) {
+    return ('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9' || r == '_');
   }
 
   //// EMPTY_* flags
 
-  static final int EMPTY_BEGIN_LINE       = 0x01;
-  static final int EMPTY_END_LINE         = 0x02;
-  static final int EMPTY_BEGIN_TEXT       = 0x04;
-  static final int EMPTY_END_TEXT         = 0x08;
-  static final int EMPTY_WORD_BOUNDARY    = 0x10;
+  static final int EMPTY_BEGIN_LINE = 0x01;
+  static final int EMPTY_END_LINE = 0x02;
+  static final int EMPTY_BEGIN_TEXT = 0x04;
+  static final int EMPTY_END_TEXT = 0x08;
+  static final int EMPTY_WORD_BOUNDARY = 0x10;
   static final int EMPTY_NO_WORD_BOUNDARY = 0x20;
-  static final int EMPTY_ALL              = -1;  // (impossible)
+  static final int EMPTY_ALL = -1; // (impossible)
 
   // emptyOpContext returns the zero-width assertions satisfied at the position
   // between the runes r1 and r2, a bitmask of EMPTY_* flags.
@@ -190,6 +199,5 @@ abstract class Utils {
     return op;
   }
 
-  private Utils() {}  // uninstantiable
-
+  private Utils() {} // uninstantiable
 }

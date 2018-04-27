@@ -20,6 +20,7 @@ class Machine {
     Thread(int n) {
       this.cap = new int[n];
     }
+
     int[] cap;
     Inst inst;
   }
@@ -29,9 +30,9 @@ class Machine {
   private static class Queue {
 
     final Thread[] denseThreads; // may contain stale Thread in slots >= size
-    final int[] densePcs;  // may contain stale pc in slots >= size
-    final int[] sparse;  // may contain stale but in-bounds values.
-    int size;  // of prefix of |dense| that is logically populated
+    final int[] densePcs; // may contain stale pc in slots >= size
+    final int[] sparse; // may contain stale but in-bounds values.
+    int size; // of prefix of |dense| that is logically populated
 
     Queue(int n) {
       this.sparse = new int[n];
@@ -44,7 +45,9 @@ class Machine {
       return j < size && densePcs[j] == pc;
     }
 
-    boolean isEmpty() { return size == 0; }
+    boolean isEmpty() {
+      return size == 0;
+    }
 
     int add(int pc) {
       int j = size++;
@@ -54,12 +57,12 @@ class Machine {
       return j;
     }
 
-
     void clear() {
       size = 0;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       StringBuilder out = new StringBuilder();
       out.append('{');
       for (int i = 0; i < size; ++i) {
@@ -113,7 +116,6 @@ class Machine {
       initNewCap(ncap);
     } else {
       resetCap(ncap);
-
     }
   }
 
@@ -145,7 +147,7 @@ class Machine {
   private Thread alloc(Inst inst) {
     Thread t;
     if (poolSize > 0) {
-      poolSize --;
+      poolSize--;
       t = pool[poolSize];
     } else {
       t = new Thread(matchcap.length);
@@ -158,15 +160,15 @@ class Machine {
   private void free(Queue queue) {
     free(queue, 0);
   }
-  
+
   private void free(Queue queue, int from) {
     int numberOfThread = queue.size - from;
     int requiredPoolLength = poolSize + numberOfThread;
     if (pool.length < requiredPoolLength) {
       pool = Arrays.copyOf(pool, Math.max(pool.length * 2, requiredPoolLength));
     }
-    
-    for(int i = from; i < queue.size; ++i) {
+
+    for (int i = from; i < queue.size; ++i) {
       Thread t = queue.denseThreads[i];
       if (t != null) {
         pool[poolSize] = t;
@@ -191,11 +193,10 @@ class Machine {
   // If so, matchcap holds the submatch information.
   boolean match(MachineInput in, int pos, int anchor) {
     int startCond = re2.cond;
-    if (startCond == Utils.EMPTY_ALL) {  // impossible
+    if (startCond == Utils.EMPTY_ALL) { // impossible
       return false;
     }
-    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) &&
-        pos != 0){
+    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) && pos != 0) {
       return false;
     }
     matched = false;
@@ -211,13 +212,13 @@ class Machine {
       rune1 = r >> 3;
       width1 = r & 7;
     }
-    int flag;  // bitmask of EMPTY_* flags
+    int flag; // bitmask of EMPTY_* flags
     if (pos == 0) {
       flag = Utils.emptyOpContext(-1, rune);
     } else {
       flag = in.context(pos);
     }
-    for (;;) {
+    for (; ; ) {
 
       if (runq.isEmpty()) {
         if ((startCond & Utils.EMPTY_BEGIN_TEXT) != 0 && pos != 0) {
@@ -228,9 +229,7 @@ class Machine {
           // Have match; finished exploring alternatives.
           break;
         }
-        if (!re2.prefix.isEmpty() &&
-            rune1 != re2.prefixRune &&
-            in.canCheckPrefix()) {
+        if (!re2.prefix.isEmpty() && rune1 != re2.prefixRune && in.canCheckPrefix()) {
           // Match requires literal prefix; fast search for it.
           int advance = in.index(re2, pos);
           if (advance < 0) {
@@ -255,7 +254,7 @@ class Machine {
       }
       flag = Utils.emptyOpContext(rune, rune1);
       step(runq, nextq, pos, pos + width, rune, flag, anchor, pos == in.endPos());
-      if (width == 0) {  // EOF
+      if (width == 0) { // EOF
         break;
       }
       if (ncap == 0 && matched) {
@@ -286,8 +285,15 @@ class Machine {
   // |nextCond| gives the setting for the EMPTY_* flags after |c|.
   // |anchor| is the anchoring flag and |atEnd| signals if we are at the end of
   // the input string.
-  private void step(Queue runq, Queue nextq, int pos, int nextPos, int c,
-            int nextCond, int anchor, boolean atEnd) {
+  private void step(
+      Queue runq,
+      Queue nextq,
+      int pos,
+      int nextPos,
+      int c,
+      int nextCond,
+      int anchor,
+      boolean atEnd) {
     boolean longest = re2.longest;
     for (int j = 0; j < runq.size; ++j) {
       Thread t = runq.denseThreads[j];
@@ -346,7 +352,6 @@ class Machine {
     }
     runq.clear();
   }
-  
 
   // add() adds an entry to |q| for |pc|, unless the |q| already has such an
   // entry.  It also recursively adds an entry for all instructions reachable
@@ -367,7 +372,7 @@ class Machine {
         throw new IllegalStateException("unhandled");
 
       case Inst.FAIL:
-        break;  // nothing
+        break; // nothing
 
       case Inst.ALT:
       case Inst.ALT_MATCH:
@@ -415,5 +420,4 @@ class Machine {
     }
     return t;
   }
-
 }

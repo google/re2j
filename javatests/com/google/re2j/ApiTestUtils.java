@@ -22,8 +22,12 @@ public class ApiTestUtils {
   public static void assertCompileFails(String regex, int flag) {
     try {
       Pattern.compile(regex, flag);
-      fail("Compiling Pattern with regex: " + regex + " and flag: " + flag +
-           " passed, when it should have failed.");
+      fail(
+          "Compiling Pattern with regex: "
+              + regex
+              + " and flag: "
+              + flag
+              + " passed, when it should have failed.");
     } catch (IllegalArgumentException e) {
       if (!"Flags UNIX_LINES and COMMENTS unsupported".equals(e.getMessage())) {
         throw e;
@@ -36,20 +40,21 @@ public class ApiTestUtils {
    */
   public static void assertArrayEquals(Object[] expected, Object[] actual) {
     assertEquals(
-        "Arrays have unequal length, therefore can't be equal to " +
-        "each other. Expected: " + Arrays.toString(expected) + " Actual: " +
-        Arrays.toString(actual),
-        expected.length, actual.length);
+        "Arrays have unequal length, therefore can't be equal to "
+            + "each other. Expected: "
+            + Arrays.toString(expected)
+            + " Actual: "
+            + Arrays.toString(actual),
+        expected.length,
+        actual.length);
     for (int idx = 0; idx < expected.length; ++idx) {
-      assertEquals("Index: " + idx + " is unequal in the arrays",
-                   expected[idx], actual[idx]);
+      assertEquals("Index: " + idx + " is unequal in the arrays", expected[idx], actual[idx]);
     }
   }
 
   /**
-   * Tests that both RE2's and JDK's pattern class act as we expect them.
-   * The regular expression {@code regexp} matches the string {@code match} and
-   * doesn't match {@code nonMatch}
+   * Tests that both RE2's and JDK's pattern class act as we expect them. The regular expression
+   * {@code regexp} matches the string {@code match} and doesn't match {@code nonMatch}
    *
    * @param regexp
    * @param match
@@ -57,60 +62,58 @@ public class ApiTestUtils {
    */
   public static void testMatches(String regexp, String match, String nonMatch) {
     String errorString = "Pattern with regexp: " + regexp;
-    assertTrue("JDK " + errorString + " doesn't match: " + match,
+    assertTrue(
+        "JDK " + errorString + " doesn't match: " + match,
         java.util.regex.Pattern.matches(regexp, match));
-    assertFalse("JDK " + errorString + " matches: " + nonMatch,
+    assertFalse(
+        "JDK " + errorString + " matches: " + nonMatch,
         java.util.regex.Pattern.matches(regexp, nonMatch));
-    assertTrue(errorString + " doesn't match: " + match,
-               Pattern.matches(regexp, match));
-    assertFalse(errorString + " matches: " + nonMatch,
-                Pattern.matches(regexp, nonMatch));
+    assertTrue(errorString + " doesn't match: " + match, Pattern.matches(regexp, match));
+    assertFalse(errorString + " matches: " + nonMatch, Pattern.matches(regexp, nonMatch));
   }
 
   // Test matches via a matcher.
-  public static void testMatcherMatches(String regexp, String match,
-                                        String nonMatch) {
+  public static void testMatcherMatches(String regexp, String match, String nonMatch) {
     testMatcherMatches(regexp, match);
     testMatcherNotMatches(regexp, nonMatch);
   }
 
   public static void testMatcherMatches(String regexp, String match) {
     java.util.regex.Pattern p = java.util.regex.Pattern.compile(regexp);
-    assertTrue("JDK Pattern with regexp: " + regexp + " doesn't match: " +
-        match, p.matcher(match).matches());
+    assertTrue(
+        "JDK Pattern with regexp: " + regexp + " doesn't match: " + match,
+        p.matcher(match).matches());
     Pattern pr = Pattern.compile(regexp);
-    assertTrue("Pattern with regexp: " + regexp + " doesn't match: " + match,
-        pr.matcher(match).matches());
+    assertTrue(
+        "Pattern with regexp: " + regexp + " doesn't match: " + match, pr.matcher(match).matches());
   }
-  
+
   public static void testMatcherNotMatches(String regexp, String nonMatch) {
     java.util.regex.Pattern p = java.util.regex.Pattern.compile(regexp);
-    assertFalse("JDK Pattern with regexp: " + regexp + " matches: " + nonMatch,
+    assertFalse(
+        "JDK Pattern with regexp: " + regexp + " matches: " + nonMatch,
         p.matcher(nonMatch).matches());
     Pattern pr = Pattern.compile(regexp);
-    assertFalse("Pattern with regexp: " + regexp + " matches: " + nonMatch,
-        pr.matcher(nonMatch).matches());
+    assertFalse(
+        "Pattern with regexp: " + regexp + " matches: " + nonMatch, pr.matcher(nonMatch).matches());
   }
-  
+
   /**
-   * This takes a regex and it's compile time flags, a string that is expected
-   * to match the regex and a string that is not expected to match the regex.
+   * This takes a regex and it's compile time flags, a string that is expected to match the regex
+   * and a string that is not expected to match the regex.
    *
-   * We don't check for JDK compatibility here, since the flags are not in a 1-1
-   * correspondence.
+   * We don't check for JDK compatibility here, since the flags are not in a 1-1 correspondence.
    *
    */
-  public static void testMatchesRE2(String regexp, int flags, String match,
-                                    String nonMatch) {
+  public static void testMatchesRE2(String regexp, int flags, String match, String nonMatch) {
     Pattern p = Pattern.compile(regexp, flags);
-    String errorString =
-        "Pattern with regexp: " + regexp + " and flags: " + flags;
+    String errorString = "Pattern with regexp: " + regexp + " and flags: " + flags;
     assertTrue(errorString + " doesn't match: " + match, p.matches(match));
     assertFalse(errorString + " matches: " + nonMatch, p.matches(nonMatch));
   }
 
-  public static void testMatchesRE2(String regexp, int flags, String[] matches,
-      String[] nonMatches) {
+  public static void testMatchesRE2(
+      String regexp, int flags, String[] matches, String[] nonMatches) {
     Pattern p = Pattern.compile(regexp, flags);
     for (String s : matches) {
       assertTrue(p.matches(s));
@@ -121,26 +124,22 @@ public class ApiTestUtils {
   }
 
   /**
-   * Tests that both RE2 and JDK split the string on the regex in the same way,
-   * and that that way matches our expectations.
+   * Tests that both RE2 and JDK split the string on the regex in the same way, and that that way
+   * matches our expectations.
    */
   public static void testSplit(String regexp, String text, String[] expected) {
     testSplit(regexp, text, 0, expected);
   }
 
-  public static void testSplit(String regexp, String text, int limit,
-                               String[] expected) {
-    assertArrayEquals(expected,
-        java.util.regex.Pattern.compile(regexp).split(text, limit));
+  public static void testSplit(String regexp, String text, int limit, String[] expected) {
+    assertArrayEquals(expected, java.util.regex.Pattern.compile(regexp).split(text, limit));
     assertArrayEquals(expected, Pattern.compile(regexp).split(text, limit));
   }
-
 
   // Helper methods for RE2Matcher's test.
 
   // Tests that both RE2 and JDK's Matchers do the same replaceFist.
-  public static void testReplaceAll(String orig, String regex, String repl,
-                                    String actual) {
+  public static void testReplaceAll(String orig, String regex, String repl, String actual) {
     Pattern p = Pattern.compile(regex);
     Matcher m = p.matcher(orig);
     String replaced = m.replaceAll(repl);
@@ -154,8 +153,7 @@ public class ApiTestUtils {
   }
 
   // Tests that both RE2 and JDK's Matchers do the same replaceFist.
-  public static void testReplaceFirst(String orig, String regex, String repl,
-                                      String actual) {
+  public static void testReplaceFirst(String orig, String regex, String repl, String actual) {
     Pattern p = Pattern.compile(regex);
     Matcher m = p.matcher(orig);
     String replaced = m.replaceFirst(repl);
@@ -209,9 +207,7 @@ public class ApiTestUtils {
     }
   }
 
-
-  public static void testFind(String text, String regexp, int start,
-                              String output) {
+  public static void testFind(String text, String regexp, int start, String output) {
     // RE2
     Pattern p = Pattern.compile(regexp);
     Matcher matchString = p.matcher(text);
@@ -247,12 +243,11 @@ public class ApiTestUtils {
     Matcher m = p.matcher(text);
     m.find();
     m.group(group);
-    fail();  // supposed to have exception by now
+    fail(); // supposed to have exception by now
   }
 
   public static void verifyLookingAt(String text, String regexp, boolean output) {
     assertEquals(output, Pattern.compile(regexp).matcher(text).lookingAt());
     assertEquals(output, java.util.regex.Pattern.compile(regexp).matcher(text).lookingAt());
   }
-
 }

@@ -24,18 +24,19 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An RE2 class instance is a compiled representation of an RE2 regular
- * expression, independent of the public Java-like Pattern/Matcher API.
+ * An RE2 class instance is a compiled representation of an RE2 regular expression, independent of
+ * the public Java-like Pattern/Matcher API.
  *
- * <p>This class also contains various implementation helpers for RE2
- * regular expressions.
+ * <p>
+ * This class also contains various implementation helpers for RE2 regular expressions.
  *
- * <p>Use the {@link #quoteMeta(String)} utility function to quote all
- * regular expression metacharacters in an arbitrary string.
+ * <p>
+ * Use the {@link #quoteMeta(String)} utility function to quote all regular expression
+ * metacharacters in an arbitrary string.
  *
- * <p>See the {@code Matcher} and {@code Pattern} classes for the public
- * API, and the <a href='package.html'>package-level
- * documentation</a> for an overview of how to use this API.
+ * <p>
+ * See the {@code Matcher} and {@code Pattern} classes for the public API, and the <a
+ * href='package.html'>package-level documentation</a> for an overview of how to use this API.
  */
 class RE2 {
 
@@ -44,23 +45,23 @@ class RE2 {
   //// Parser flags.
 
   // Fold case during matching (case-insensitive).
-  static final int FOLD_CASE            = 0x01;
+  static final int FOLD_CASE = 0x01;
 
   // Treat pattern as a literal string instead of a regexp.
-  static final int LITERAL              = 0x02;
+  static final int LITERAL = 0x02;
 
   // Allow character classes like [^a-z] and [[:space:]] to match newline.
-  static final int CLASS_NL             = 0x04;
+  static final int CLASS_NL = 0x04;
 
   // Allow '.' to match newline.
-  static final int DOT_NL               = 0x08;
+  static final int DOT_NL = 0x08;
 
   // Treat ^ and $ as only matching at beginning and end of text, not
   // around embedded newlines.  (Perl's default).
-  static final int ONE_LINE             = 0x10;
+  static final int ONE_LINE = 0x10;
 
   // Make repetition operators default to non-greedy.
-  static final int NON_GREEDY           = 0x20;
+  static final int NON_GREEDY = 0x20;
 
   // allow Perl extensions:
   //   non-capturing parens - (?: )
@@ -74,15 +75,15 @@ class RE2 {
   //   \Q and \E to disable/enable metacharacters
   //   (?P<name>expr) for named captures
   // \C (any byte) is not supported.
-  static final int PERL_X               = 0x40;
+  static final int PERL_X = 0x40;
 
   // Allow \p{Han}, \P{Han} for Unicode group and negation.
-  static final int UNICODE_GROUPS       = 0x80;
+  static final int UNICODE_GROUPS = 0x80;
 
   // Regexp END_TEXT was $, not \z.  Internal use only.
-  static final int WAS_DOLLAR           = 0x100;
+  static final int WAS_DOLLAR = 0x100;
 
-  static final int MATCH_NL             = CLASS_NL | DOT_NL;
+  static final int MATCH_NL = CLASS_NL | DOT_NL;
 
   // As close to Perl as possible.
   static final int PERL = CLASS_NL | ONE_LINE | PERL_X | UNICODE_GROUPS;
@@ -97,17 +98,17 @@ class RE2 {
 
   //// RE2 instance members.
 
-  final String expr;            // as passed to Compile
-  final Prog prog;              // compiled program
-  final int cond;               // EMPTY_* bitmask: empty-width conditions
-                                // required at start of match
+  final String expr; // as passed to Compile
+  final Prog prog; // compiled program
+  final int cond; // EMPTY_* bitmask: empty-width conditions
+  // required at start of match
   final int numSubexp;
   boolean longest;
 
-  String prefix;                // required UTF-16 prefix in unanchored matches
-  byte[] prefixUTF8;            // required UTF-8 prefix in unanchored matches
-  boolean prefixComplete;       // true iff prefix is the entire regexp
-  int prefixRune;               // first rune in prefix
+  String prefix; // required UTF-16 prefix in unanchored matches
+  byte[] prefixUTF8; // required UTF-8 prefix in unanchored matches
+  boolean prefixComplete; // true iff prefix is the entire regexp
+  int prefixRune; // first rune in prefix
 
   // Cache of machines for running regexp.
   // Accesses must be serialized using |this| monitor.
@@ -137,51 +138,46 @@ class RE2 {
   }
 
   /**
-   * Parses a regular expression and returns, if successful, an
-   * {@code RE2} instance that can be used to match against text.
+   * Parses a regular expression and returns, if successful, an {@code RE2} instance that can be
+   * used to match against text.
    *
-   * <p>When matching against text, the regexp returns a match that
-   * begins as early as possible in the input (leftmost), and among those
-   * it chooses the one that a backtracking search would have found first.
-   * This so-called leftmost-first matching is the same semantics
-   * that Perl, Python, and other implementations use, although this
-   * package implements it without the expense of backtracking.
-   * For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
+   * <p>
+   * When matching against text, the regexp returns a match that begins as early as possible in the
+   * input (leftmost), and among those it chooses the one that a backtracking search would have
+   * found first. This so-called leftmost-first matching is the same semantics that Perl, Python,
+   * and other implementations use, although this package implements it without the expense of
+   * backtracking. For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
    */
   static RE2 compile(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, PERL, /*longest=*/false);
+    return compileImpl(expr, PERL, /*longest=*/ false);
   }
 
   /**
-   * {@code compilePOSIX} is like {@link #compile} but restricts the
-   * regular expression to POSIX ERE (egrep) syntax and changes the
-   * match semantics to leftmost-longest.
+   * {@code compilePOSIX} is like {@link #compile} but restricts the regular expression to POSIX ERE
+   * (egrep) syntax and changes the match semantics to leftmost-longest.
    *
-   * <p>That is, when matching against text, the regexp returns a match that
-   * begins as early as possible in the input (leftmost), and among those
-   * it chooses a match that is as long as possible.
-   * This so-called leftmost-longest matching is the same semantics
-   * that early regular expression implementations used and that POSIX
-   * specifies.
+   * <p>
+   * That is, when matching against text, the regexp returns a match that begins as early as
+   * possible in the input (leftmost), and among those it chooses a match that is as long as
+   * possible. This so-called leftmost-longest matching is the same semantics that early regular
+   * expression implementations used and that POSIX specifies.
    *
-   * <p>However, there can be multiple leftmost-longest matches, with different
-   * submatch choices, and here this package diverges from POSIX.
-   * Among the possible leftmost-longest matches, this package chooses
-   * the one that a backtracking search would have found first, while POSIX
-   * specifies that the match be chosen to maximize the length of the first
-   * subexpression, then the second, and so on from left to right.
-   * The POSIX rule is computationally prohibitive and not even well-defined.
-   * See http://swtch.com/~rsc/regexp/regexp2.html#posix
+   * <p>
+   * However, there can be multiple leftmost-longest matches, with different submatch choices, and
+   * here this package diverges from POSIX. Among the possible leftmost-longest matches, this
+   * package chooses the one that a backtracking search would have found first, while POSIX
+   * specifies that the match be chosen to maximize the length of the first subexpression, then the
+   * second, and so on from left to right. The POSIX rule is computationally prohibitive and not
+   * even well-defined. See http://swtch.com/~rsc/regexp/regexp2.html#posix
    */
   static RE2 compilePOSIX(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, POSIX, /*longest=*/true);
+    return compileImpl(expr, POSIX, /*longest=*/ true);
   }
 
   // Exposed to ExecTests.
-  static RE2 compileImpl(String expr, int mode, boolean longest)
-      throws PatternSyntaxException {
+  static RE2 compileImpl(String expr, int mode, boolean longest) throws PatternSyntaxException {
     Regexp re = Parser.parse(expr, mode);
-    int maxCap = re.maxCap();  // (may shrink during simplify)
+    int maxCap = re.maxCap(); // (may shrink during simplify)
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re);
     RE2 re2 = new RE2(expr, prog, maxCap, longest);
@@ -200,8 +196,7 @@ class RE2 {
   }
 
   /**
-   * Returns the number of parenthesized subexpressions in this regular
-   * expression.
+   * Returns the number of parenthesized subexpressions in this regular expression.
    */
   int numberOfCapturingGroups() {
     return numSubexp;
@@ -254,12 +249,10 @@ class RE2 {
   }
 
   /**
-   * Matches the regular expression against input starting at position start
-   * and ending at position end, with the given anchoring.
-   * Records the submatch boundaries in group, which is [start, end) pairs
-   * of byte offsets. The number of boundaries needed is inferred
-   * from the size of the group array. It is most efficient not to ask for
-   * submatch boundaries.
+   * Matches the regular expression against input starting at position start and ending at position
+   * end, with the given anchoring. Records the submatch boundaries in group, which is [start, end)
+   * pairs of byte offsets. The number of boundaries needed is inferred from the size of the group
+   * array. It is most efficient not to ask for submatch boundaries.
    *
    * @param input the input byte array
    * @param start the beginning position in the input
@@ -269,8 +262,7 @@ class RE2 {
    * @param ngroup the number of array pairs to fill in
    * @return true if a match was found
    */
-  boolean match(CharSequence input, int start, int end, int anchor, int[] group,
-                int ngroup) {
+  boolean match(CharSequence input, int start, int end, int anchor, int[] group, int ngroup) {
     if (start > end) {
       return false;
     }
@@ -281,8 +273,7 @@ class RE2 {
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    int[] groupMatch = doExecute(MachineInput.fromUTF16(input, 0, end), start,
-        anchor, 2 * ngroup);
+    int[] groupMatch = doExecute(MachineInput.fromUTF16(input, 0, end), start, anchor, 2 * ngroup);
 
     if (groupMatch == null) {
       return false;
@@ -303,11 +294,10 @@ class RE2 {
   }
 
   /**
-   * Returns true iff textual regular expression {@code pattern}
-   * matches string {@code s}.
+   * Returns true iff textual regular expression {@code pattern} matches string {@code s}.
    *
-   * <p>More complicated queries need to use {@link #compile} and the
-   * full {@code RE2} interface.
+   * <p>
+   * More complicated queries need to use {@link #compile} and the full {@code RE2} interface.
    */
   // This is visible for testing.
   static boolean match(String pattern, CharSequence s) throws PatternSyntaxException {
@@ -320,52 +310,61 @@ class RE2 {
   }
 
   /**
-   * Returns a copy of {@code src} in which all matches for this regexp
-   * have been replaced by {@code repl}.  No support is provided for
-   * expressions (e.g. {@code \1} or {@code $1}) in the replacement
-   * string.
+   * Returns a copy of {@code src} in which all matches for this regexp have been replaced by
+   * {@code repl}. No support is provided for expressions (e.g. {@code \1} or {@code $1}) in the
+   * replacement string.
    */
   // This is visible for testing.
   String replaceAll(String src, final String repl) {
-    return replaceAllFunc(src, new ReplaceFunc() {
-        @Override public String replace(String orig) { return repl; }
-      }, 2 * src.length() + 1);
+    return replaceAllFunc(
+        src,
+        new ReplaceFunc() {
+          @Override
+          public String replace(String orig) {
+            return repl;
+          }
+        },
+        2 * src.length() + 1);
     // TODO(afrozm): Is the reasoning correct, there can be at the most 2*len +1
     // replacements. Basically [a-z]*? abc x will be xaxbcx. So should it be
     // len + 1 or 2*len + 1.
   }
 
   /**
-   * Returns a copy of {@code src} in which only the first match for this regexp
-   * has been replaced by {@code repl}.  No support is provided for
-   * expressions (e.g. {@code \1} or {@code $1}) in the replacement
-   * string.
+   * Returns a copy of {@code src} in which only the first match for this regexp has been replaced
+   * by {@code repl}. No support is provided for expressions (e.g. {@code \1} or {@code $1}) in the
+   * replacement string.
    */
   // This is visible for testing.
   String replaceFirst(String src, final String repl) {
-    return replaceAllFunc(src, new ReplaceFunc() {
-      @Override public String replace(String orig) { return repl; }
-    }, 1);
+    return replaceAllFunc(
+        src,
+        new ReplaceFunc() {
+          @Override
+          public String replace(String orig) {
+            return repl;
+          }
+        },
+        1);
   }
 
   /**
-   * Returns a copy of {@code src} in which at most {@code maxReplaces} matches
-   * for this regexp have been replaced by the return value of of function
-   * {@code repl} (whose first argument is the matched string). No support is
-   * provided for expressions (e.g. {@code \1} or {@code $1}) in the
+   * Returns a copy of {@code src} in which at most {@code maxReplaces} matches for this regexp have
+   * been replaced by the return value of of function {@code repl} (whose first argument is the
+   * matched string). No support is provided for expressions (e.g. {@code \1} or {@code $1}) in the
    * replacement string.
    */
   // This is visible for testing.
   String replaceAllFunc(String src, ReplaceFunc repl, int maxReplaces) {
     int lastMatchEnd = 0; // end position of the most recent match
-    int searchPos = 0;    // position where we next look for a match
+    int searchPos = 0; // position where we next look for a match
     StringBuilder buf = new StringBuilder();
     MachineInput input = MachineInput.fromUTF16(src);
     int numReplaces = 0;
     while (searchPos <= src.length()) {
       int[] a = doExecute(input, searchPos, UNANCHORED, 2);
       if (a == null || a.length == 0) {
-        break;  // no more matches
+        break; // no more matches
       }
 
       // Copy the unmatched characters before this match.
@@ -412,9 +411,8 @@ class RE2 {
   }
 
   /**
-   * Returns a string that quotes all regular expression metacharacters
-   * inside the argument text; the returned string is a regular
-   * expression matching the literal text.  For example,
+   * Returns a string that quotes all regular expression metacharacters inside the argument text;
+   * the returned string is a regular expression matching the literal text. For example,
    * {@code quoteMeta("[foo]").equals("\\[foo\\]")}.
    */
   static String quoteMeta(String s) {
@@ -438,7 +436,7 @@ class RE2 {
   // the result may alias a.
   private int[] pad(int[] a) {
     if (a == null) {
-      return null;  // No match.
+      return null; // No match.
     }
     int n = (1 + numSubexp) * 2;
     if (a.length < n) {
@@ -477,7 +475,7 @@ class RE2 {
           accept = false;
         }
         int r = input.step(pos);
-        if (r < 0) {  // EOF
+        if (r < 0) { // EOF
           pos = end + 1;
         } else {
           pos += r & 0x7;
@@ -531,10 +529,11 @@ class RE2 {
   // any string in the input.
 
   /**
-   * Returns an array holding the text of the leftmost match in {@code b}
-   * of this regular expression.
+   * Returns an array holding the text of the leftmost match in {@code b} of this regular
+   * expression.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   byte[] findUTF8(byte[] b) {
@@ -546,11 +545,11 @@ class RE2 {
   }
 
   /**
-   * Returns a two-element array of integers defining the location of
-   * the leftmost match in {@code b} of this regular expression.  The
-   * match itself is at {@code b[loc[0]...loc[1]]}.
+   * Returns a two-element array of integers defining the location of the leftmost match in
+   * {@code b} of this regular expression. The match itself is at {@code b[loc[0]...loc[1]]}.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   int[] findUTF8Index(byte[] b) {
@@ -562,14 +561,13 @@ class RE2 {
   }
 
   /**
-   * Returns a string holding the text of the leftmost match in
-   * {@code s} of this regular expression.
+   * Returns a string holding the text of the leftmost match in {@code s} of this regular
+   * expression.
    *
-   * <p>If there is no match, the return value is an empty string, but it
-   * will also be empty if the regular expression successfully matches
-   * an empty string.  Use {@link #findIndex} or
-   * {@link #findSubmatch} if it is necessary to distinguish these
-   * cases.
+   * <p>
+   * If there is no match, the return value is an empty string, but it will also be empty if the
+   * regular expression successfully matches an empty string. Use {@link #findIndex} or
+   * {@link #findSubmatch} if it is necessary to distinguish these cases.
    */
   // This is visible for testing.
   String find(String s) {
@@ -581,11 +579,12 @@ class RE2 {
   }
 
   /**
-   * Returns a two-element array of integers defining the location of
-   * the leftmost match in {@code s} of this regular expression.  The
-   * match itself is at {@code s.substring(loc[0], loc[1])}.
+   * Returns a two-element array of integers defining the location of the leftmost match in
+   * {@code s} of this regular expression. The match itself is at
+   * {@code s.substring(loc[0], loc[1])}.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   int[] findIndex(String s) {
@@ -597,12 +596,12 @@ class RE2 {
   }
 
   /**
-   * Returns an array of arrays the text of the leftmost match of the
-   * regular expression in {@code b} and the matches, if any, of its
-   * subexpressions, as defined by the <a
+   * Returns an array of arrays the text of the leftmost match of the regular expression in
+   * {@code b} and the matches, if any, of its subexpressions, as defined by the <a
    * href='#submatch'>Submatch</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   byte[][] findUTF8Submatch(byte[] b) {
@@ -620,13 +619,12 @@ class RE2 {
   }
 
   /**
-   * Returns an array holding the index pairs identifying the leftmost
-   * match of this regular expression in {@code b} and the matches, if
-   * any, of its subexpressions, as defined by the the <a
-   * href='#submatch'>Submatch</a> and <a href='#index'>Index</a>
-   * descriptions above.
+   * Returns an array holding the index pairs identifying the leftmost match of this regular
+   * expression in {@code b} and the matches, if any, of its subexpressions, as defined by the the
+   * <a href='#submatch'>Submatch</a> and <a href='#index'>Index</a> descriptions above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   int[] findUTF8SubmatchIndex(byte[] b) {
@@ -634,12 +632,12 @@ class RE2 {
   }
 
   /**
-   * Returns an array of strings holding the text of the leftmost match
-   * of the regular expression in {@code s} and the matches, if any, of
-   * its subexpressions, as defined by the <a
+   * Returns an array of strings holding the text of the leftmost match of the regular expression in
+   * {@code s} and the matches, if any, of its subexpressions, as defined by the <a
    * href='#submatch'>Submatch</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   String[] findSubmatch(String s) {
@@ -657,12 +655,12 @@ class RE2 {
   }
 
   /**
-   * Returns an array holding the index pairs identifying the leftmost
-   * match of this regular expression in {@code s} and the matches, if
-   * any, of its subexpressions, as defined by the <a
+   * Returns an array holding the index pairs identifying the leftmost match of this regular
+   * expression in {@code s} and the matches, if any, of its subexpressions, as defined by the <a
    * href='#submatch'>Submatch</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   int[] findSubmatchIndex(String s) {
@@ -670,23 +668,28 @@ class RE2 {
   }
 
   /**
-   * {@code findAllUTF8()} is the <a href='#all'>All</a> version of
-   * {@link #findUTF8}; it returns a list of up to {@code n} successive
-   * matches of the expression, as defined by the <a href='#all'>All</a>
-   * description above.
+   * {@code findAllUTF8()} is the <a href='#all'>All</a> version of {@link #findUTF8}; it returns a
+   * list of up to {@code n} successive matches of the expression, as defined by the <a
+   * href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    *
-   * TODO(adonovan): think about defining a byte slice view class, like
-   * a read-only Go slice backed by |b|.
+   * TODO(adonovan): think about defining a byte slice view class, like a read-only Go slice backed
+   * by |b|.
    */
   // This is visible for testing.
   List<byte[]> findAllUTF8(final byte[] b, int n) {
     final List<byte[]> result = new ArrayList<byte[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-        @Override public void deliver(int[] match) {
-          result.add(Utils.subarray(b, match[0], match[1]));
-        }});
+    allMatches(
+        MachineInput.fromUTF8(b),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(Utils.subarray(b, match[0], match[1]));
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -694,20 +697,25 @@ class RE2 {
   }
 
   /**
-   * {@code findAllUTF8Index} is the <a href='#all'>All</a> version of
-   * {@link #findUTF8Index}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
+   * {@code findAllUTF8Index} is the <a href='#all'>All</a> version of {@link #findUTF8Index}; it
+   * returns a list of up to {@code n} successive matches of the expression, as defined by the <a
    * href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<int[]> findAllUTF8Index(final byte[] b, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          result.add(Utils.subarray(match, 0, 2));
-        }});
+    allMatches(
+        MachineInput.fromUTF8(b),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(Utils.subarray(match, 0, 2));
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -715,20 +723,25 @@ class RE2 {
   }
 
   /**
-   * {@code findAll} is the <a href='#all'>All</a> version of
-   * {@link #find}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
-   * href='#all'>All</a> description above.
+   * {@code findAll} is the <a href='#all'>All</a> version of {@link #find}; it returns a list of up
+   * to {@code n} successive matches of the expression, as defined by the <a href='#all'>All</a>
+   * description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<String> findAll(final String s, int n) {
     final List<String> result = new ArrayList<String>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
-        @Override public void deliver(int[] match) {
-          result.add(s.substring(match[0], match[1]));
-        }});
+    allMatches(
+        MachineInput.fromUTF16(s),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(s.substring(match[0], match[1]));
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -736,20 +749,25 @@ class RE2 {
   }
 
   /**
-   * {@code findAllIndex} is the <a href='#all'>All</a> version of
-   * {@link #findIndex}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
+   * {@code findAllIndex} is the <a href='#all'>All</a> version of {@link #findIndex}; it returns a
+   * list of up to {@code n} successive matches of the expression, as defined by the <a
    * href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<int[]> findAllIndex(String s, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          result.add(Utils.subarray(match, 0, 2));
-        }});
+    allMatches(
+        MachineInput.fromUTF16(s),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(Utils.subarray(match, 0, 2));
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -757,26 +775,31 @@ class RE2 {
   }
 
   /**
-   * {@code findAllUTF8Submatch} is the <a href='#all'>All</a> version
-   * of {@link #findUTF8Submatch}; it returns a list of up to {@code n}
-   * successive matches of the expression, as defined by the <a
+   * {@code findAllUTF8Submatch} is the <a href='#all'>All</a> version of {@link #findUTF8Submatch};
+   * it returns a list of up to {@code n} successive matches of the expression, as defined by the <a
    * href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<byte[][]> findAllUTF8Submatch(final byte[] b, int n) {
     final List<byte[][]> result = new ArrayList<byte[][]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          byte[][] slice = new byte[match.length / 2][];
-          for (int j = 0; j < slice.length; ++j) {
-            if (match[2 * j] >= 0) {
-              slice[j] = Utils.subarray(b, match[2 * j], match[2 * j + 1]);
+    allMatches(
+        MachineInput.fromUTF8(b),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            byte[][] slice = new byte[match.length / 2][];
+            for (int j = 0; j < slice.length; ++j) {
+              if (match[2 * j] >= 0) {
+                slice[j] = Utils.subarray(b, match[2 * j], match[2 * j + 1]);
+              }
             }
+            result.add(slice);
           }
-          result.add(slice);
-        }});
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -784,20 +807,25 @@ class RE2 {
   }
 
   /**
-   * {@code findAllUTF8SubmatchIndex} is the <a href='#all'>All</a>
-   * version of {@link #findUTF8SubmatchIndex}; it returns a list of up
-   * to {@code n} successive matches of the expression, as defined by
-   * the <a href='#all'>All</a> description above.
+   * {@code findAllUTF8SubmatchIndex} is the <a href='#all'>All</a> version of
+   * {@link #findUTF8SubmatchIndex}; it returns a list of up to {@code n} successive matches of the
+   * expression, as defined by the <a href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<int[]> findAllUTF8SubmatchIndex(byte[] b, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF8(b), n, new DeliverFunc() {
-      @Override public void deliver(int[] match) {
-          result.add(match);
-        }});
+    allMatches(
+        MachineInput.fromUTF8(b),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(match);
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -805,26 +833,31 @@ class RE2 {
   }
 
   /**
-   * {@code findAllSubmatch} is the <a href='#all'>All</a> version
-   * of {@link #findSubmatch}; it returns a list of up to
-   * {@code n} successive matches of the expression, as defined by the
-   * <a href='#all'>All</a> description above.
+   * {@code findAllSubmatch} is the <a href='#all'>All</a> version of {@link #findSubmatch}; it
+   * returns a list of up to {@code n} successive matches of the expression, as defined by the <a
+   * href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<String[]> findAllSubmatch(final String s, int n) {
     final List<String[]> result = new ArrayList<String[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
-        @Override public void deliver(int[] match) {
-          String[] slice = new String[match.length / 2];
-          for (int j = 0; j < slice.length; ++j) {
-            if (match[2 * j] >= 0) {
-              slice[j] = s.substring(match[2 * j], match[2 * j + 1]);
+    allMatches(
+        MachineInput.fromUTF16(s),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            String[] slice = new String[match.length / 2];
+            for (int j = 0; j < slice.length; ++j) {
+              if (match[2 * j] >= 0) {
+                slice[j] = s.substring(match[2 * j], match[2 * j + 1]);
+              }
             }
+            result.add(slice);
           }
-          result.add(slice);
-        }});
+        });
     if (result.isEmpty()) {
       return null;
     }
@@ -832,24 +865,28 @@ class RE2 {
   }
 
   /**
-   * {@code findAllSubmatchIndex} is the <a href='#all'>All</a>
-   * version of {@link #findSubmatchIndex}; it returns a list of
-   * up to {@code n} successive matches of the expression, as defined by
-   * the <a href='#all'>All</a> description above.
+   * {@code findAllSubmatchIndex} is the <a href='#all'>All</a> version of
+   * {@link #findSubmatchIndex}; it returns a list of up to {@code n} successive matches of the
+   * expression, as defined by the <a href='#all'>All</a> description above.
    *
-   * <p>A return value of null indicates no match.
+   * <p>
+   * A return value of null indicates no match.
    */
   // This is visible for testing.
   List<int[]> findAllSubmatchIndex(String s, int n) {
     final List<int[]> result = new ArrayList<int[]>();
-    allMatches(MachineInput.fromUTF16(s), n, new DeliverFunc() {
-        @Override public void deliver(int[] match) {
-          result.add(match);
-        }});
+    allMatches(
+        MachineInput.fromUTF16(s),
+        n,
+        new DeliverFunc() {
+          @Override
+          public void deliver(int[] match) {
+            result.add(match);
+          }
+        });
     if (result.isEmpty()) {
       return null;
     }
     return result;
   }
-
 }

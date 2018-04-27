@@ -9,23 +9,25 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class RE2ReplaceAllFunctionTest {
-  private static final RE2.ReplaceFunc REPLACE_XSY = new RE2.ReplaceFunc() {
-    public String replace(String s) {
-      return "x" + s + "y";
-    }
+  private static final RE2.ReplaceFunc REPLACE_XSY =
+      new RE2.ReplaceFunc() {
+        public String replace(String s) {
+          return "x" + s + "y";
+        }
 
-    public String toString() {
-      return "REPLACE_XSY";
-    }
-  };
+        public String toString() {
+          return "REPLACE_XSY";
+        }
+      };
 
   // Each row is (String pattern, input, output, ReplaceFunc replacement).
   // Conceptually the replacement func is a table column---but for now
   // it's always REPLACE_XSY.
   private static final String[][] REPLACE_FUNC_TESTS = {
-      { "[a-c]", "defabcdef", "defxayxbyxcydef" },
-      { "[a-c]+", "defabcdef", "defxabcydef" },
-      { "[a-c]*", "defabcdef", "xydxyexyfxabcydxyexyfxy" }, };
+    {"[a-c]", "defabcdef", "defxayxbyxcydef"},
+    {"[a-c]+", "defabcdef", "defxabcydef"},
+    {"[a-c]*", "defabcdef", "xydxyexyfxabcydxyexyfxy"},
+  };
 
   @Parameters
   public static String[][] testCases() {
@@ -52,8 +54,14 @@ public class RE2ReplaceAllFunctionTest {
     }
     String actual = re.replaceAllFunc(input, REPLACE_XSY, input.length());
     if (!actual.equals(expected)) {
-      fail(String.format("%s.replaceAllFunc(%s,%s) = %s; want %s", pattern, input, REPLACE_XSY, actual, expected));
+      fail(
+          String.format(
+              "%s.replaceAllFunc(%s,%s) = %s; want %s",
+              pattern,
+              input,
+              REPLACE_XSY,
+              actual,
+              expected));
     }
   }
-
 }

@@ -5,6 +5,7 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,6 +52,7 @@ public class PatternTest {
     boolean caught = false;
     try {
       Pattern.compile("abc(");
+      fail("should have thrown");
     } catch (PatternSyntaxException e) {
       assertEquals(-1, e.getIndex());
       assertNotSame("", e.getDescription());

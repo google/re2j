@@ -4,6 +4,7 @@ plugins {
   id 'com.jfrog.bintray' version '1.7.3'
   id 'maven-publish'
   id 'com.github.sherter.google-java-format' version '0.3.2'
+  id 'net.ltgt.errorprone' version '0.0.11'
 }
 
 // The name of the release we're working on. See RELEASING.md for details.
@@ -34,6 +35,12 @@ sourceSets {
 
 repositories {
   mavenCentral()
+}
+
+// Use error_prone_core 2.0.5, later versions require Java 8 to build and we'd
+// like to support building on Java 7.
+configurations.errorprone {
+  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
 }
 
 dependencies {

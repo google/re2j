@@ -643,6 +643,7 @@ public class FindTest {
   }
 
   // (Go: TestFindAllStringSubmatch)
+  @org.junit.Test
   public void testFindAllSubmatch() {
     List<String[]> result = RE2.compile(test.pat).findAllSubmatch(test.text, -1);
     if (test.matches.length == 0 && result == null) {

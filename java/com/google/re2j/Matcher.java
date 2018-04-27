@@ -3,31 +3,30 @@
 package com.google.re2j;
 
 /**
- * A stateful iterator that interprets a regex {@code Pattern} on a
- * specific input.  Its interface mimics the JDK 1.4.2
- * {@code java.util.regex.Matcher}.
+ * A stateful iterator that interprets a regex {@code Pattern} on a specific input. Its interface
+ * mimics the JDK 1.4.2 {@code java.util.regex.Matcher}.
  *
- * <p>Conceptually, a Matcher consists of four parts:
+ * <p>
+ * Conceptually, a Matcher consists of four parts:
  * <ol>
- *   <li>A compiled regular expression {@code Pattern}, set at
- *   construction and fixed for the lifetime of the matcher.</li>
+ * <li>A compiled regular expression {@code Pattern}, set at construction and fixed for the lifetime
+ * of the matcher.</li>
  *
- *   <li>The remainder of the input string, set at construction or
- *   {@link #reset()} and advanced by each match operation such as
- *   {@link #find}, {@link #matches} or {@link #lookingAt}.</li>
+ * <li>The remainder of the input string, set at construction or {@link #reset()} and advanced by
+ * each match operation such as {@link #find}, {@link #matches} or {@link #lookingAt}.</li>
  *
- *   <li>The current match information, accessible via {@link #start},
- *   {@link #end}, and {@link #group}, and updated by each match
- *   operation.</li>
+ * <li>The current match information, accessible via {@link #start}, {@link #end}, and
+ * {@link #group}, and updated by each match operation.</li>
  *
- *   <li>The append position, used and advanced by
- *   {@link #appendReplacement} and {@link #appendTail} if performing a
- *   search and replace from the input to an external {@code StringBuffer}.
+ * <li>The append position, used and advanced by {@link #appendReplacement} and {@link #appendTail}
+ * if performing a search and replace from the input to an external {@code StringBuffer}.
  *
  * </ol>
  *
- * <p>See the <a href="package.html">package-level
- * documentation</a> for an overview of how to use this API.</p>
+ * <p>
+ * See the <a href="package.html">package-level documentation</a> for an overview of how to use this
+ * API.
+ * </p>
  *
  * @author rsc@google.com (Russ Cox)
  */
@@ -81,8 +80,7 @@ public final class Matcher {
   }
 
   /**
-   * Resets the {@code Matcher}, rewinding input and
-   * discarding any match information.
+   * Resets the {@code Matcher}, rewinding input and discarding any match information.
    *
    * @return the {@code Matcher} itself, for chained method calls
    */
@@ -132,8 +130,7 @@ public final class Matcher {
    *
    * @param group the group index; 0 is the overall match
    * @throws IllegalStateException if there is no match
-   * @throws IndexOutOfBoundsException
-   *   if {@code group < 0} or {@code group > groupCount()}
+   * @throws IndexOutOfBoundsException if {@code group < 0} or {@code group > groupCount()}
    */
   public int start(int group) {
     loadGroup(group);
@@ -145,8 +142,7 @@ public final class Matcher {
    *
    * @param group the group index; 0 is the overall match
    * @throws IllegalStateException if there is no match
-   * @throws IndexOutOfBoundsException
-   *   if {@code group < 0} or {@code group > groupCount()}
+   * @throws IndexOutOfBoundsException if {@code group < 0} or {@code group > groupCount()}
    */
   public int end(int group) {
     loadGroup(group);
@@ -166,8 +162,7 @@ public final class Matcher {
    * Returns the subgroup of the most recent match.
    *
    * @throws IllegalStateException if there is no match
-   * @throws IndexOutOfBoundsException if {@code group < 0}
-   *   or {@code group > groupCount()}
+   * @throws IndexOutOfBoundsException if {@code group < 0} or {@code group > groupCount()}
    */
   public String group(int group) {
     int start = start(group);
@@ -191,8 +186,7 @@ public final class Matcher {
   /** Helper: finds subgroup information if needed for group. */
   private void loadGroup(int group) {
     if (group < 0 || group > groupCount) {
-      throw new IndexOutOfBoundsException(
-          "Group index out of bounds: " + group);
+      throw new IndexOutOfBoundsException("Group index out of bounds: " + group);
     }
     if (!hasMatch) {
       throw new IllegalStateException("perhaps no match attempted");
@@ -213,8 +207,8 @@ public final class Matcher {
       end = inputLength;
     }
 
-    boolean ok = pattern.re2().match(inputSequence, groups[0], end,
-      anchorFlag, groups, 1 + groupCount);
+    boolean ok =
+        pattern.re2().match(inputSequence, groups[0], end, anchorFlag, groups, 1 + groupCount);
     // Must match - hasMatch says that the last call with these
     // parameters worked just fine.
     if (!ok) {
@@ -224,8 +218,8 @@ public final class Matcher {
   }
 
   /**
-   * Matches the entire input against the pattern (anchored start and end).
-   * If there is a match, {@code matches} sets the match state to describe it.
+   * Matches the entire input against the pattern (anchored start and end). If there is a match,
+   * {@code matches} sets the match state to describe it.
    *
    * @return true if the entire input matches the pattern
    */
@@ -234,8 +228,8 @@ public final class Matcher {
   }
 
   /**
-   * Matches the beginning of input against the pattern (anchored start).
-   * If there is a match, {@code lookingAt} sets the match state to describe it.
+   * Matches the beginning of input against the pattern (anchored start). If there is a match,
+   * {@code lookingAt} sets the match state to describe it.
    *
    * @return true if the beginning of the input matches the pattern
    */
@@ -244,10 +238,9 @@ public final class Matcher {
   }
 
   /**
-   * Matches the input against the pattern (unanchored).
-   * The search begins at the end of the last match, or else the beginning
-   * of the input.
-   * If there is a match, {@code find} sets the match state to describe it.
+   * Matches the input against the pattern (unanchored). The search begins at the end of the last
+   * match, or else the beginning of the input. If there is a match, {@code find} sets the match
+   * state to describe it.
    *
    * @return true if it finds a match
    */
@@ -255,7 +248,7 @@ public final class Matcher {
     int start = 0;
     if (hasMatch) {
       start = groups[1];
-      if (groups[0] == groups[1]) {  // empty match - nudge forward
+      if (groups[0] == groups[1]) { // empty match - nudge forward
         start++;
       }
     }
@@ -263,9 +256,8 @@ public final class Matcher {
   }
 
   /**
-   * Matches the input against the pattern (unanchored),
-   * starting at a specified position.
-   * If there is a match, {@code find} sets the match state to describe it.
+   * Matches the input against the pattern (unanchored), starting at a specified position. If there
+   * is a match, {@code find} sets the match state to describe it.
    *
    * @param start the input position where the search begins
    * @return true if it finds a match
@@ -273,8 +265,7 @@ public final class Matcher {
    */
   public boolean find(int start) {
     if (start < 0 || start > inputLength) {
-      throw new IndexOutOfBoundsException(
-          "start index out of bounds: " + start);
+      throw new IndexOutOfBoundsException("start index out of bounds: " + start);
     }
     reset();
     return genMatch(start, 0);
@@ -284,8 +275,7 @@ public final class Matcher {
   private boolean genMatch(int startByte, int anchor) {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
-    boolean ok = pattern.re2().match(inputSequence, startByte, inputLength,
-        anchor, groups, 1);
+    boolean ok = pattern.re2().match(inputSequence, startByte, inputLength, anchor, groups, 1);
     if (!ok) {
       return false;
     }
@@ -308,8 +298,8 @@ public final class Matcher {
   }
 
   /**
-   * Quotes '\' and '$' in {@code s}, so that the returned string could be
-   * used in {@link #appendReplacement} as a literal replacement of {@code s}.
+   * Quotes '\' and '$' in {@code s}, so that the returned string could be used in
+   * {@link #appendReplacement} as a literal replacement of {@code s}.
    *
    * @param s the string to be quoted
    * @return the quoted string
@@ -330,21 +320,20 @@ public final class Matcher {
   }
 
   /**
-   * Appends to {@code sb} two strings: the text from the append position up
-   * to the beginning of the most recent match, and then the replacement with
-   * submatch groups substituted for references of the form {@code $n}, where
-   * {@code n} is the group number in decimal.  It advances the append position
-   * to where the most recent match ended.
+   * Appends to {@code sb} two strings: the text from the append position up to the beginning of the
+   * most recent match, and then the replacement with submatch groups substituted for references of
+   * the form {@code $n}, where {@code n} is the group number in decimal. It advances the append
+   * position to where the most recent match ended.
    *
-   * <p>To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string
-   * escapes).  The escape is only necessary when {@code $} is followed by a
-   * digit, but it is always allowed.  Only {@code $} and {@code \} need
-   * escaping, but any character can be escaped.
+   * <p>
+   * To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string escapes). The escape
+   * is only necessary when {@code $} is followed by a digit, but it is always allowed. Only
+   * {@code $} and {@code \} need escaping, but any character can be escaped.
    *
-   * <p>The group number {@code n} in {@code $n} is always at least one digit
-   * and expands to use more digits as long as the resulting number is a
-   * valid group number for this pattern.  To cut it off earlier, escape the
-   * first digit that should not be used.
+   * <p>
+   * The group number {@code n} in {@code $n} is always at least one digit and expands to use more
+   * digits as long as the resulting number is a valid group number for this pattern. To cut it off
+   * earlier, escape the first digit that should not be used.
    *
    * @param sb the {@link StringBuffer} to append to
    * @param replacement the replacement string
@@ -352,7 +341,7 @@ public final class Matcher {
    * @throws IllegalStateException if there was no most recent match
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
    */
-  public Matcher appendReplacement(StringBuffer sb, String replacement)  {
+  public Matcher appendReplacement(StringBuffer sb, String replacement) {
     int s = start();
     int e = end();
     if (appendPos < s) {
@@ -366,21 +355,20 @@ public final class Matcher {
   }
 
   /**
-   * Appends to {@code sb} two strings: the text from the append position up
-   * to the beginning of the most recent match, and then the replacement with
-   * submatch groups substituted for references of the form {@code $n}, where
-   * {@code n} is the group number in decimal.  It advances the append position
-   * to where the most recent match ended.
+   * Appends to {@code sb} two strings: the text from the append position up to the beginning of the
+   * most recent match, and then the replacement with submatch groups substituted for references of
+   * the form {@code $n}, where {@code n} is the group number in decimal. It advances the append
+   * position to where the most recent match ended.
    *
-   * <p>To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string
-   * escapes).  The escape is only necessary when {@code $} is followed by a
-   * digit, but it is always allowed.  Only {@code $} and {@code \} need
-   * escaping, but any character can be escaped.
+   * <p>
+   * To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string escapes). The escape
+   * is only necessary when {@code $} is followed by a digit, but it is always allowed. Only
+   * {@code $} and {@code \} need escaping, but any character can be escaped.
    *
-   * <p>The group number {@code n} in {@code $n} is always at least one digit
-   * and expands to use more digits as long as the resulting number is a
-   * valid group number for this pattern.  To cut it off earlier, escape the
-   * first digit that should not be used.
+   * <p>
+   * The group number {@code n} in {@code $n} is always at least one digit and expands to use more
+   * digits as long as the resulting number is a valid group number for this pattern. To cut it off
+   * earlier, escape the first digit that should not be used.
    *
    * @param sb the {@link StringBuilder} to append to
    * @param replacement the replacement string
@@ -445,8 +433,8 @@ public final class Matcher {
   }
 
   /**
-   * Appends to {@code sb} the substring of the input from the
-   * append position to the end of the input.
+   * Appends to {@code sb} the substring of the input from the append position to the end of the
+   * input.
    *
    * @param sb the {@link StringBuffer} to append to
    * @return the argument {@code sb}, for method chaining
@@ -457,8 +445,8 @@ public final class Matcher {
   }
 
   /**
-   * Appends to {@code sb} the substring of the input from the
-   * append position to the end of the input.
+   * Appends to {@code sb} the substring of the input from the append position to the end of the
+   * input.
    *
    * @param sb the {@link StringBuilder} to append to
    * @return the argument {@code sb}, for method chaining
@@ -469,8 +457,8 @@ public final class Matcher {
   }
 
   /**
-   * Returns the input with all matches replaced by {@code replacement},
-   * interpreted as for {@code appendReplacement}.
+   * Returns the input with all matches replaced by {@code replacement}, interpreted as for
+   * {@code appendReplacement}.
    *
    * @param replacement the replacement string
    * @return the input string with the matches replaced
@@ -481,8 +469,8 @@ public final class Matcher {
   }
 
   /**
-   * Returns the input with the first match replaced by {@code replacement},
-   * interpreted as for {@code appendReplacement}.
+   * Returns the input with the first match replaced by {@code replacement}, interpreted as for
+   * {@code appendReplacement}.
    *
    * @param replacement the replacement string
    * @return the input string with the first match replaced

@@ -11,9 +11,11 @@ class GoTestUtils {
   protected static int len(Object[] array) {
     return array == null ? 0 : array.length;
   }
+
   protected static int len(int[] array) {
     return array == null ? 0 : array.length;
   }
+
   protected static int len(byte[] array) {
     return array == null ? 0 : array.length;
   }
@@ -43,14 +45,12 @@ class GoTestUtils {
     try {
       int[] idx8 = new int[idx16.length];
       for (int i = 0; i < idx16.length; ++i) {
-        idx8[i] = idx16[i] == -1
-            ? -1
-            : text.substring(0, idx16[i]).getBytes("UTF-8").length;  // yikes
+        idx8[i] =
+            idx16[i] == -1 ? -1 : text.substring(0, idx16[i]).getBytes("UTF-8").length; // yikes
       }
       return idx8;
     } catch (java.io.UnsupportedEncodingException e) {
       throw new IllegalStateException(e);
     }
   }
-
 }

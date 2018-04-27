@@ -34,28 +34,31 @@ public class ParserTest {
     boolean applies(int rune);
   }
 
-  private static final RunePredicate IS_UPPER = new RunePredicate() {
-      public boolean applies(int r) {
-        return Unicode.isUpper(r);
-      }
-    };
-
-  private static final RunePredicate IS_UPPER_FOLD = new RunePredicate() {
-      public boolean applies(int r) {
-        if (Unicode.isUpper(r)) {
-          return true;
+  private static final RunePredicate IS_UPPER =
+      new RunePredicate() {
+        public boolean applies(int r) {
+          return Unicode.isUpper(r);
         }
-        for (int c = Unicode.simpleFold(r); c != r; c = Unicode.simpleFold(c)) {
-          if (Unicode.isUpper(c)) {
+      };
+
+  private static final RunePredicate IS_UPPER_FOLD =
+      new RunePredicate() {
+        public boolean applies(int r) {
+          if (Unicode.isUpper(r)) {
             return true;
           }
+          for (int c = Unicode.simpleFold(r); c != r; c = Unicode.simpleFold(c)) {
+            if (Unicode.isUpper(c)) {
+              return true;
+            }
+          }
+          return false;
         }
-        return false;
-      }
-    };
+      };
 
   private static final Map<Regexp.Op, String> OP_NAMES =
       new EnumMap<Regexp.Op, String>(Regexp.Op.class);
+
   static {
     OP_NAMES.put(Regexp.Op.NO_MATCH, "no");
     OP_NAMES.put(Regexp.Op.EMPTY_MATCH, "emp");
@@ -157,7 +160,7 @@ public class ParserTest {
     {"(?i)\\w", "cc{0x30-0x39 0x41-0x5a 0x5f 0x61-0x7a 0x17f 0x212a}"},
     {"(?i)\\W", "cc{0x0-0x2f 0x3a-0x40 0x5b-0x5e 0x60 0x7b-0x17e 0x180-0x2129 0x212b-0x10ffff}"},
     {"[^\\\\]", "cc{0x0-0x5b 0x5d-0x10ffff}"},
-//  { "\\C", "byte{}" },  // probably never
+    //  { "\\C", "byte{}" },  // probably never
 
     // Unicode, negatives, and a double negative.
     {"\\p{Braille}", "cc{0x2800-0x28ff}"},
@@ -234,7 +237,10 @@ public class ParserTest {
     {"[Aa][Bb]cd", "cat{strfold{AB}str{cd}}"},
 
     // Factoring.
-    {"abc|abd|aef|bcx|bcy", "alt{cat{lit{a}alt{cat{lit{b}cc{0x63-0x64}}str{ef}}}cat{str{bc}cc{0x78-0x79}}}"},
+    {
+      "abc|abd|aef|bcx|bcy",
+      "alt{cat{lit{a}alt{cat{lit{b}cc{0x63-0x64}}str{ef}}}cat{str{bc}cc{0x78-0x79}}}"
+    },
     {"ax+y|ax+z|ay+w", "cat{lit{a}alt{cat{plus{lit{x}}cc{0x79-0x7a}}cat{plus{lit{y}}lit{w}}}}"},
 
     // Bug fixes.
@@ -249,7 +255,6 @@ public class ParserTest {
     {"(?-s).", "dnl{}"},
     {"(?:(?:^).)", "cat{bol{}dot{}}"},
     {"(?-s)(?:(?:^).)", "cat{bol{}dnl{}}"},
-
     {"[\\x00-\\x{10FFFF}]", "dot{}"},
     {"[^\\x00-\\x{10FFFF}]", "cc{}"},
     {"(?:[a][a-])", "cat{lit{a}cc{0x2d 0x61}}"},
@@ -257,20 +262,16 @@ public class ParserTest {
     // RE2 prefix_tests
     {"abc|abd", "cat{str{ab}cc{0x63-0x64}}"},
     {"a(?:b)c|abd", "cat{str{ab}cc{0x63-0x64}}"},
-
-    {"abc|abd|aef|bcx|bcy",
-     "alt{cat{lit{a}alt{cat{lit{b}cc{0x63-0x64}}str{ef}}}" +
-     "cat{str{bc}cc{0x78-0x79}}}"},
-
+    {
+      "abc|abd|aef|bcx|bcy",
+      "alt{cat{lit{a}alt{cat{lit{b}cc{0x63-0x64}}str{ef}}}" + "cat{str{bc}cc{0x78-0x79}}}"
+    },
     {"abc|x|abd", "alt{str{abc}lit{x}str{abd}}"},
     {"(?i)abc|ABD", "cat{strfold{AB}cc{0x43-0x44 0x63-0x64}}"},
     {"[ab]c|[ab]d", "cat{cc{0x61-0x62}cc{0x63-0x64}}"},
-    {"(?:xx|yy)c|(?:xx|yy)d",
-     "cat{alt{str{xx}str{yy}}cc{0x63-0x64}}"},
-    {"x{2}|x{2}[0-9]",
-     "cat{rep{2,2 lit{x}}alt{emp{}cc{0x30-0x39}}}"},
-    {"x{2}y|x{2}[0-9]y",
-     "cat{rep{2,2 lit{x}}alt{lit{y}cat{cc{0x30-0x39}lit{y}}}}"},
+    {"(?:xx|yy)c|(?:xx|yy)d", "cat{alt{str{xx}str{yy}}cc{0x63-0x64}}"},
+    {"x{2}|x{2}[0-9]", "cat{rep{2,2 lit{x}}alt{emp{}cc{0x30-0x39}}}"},
+    {"x{2}y|x{2}[0-9]y", "cat{rep{2,2 lit{x}}alt{lit{y}cat{cc{0x30-0x39}lit{y}}}}"},
   };
 
   // TODO(adonovan): add some tests for:
@@ -339,8 +340,7 @@ public class ParserTest {
         Regexp re = Parser.parse(test[0], flags);
         String d = dump(re);
         if (!test[1].equals(d)) {
-          fail(String.format("parse/dump of " + test[0] + " expected " +
-                             test[1] + ", got " + d));
+          fail(String.format("parse/dump of " + test[0] + " expected " + test[1] + ", got " + d));
         }
       } catch (PatternSyntaxException e) {
         throw new RuntimeException("Parsing failed: " + test[0], e);
@@ -428,20 +428,21 @@ public class ParserTest {
         }
         dumpRegexp(b, re.subs[0]);
         break;
-      case CHAR_CLASS: {
-        String sep = "";
-        for (int i = 0; i < re.runes.length; i += 2) {
-          b.append(sep);
-          sep = " ";
-          int lo = re.runes[i], hi = re.runes[i + 1];
-          if (lo == hi) {
-            b.append(String.format("%#x", lo));
-          } else {
-            b.append(String.format("%#x-%#x", lo, hi));
+      case CHAR_CLASS:
+        {
+          String sep = "";
+          for (int i = 0; i < re.runes.length; i += 2) {
+            b.append(sep);
+            sep = " ";
+            int lo = re.runes[i], hi = re.runes[i + 1];
+            if (lo == hi) {
+              b.append(String.format("%#x", lo));
+            } else {
+              b.append(String.format("%#x-%#x", lo, hi));
+            }
           }
+          break;
         }
-        break;
-      }
     }
     b.append('}');
   }
@@ -469,7 +470,7 @@ public class ParserTest {
     }
     re.runes = new int[runes.size()];
     int j = 0;
-    for(Integer i : runes) {
+    for (Integer i : runes) {
       re.runes[j++] = i;
     }
     return dump(re);
@@ -540,12 +541,7 @@ public class ParserTest {
   };
 
   private static final String[] ONLY_POSIX = {
-    "a++",
-    "a**",
-    "a?*",
-    "a+*",
-    "a{1}*",
-    ".{1}{2}.{3}",
+    "a++", "a**", "a?*", "a+*", "a{1}*", ".{1}{2}.{3}",
   };
 
   @Test
@@ -553,15 +549,13 @@ public class ParserTest {
     for (String regexp : INVALID_REGEXPS) {
       try {
         Regexp re = Parser.parse(regexp, PERL);
-        fail("Parsing (PERL) " + regexp + " should have failed, instead got "
-             + dump(re));
+        fail("Parsing (PERL) " + regexp + " should have failed, instead got " + dump(re));
       } catch (PatternSyntaxException e) {
         /* ok */
       }
       try {
         Regexp re = Parser.parse(regexp, POSIX);
-        fail("parsing (POSIX) " + regexp + " should have failed, instead got "
-             + dump(re));
+        fail("parsing (POSIX) " + regexp + " should have failed, instead got " + dump(re));
       } catch (PatternSyntaxException e) {
         /* ok */
       }
@@ -570,8 +564,7 @@ public class ParserTest {
       Parser.parse(regexp, PERL);
       try {
         Regexp re = Parser.parse(regexp, POSIX);
-        fail("parsing (POSIX) " + regexp + " should have failed, instead got "
-             + dump(re));
+        fail("parsing (POSIX) " + regexp + " should have failed, instead got " + dump(re));
       } catch (PatternSyntaxException e) {
         /* ok */
       }
@@ -579,8 +572,7 @@ public class ParserTest {
     for (String regexp : ONLY_POSIX) {
       try {
         Regexp re = Parser.parse(regexp, PERL);
-        fail("parsing (PERL) " + regexp + " should have failed, instead got "
-             + dump(re));
+        fail("parsing (PERL) " + regexp + " should have failed, instead got " + dump(re));
       } catch (PatternSyntaxException e) {
         /* ok */
       }
@@ -593,7 +585,7 @@ public class ParserTest {
     for (String[] tt : PARSE_TESTS) {
       Regexp re = Parser.parse(tt[0], TEST_FLAGS);
       String d = dump(re);
-      assertEquals(d, tt[1]);  // (already ensured by testParseSimple)
+      assertEquals(d, tt[1]); // (already ensured by testParseSimple)
 
       String s = re.toString();
       if (!s.equals(tt[0])) {
@@ -604,12 +596,10 @@ public class ParserTest {
         // but "{" is a shorter equivalent in some contexts.
         Regexp nre = Parser.parse(s, TEST_FLAGS);
         String nd = dump(nre);
-        assertEquals(String.format("parse(%s) -> %s", tt[0], s),
-                     d, nd);
+        assertEquals(String.format("parse(%s) -> %s", tt[0], s), d, nd);
 
         String ns = nre.toString();
-        assertEquals(String.format("parse(%s) -> %s", tt[0], s),
-                     s, ns);
+        assertEquals(String.format("parse(%s) -> %s", tt[0], s), s, ns);
       }
     }
   }

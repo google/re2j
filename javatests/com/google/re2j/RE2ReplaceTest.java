@@ -46,7 +46,6 @@ public class RE2ReplaceTest {
     {"^[a-c]*", "x", "", "x", "false"},
     {"[a-c]*$", "x", "", "x", "false"},
     {"^[a-c]*$", "x", "", "x", "false"},
-
     {"^[a-c]+", "x", "abcdabc", "xdabc", "false"},
     {"[a-c]+$", "x", "abcdabc", "abcdx", "false"},
     {"^[a-c]+$", "x", "abcdabc", "abcdabc", "false"},
@@ -108,7 +107,6 @@ public class RE2ReplaceTest {
     {"^[a-c]*", "x", "", "x", "true"},
     {"[a-c]*$", "x", "", "x", "true"},
     {"^[a-c]*$", "x", "", "x", "true"},
-
     {"^[a-c]+", "x", "abcdabc", "xdabc", "true"},
     {"[a-c]+$", "x", "abcdabc", "abcdx", "true"},
     {"^[a-c]+$", "x", "abcdabc", "abcdabc", "true"},
@@ -146,7 +144,8 @@ public class RE2ReplaceTest {
   private final String expected;
   private boolean replaceFirst;
 
-  public RE2ReplaceTest(String pattern, String replacement, String source, String expected, String replaceFirst) {
+  public RE2ReplaceTest(
+      String pattern, String replacement, String source, String expected, String replaceFirst) {
     this.pattern = pattern;
     this.replacement = replacement;
     this.source = source;
@@ -162,11 +161,17 @@ public class RE2ReplaceTest {
     } catch (PatternSyntaxException e) {
       fail(String.format("Unexpected error compiling %s: %s", pattern, e.getMessage()));
     }
-    String actual = replaceFirst ? re.replaceFirst(source, replacement)
-        : re.replaceAll(source, replacement);
+    String actual =
+        replaceFirst ? re.replaceFirst(source, replacement) : re.replaceAll(source, replacement);
     if (!actual.equals(expected)) {
-      fail(String.format("%s.replaceAll(%s,%s) = %s; want %s", pattern, source,
-          replacement, actual, expected));
+      fail(
+          String.format(
+              "%s.replaceAll(%s,%s) = %s; want %s",
+              pattern,
+              source,
+              replacement,
+              actual,
+              expected));
     }
   }
 }

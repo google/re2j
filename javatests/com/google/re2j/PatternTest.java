@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * This class checks that the behaviour of Pattern and JDK's Pattern are
- * same, and we expect them that way too.
+ * This class checks that the behaviour of Pattern and JDK's Pattern are same, and we expect them
+ * that way too.
  *
  * @author afrozm@google.com (Afroz Mohiuddin)
  */
@@ -71,23 +71,18 @@ public class PatternTest {
   @Test
   public void testMatchesWithFlags() {
     ApiTestUtils.testMatchesRE2("ab+c", 0, "abbbc", "cbba");
-    ApiTestUtils.testMatchesRE2("ab+c", Pattern.CASE_INSENSITIVE, "abBBc",
-                                "cbbba");
+    ApiTestUtils.testMatchesRE2("ab+c", Pattern.CASE_INSENSITIVE, "abBBc", "cbbba");
     ApiTestUtils.testMatchesRE2("ab.*c", 0, "abxyzc", "ab\nxyzc");
-    ApiTestUtils.testMatchesRE2("ab.*c", Pattern.DOTALL, "ab\nxyzc",
-                                "aB\nxyzC");
-    ApiTestUtils.testMatchesRE2("ab.*c",
-                                Pattern.DOTALL | Pattern.CASE_INSENSITIVE,
-                                "aB\nxyzC", "z");
+    ApiTestUtils.testMatchesRE2("ab.*c", Pattern.DOTALL, "ab\nxyzc", "aB\nxyzC");
+    ApiTestUtils.testMatchesRE2(
+        "ab.*c", Pattern.DOTALL | Pattern.CASE_INSENSITIVE, "aB\nxyzC", "z");
     ApiTestUtils.testMatchesRE2("^ab.*c$", 0, "abc", "xyz\nabc\ndef");
 
-    ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.MULTILINE, "abc",
-                                "xyz\nabc\ndef");
+    ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.MULTILINE, "abc", "xyz\nabc\ndef");
     ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.MULTILINE, "abc", "");
-    ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE,
-        "ab\nc", "AB\nc");
-    ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE |
-        Pattern.CASE_INSENSITIVE, "AB\nc", "z");
+    ApiTestUtils.testMatchesRE2("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE, "ab\nc", "AB\nc");
+    ApiTestUtils.testMatchesRE2(
+        "^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE | Pattern.CASE_INSENSITIVE, "AB\nc", "z");
   }
 
   private void testFind(String regexp, int flag, String match, String nonMatch) {
@@ -105,29 +100,27 @@ public class PatternTest {
     testFind("^ab.*c$", 0, "abc", "xyz\nabc\ndef");
     testFind("^ab.*c$", Pattern.MULTILINE, "xyz\nabc\ndef", "xyz\nab\nc\ndef");
     testFind("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE, "xyz\nab\nc\ndef", "xyz\nAB\nc\ndef");
-    testFind("^ab.*c$", Pattern.DOTALL | Pattern.MULTILINE | Pattern.CASE_INSENSITIVE,
-      "xyz\nAB\nc\ndef", "z");
+    testFind(
+        "^ab.*c$",
+        Pattern.DOTALL | Pattern.MULTILINE | Pattern.CASE_INSENSITIVE,
+        "xyz\nAB\nc\ndef",
+        "z");
   }
 
   @Test
   public void testSplit() {
     ApiTestUtils.testSplit("/", "abcde", new String[] {"abcde"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//",
-                           new String[] {"a", "b", "cc", "", "d", "e"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 3,
-        new String[] {"a", "b", "cc//d/e//"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 4,
-        new String[] {"a", "b", "cc", "/d/e//"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 5,
-        new String[] {"a", "b", "cc", "", "d/e//"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 6,
-        new String[] {"a", "b", "cc", "", "d", "e//"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 7,
-        new String[] {"a", "b", "cc", "", "d", "e", "/"});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 8,
-        new String[] {"a", "b", "cc", "", "d", "e", "", ""});
-    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 9,
-        new String[] {"a", "b", "cc", "", "d", "e", "", ""});
+    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", new String[] {"a", "b", "cc", "", "d", "e"});
+    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 3, new String[] {"a", "b", "cc//d/e//"});
+    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 4, new String[] {"a", "b", "cc", "/d/e//"});
+    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 5, new String[] {"a", "b", "cc", "", "d/e//"});
+    ApiTestUtils.testSplit("/", "a/b/cc//d/e//", 6, new String[] {"a", "b", "cc", "", "d", "e//"});
+    ApiTestUtils.testSplit(
+        "/", "a/b/cc//d/e//", 7, new String[] {"a", "b", "cc", "", "d", "e", "/"});
+    ApiTestUtils.testSplit(
+        "/", "a/b/cc//d/e//", 8, new String[] {"a", "b", "cc", "", "d", "e", "", ""});
+    ApiTestUtils.testSplit(
+        "/", "a/b/cc//d/e//", 9, new String[] {"a", "b", "cc", "", "d", "e", "", ""});
 
     // The tests below are listed at
     // http://docs.oracle.com/javase/1.5.0/docs/api/java/util/regex/Pattern.html#split(java.lang.CharSequence, int)
@@ -139,12 +132,10 @@ public class PatternTest {
     ApiTestUtils.testSplit(regexp1, s, 2, new String[] {"boo", "and:foo"});
     ApiTestUtils.testSplit(regexp1, s, 5, new String[] {"boo", "and", "foo"});
     ApiTestUtils.testSplit(regexp1, s, -2, new String[] {"boo", "and", "foo"});
-    ApiTestUtils.testSplit(regexp2, s, 5,
-                           new String[] { "b", "", ":and:f", "", "" });
-    ApiTestUtils.testSplit(regexp2, s, -2,
-                           new String[] { "b", "", ":and:f", "", "" });
-    ApiTestUtils.testSplit(regexp2, s, 0, new String[] { "b", "", ":and:f" });
-    ApiTestUtils.testSplit(regexp2, s, new String[] { "b", "", ":and:f" });
+    ApiTestUtils.testSplit(regexp2, s, 5, new String[] {"b", "", ":and:f", "", ""});
+    ApiTestUtils.testSplit(regexp2, s, -2, new String[] {"b", "", ":and:f", "", ""});
+    ApiTestUtils.testSplit(regexp2, s, 0, new String[] {"b", "", ":and:f"});
+    ApiTestUtils.testSplit(regexp2, s, new String[] {"b", "", ":and:f"});
   }
 
   @Test
@@ -167,8 +158,7 @@ public class PatternTest {
     try {
       ObjectOutputStream out = new ObjectOutputStream(bytes);
       out.writeObject(object);
-      ObjectInputStream in = new ObjectInputStream(
-          new ByteArrayInputStream(bytes.toByteArray()));
+      ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
       return (Pattern) in.readObject();
     } catch (IOException e) {
       throw new RuntimeException(e);

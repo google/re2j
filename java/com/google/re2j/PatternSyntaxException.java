@@ -7,13 +7,12 @@ package com.google.re2j;
 /**
  * An exception thrown by the parser if the pattern was invalid.
  *
- * Following {@code java.util.regex.PatternSyntaxException}, this is an
- * unchecked exception.
+ * Following {@code java.util.regex.PatternSyntaxException}, this is an unchecked exception.
  */
 public class PatternSyntaxException extends RuntimeException {
 
-  private final String error;  // the nature of the error
-  private final String input;  // the partial input at the point of error.
+  private final String error; // the nature of the error
+  private final String input; // the partial input at the point of error.
 
   public PatternSyntaxException(String error, String input) {
     super("error parsing regexp: " + error + ": `" + input + "`");
@@ -30,8 +29,8 @@ public class PatternSyntaxException extends RuntimeException {
   /**
    * Retrieves the error index.
    *
-   * @return  The approximate index in the pattern of the error,
-   *         or <tt>-1</tt> if the index is not known
+   * @return The approximate index in the pattern of the error, or <tt>-1</tt> if the index is not
+   * known
    */
   public int getIndex() {
     return -1;
@@ -40,7 +39,7 @@ public class PatternSyntaxException extends RuntimeException {
   /**
    * Retrieves the description of the error.
    *
-   * @return  The description of the error
+   * @return The description of the error
    */
   public String getDescription() {
     return error;
@@ -49,10 +48,9 @@ public class PatternSyntaxException extends RuntimeException {
   /**
    * Retrieves the erroneous regular-expression pattern.
    *
-   * @return  The erroneous pattern
+   * @return The erroneous pattern
    */
   public String getPattern() {
     return input;
   }
-
 }

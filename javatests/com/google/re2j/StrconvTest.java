@@ -33,7 +33,6 @@ public class StrconvTest {
     {"\"\\U0001011111\"", rune(0x10111) + "11"},
     {"\"\\a\\b\\f\\n\\r\\t\\v\\\\\\\"\"", "\007\b\f\n\r\t\013\\\""},
     {"\"'\"", "'"},
-
     {"'a'", "a"},
     {"'☹'", "☹"},
     {"'\\a'", "\u0007"},
@@ -45,7 +44,6 @@ public class StrconvTest {
     {"' '", " "},
     {"'\\''", "'"},
     {"'\"'", "\""},
-
     {"``", ""},
     {"`a`", "a"},
     {"`abc`", "abc"},
@@ -96,8 +94,7 @@ public class StrconvTest {
   @Test
   public void testUnquote() {
     if (expected != null) {
-      assertEquals(String.format("unquote(%s)", input),
-                   expected, Strconv.unquote(input));
+      assertEquals(String.format("unquote(%s)", input), expected, Strconv.unquote(input));
     } else {
       try {
         Strconv.unquote(input);

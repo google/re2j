@@ -37,6 +37,9 @@ public class RE2TestNumSubexps {
 
   @Test
   public void testNumSubexp() throws PatternSyntaxException {
-    assertEquals("numberOfCapturingGroups(" + input +")", expected, RE2.compile(input).numberOfCapturingGroups());
+    assertEquals(
+        "numberOfCapturingGroups(" + input + ")",
+        expected,
+        RE2.compile(input).numberOfCapturingGroups());
   }
 }

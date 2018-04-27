@@ -13,7 +13,7 @@ public class RE2CompileTest {
   // succeed.
   @Parameters()
   public static String[][] testData() {
-    return new String[][]{
+    return new String[][] {
       {"", null},
       {".", null},
       {"^.$", null},
@@ -31,7 +31,7 @@ public class RE2CompileTest {
       {"[^1234]", null},
       {"[^\n]", null},
       {"\\!\\\\", null},
-      {"abc]",  null}, // Matches the closing bracket literally.
+      {"abc]", null}, // Matches the closing bracket literally.
       {"a??", null},
       {"*", "missing argument to repetition operator: `*`"},
       {"+", "missing argument to repetition operator: `+`"},
@@ -63,8 +63,8 @@ public class RE2CompileTest {
         fail("RE2.compile(" + input + ") was successful, expected " + expectedError);
       }
     } catch (PatternSyntaxException e) {
-      if (expectedError == null ||
-          !e.getMessage().equals("error parsing regexp: " + expectedError)) {
+      if (expectedError == null
+          || !e.getMessage().equals("error parsing regexp: " + expectedError)) {
         fail("compiling " + input + "; unexpected error: " + e.getMessage());
       }
     }

@@ -40,7 +40,7 @@ class Unicode {
     // binary search over ranges
     for (int lo = 0, hi = ranges.length; lo < hi; ) {
       int m = lo + (hi - lo) / 2;
-      int[] range = ranges[m];  // [lo, hi, stride]
+      int[] range = ranges[m]; // [lo, hi, stride]
       if (range[0] <= r && r <= range[1]) {
         return ((r - range[0]) % range[2]) == 0;
       }
@@ -57,7 +57,7 @@ class Unicode {
   private static boolean is(int[][] ranges, int r) {
     // common case: rune is ASCII or Latin-1, so use linear search.
     if (r <= MAX_LATIN1) {
-      for (int[] range : ranges) {  // range = [lo, hi, stride]
+      for (int[] range : ranges) { // range = [lo, hi, stride]
         if (r > range[1]) {
           continue;
         }
@@ -68,9 +68,7 @@ class Unicode {
       }
       return false;
     }
-    return ranges.length > 0 &&
-        r >= ranges[0][0] &&
-        is32(ranges, r);
+    return ranges.length > 0 && r >= ranges[0][0] && is32(ranges, r);
   }
 
   // isUpper reports whether the rune is an upper case letter.
@@ -102,14 +100,13 @@ class Unicode {
   // isPrint reports whether the rune is printable (Unicode L/M/N/P/S or ' ').
   static boolean isPrint(int r) {
     if (r <= MAX_LATIN1) {
-      return r >= 0x20 && r < 0x7F ||
-             r >= 0xA1 && r != 0xAD;
+      return r >= 0x20 && r < 0x7F || r >= 0xA1 && r != 0xAD;
     }
-    return is(UnicodeTables.L, r) ||
-           is(UnicodeTables.M, r) ||
-           is(UnicodeTables.N, r) ||
-           is(UnicodeTables.P, r) ||
-           is(UnicodeTables.S, r);
+    return is(UnicodeTables.L, r)
+        || is(UnicodeTables.M, r)
+        || is(UnicodeTables.N, r)
+        || is(UnicodeTables.P, r)
+        || is(UnicodeTables.S, r);
   }
 
   // A case range is conceptually a record:
@@ -127,7 +124,7 @@ class Unicode {
     // binary search over ranges
     for (int lo = 0, hi = caseRange.length; lo < hi; ) {
       int m = lo + (hi - lo) / 2;
-      int[] cr = caseRange[m];  // cr = [lo, hi, upper, lower, title]
+      int[] cr = caseRange[m]; // cr = [lo, hi, upper, lower, title]
       int crlo = cr[0];
       int crhi = cr[1];
       if (crlo <= r && r <= crhi) {
@@ -212,8 +209,7 @@ class Unicode {
         hi = m;
       }
     }
-    if (lo < UnicodeTables.CASE_ORBIT.length &&
-        UnicodeTables.CASE_ORBIT[lo][0] == r) {
+    if (lo < UnicodeTables.CASE_ORBIT.length && UnicodeTables.CASE_ORBIT[lo][0] == r) {
       return UnicodeTables.CASE_ORBIT[lo][1];
     }
 
@@ -227,6 +223,5 @@ class Unicode {
     return toUpper(r);
   }
 
-  private Unicode() {}  // uninstantiable
-
+  private Unicode() {} // uninstantiable
 }

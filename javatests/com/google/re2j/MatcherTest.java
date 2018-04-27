@@ -35,46 +35,57 @@ public class MatcherTest {
 
   @Test
   public void testReplaceAll() {
-     ApiTestUtils.testReplaceAll("What the Frog's Eye Tells the Frog's Brain",
-         "Frog", "Lizard",
-         "What the Lizard's Eye Tells the Lizard's Brain");
-     ApiTestUtils.testReplaceAll("What the Frog's Eye Tells the Frog's Brain",
-         "F(rog)", "\\$Liza\\rd$1",
-         "What the $Lizardrog's Eye Tells the $Lizardrog's Brain");
-     ApiTestUtils.testReplaceAll("abcdefghijklmnopqrstuvwxyz123",
-       "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)", "$10$20", "jb0wo0123");
-     ApiTestUtils.testReplaceAll("\u00e1\u0062\u00e7\u2655", "(.)", "<$1>",
-         "<\u00e1><\u0062><\u00e7><\u2655>");
-     ApiTestUtils.testReplaceAll("\u00e1\u0062\u00e7\u2655", "[\u00e0-\u00e9]",
-       "<$0>", "<\u00e1>\u0062<\u00e7>\u2655");
-     ApiTestUtils.testReplaceAll("hello world", "z*", "x",
-                                 "xhxexlxlxox xwxoxrxlxdx");
-     // test replaceAll with alternation
-     ApiTestUtils.testReplaceAll("123:foo", "(?:\\w+|\\d+:foo)", "x", "x:x");
-     ApiTestUtils.testReplaceAll("123:foo", "(?:\\d+:foo|\\w+)", "x", "x");
-     ApiTestUtils.testReplaceAll("aab", "a*", "<$0>", "<aa><>b<>");
-     ApiTestUtils.testReplaceAll("aab", "a*?", "<$0>", "<>a<>a<>b<>");
+    ApiTestUtils.testReplaceAll(
+        "What the Frog's Eye Tells the Frog's Brain",
+        "Frog",
+        "Lizard",
+        "What the Lizard's Eye Tells the Lizard's Brain");
+    ApiTestUtils.testReplaceAll(
+        "What the Frog's Eye Tells the Frog's Brain",
+        "F(rog)",
+        "\\$Liza\\rd$1",
+        "What the $Lizardrog's Eye Tells the $Lizardrog's Brain");
+    ApiTestUtils.testReplaceAll(
+        "abcdefghijklmnopqrstuvwxyz123",
+        "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
+        "$10$20",
+        "jb0wo0123");
+    ApiTestUtils.testReplaceAll(
+        "\u00e1\u0062\u00e7\u2655", "(.)", "<$1>", "<\u00e1><\u0062><\u00e7><\u2655>");
+    ApiTestUtils.testReplaceAll(
+        "\u00e1\u0062\u00e7\u2655", "[\u00e0-\u00e9]", "<$0>", "<\u00e1>\u0062<\u00e7>\u2655");
+    ApiTestUtils.testReplaceAll("hello world", "z*", "x", "xhxexlxlxox xwxoxrxlxdx");
+    // test replaceAll with alternation
+    ApiTestUtils.testReplaceAll("123:foo", "(?:\\w+|\\d+:foo)", "x", "x:x");
+    ApiTestUtils.testReplaceAll("123:foo", "(?:\\d+:foo|\\w+)", "x", "x");
+    ApiTestUtils.testReplaceAll("aab", "a*", "<$0>", "<aa><>b<>");
+    ApiTestUtils.testReplaceAll("aab", "a*?", "<$0>", "<>a<>a<>b<>");
   }
 
   @Test
   public void testReplaceFirst() {
-     ApiTestUtils.testReplaceFirst("What the Frog's Eye Tells the Frog's Brain",
-         "Frog", "Lizard",
-       "What the Lizard's Eye Tells the Frog's Brain");
-     ApiTestUtils.testReplaceFirst("What the Frog's Eye Tells the Frog's Brain",
-         "F(rog)", "\\$Liza\\rd$1",
-       "What the $Lizardrog's Eye Tells the Frog's Brain");
-     ApiTestUtils.testReplaceFirst("abcdefghijklmnopqrstuvwxyz123",
-       "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)", "$10$20",
-                                   "jb0nopqrstuvwxyz123");
-     ApiTestUtils.testReplaceFirst("\u00e1\u0062\u00e7\u2655", "(.)", "<$1>",
-         "<\u00e1>\u0062\u00e7\u2655");
-     ApiTestUtils.testReplaceFirst("\u00e1\u0062\u00e7\u2655",
-                                   "[\u00e0-\u00e9]",
-       "<$0>", "<\u00e1>\u0062\u00e7\u2655");
-     ApiTestUtils.testReplaceFirst("hello world", "z*", "x", "xhello world");
-     ApiTestUtils.testReplaceFirst("aab", "a*", "<$0>", "<aa>b");
-     ApiTestUtils.testReplaceFirst("aab", "a*?", "<$0>", "<>aab");
+    ApiTestUtils.testReplaceFirst(
+        "What the Frog's Eye Tells the Frog's Brain",
+        "Frog",
+        "Lizard",
+        "What the Lizard's Eye Tells the Frog's Brain");
+    ApiTestUtils.testReplaceFirst(
+        "What the Frog's Eye Tells the Frog's Brain",
+        "F(rog)",
+        "\\$Liza\\rd$1",
+        "What the $Lizardrog's Eye Tells the Frog's Brain");
+    ApiTestUtils.testReplaceFirst(
+        "abcdefghijklmnopqrstuvwxyz123",
+        "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
+        "$10$20",
+        "jb0nopqrstuvwxyz123");
+    ApiTestUtils.testReplaceFirst(
+        "\u00e1\u0062\u00e7\u2655", "(.)", "<$1>", "<\u00e1>\u0062\u00e7\u2655");
+    ApiTestUtils.testReplaceFirst(
+        "\u00e1\u0062\u00e7\u2655", "[\u00e0-\u00e9]", "<$0>", "<\u00e1>\u0062\u00e7\u2655");
+    ApiTestUtils.testReplaceFirst("hello world", "z*", "x", "xhello world");
+    ApiTestUtils.testReplaceFirst("aab", "a*", "<$0>", "<aa>b");
+    ApiTestUtils.testReplaceFirst("aab", "a*?", "<$0>", "<>aab");
   }
 
   @Test
@@ -84,21 +95,19 @@ public class MatcherTest {
 
   @Test
   public void testGroup() {
-    ApiTestUtils.testGroup("xabdez", "(a)(b(c)?)d?(e)",
-        new String[] {"abde", "a", "b", null, "e"});
-    ApiTestUtils.testGroup(
-        "abc", "(a)(b$)?(b)?", new String[] {"ab", "a", null, "b"});
-    ApiTestUtils.testGroup(
-        "abc", "(^b)?(b)?c", new String[] {"bc", null, "b"});
-    ApiTestUtils.testGroup(
-        " a b", "\\b(.).\\b", new String[] {"a ", "a"});
+    ApiTestUtils.testGroup("xabdez", "(a)(b(c)?)d?(e)", new String[] {"abde", "a", "b", null, "e"});
+    ApiTestUtils.testGroup("abc", "(a)(b$)?(b)?", new String[] {"ab", "a", null, "b"});
+    ApiTestUtils.testGroup("abc", "(^b)?(b)?c", new String[] {"bc", null, "b"});
+    ApiTestUtils.testGroup(" a b", "\\b(.).\\b", new String[] {"a ", "a"});
 
     // Not allowed to use UTF-8 except in comments, per Java style guide.
     // ("αβξδεφγ", "(.)(..)(...)", new String[] {"αβξδεφ", "α", "βξ", "δεφ"});
-    ApiTestUtils.testGroup("\u03b1\u03b2\u03be\u03b4\u03b5\u03c6\u03b3",
+    ApiTestUtils.testGroup(
+        "\u03b1\u03b2\u03be\u03b4\u03b5\u03c6\u03b3",
         "(.)(..)(...)",
-        new String[] {"\u03b1\u03b2\u03be\u03b4\u03b5\u03c6",
-            "\u03b1", "\u03b2\u03be", "\u03b4\u03b5\u03c6"});
+        new String[] {
+          "\u03b1\u03b2\u03be\u03b4\u03b5\u03c6", "\u03b1", "\u03b2\u03be", "\u03b4\u03b5\u03c6"
+        });
   }
 
   @Test
@@ -184,8 +193,7 @@ public class MatcherTest {
   }
 
   /**
-   * Test that IllegalStateException is thrown if start/end are called
-   * before calling find
+   * Test that IllegalStateException is thrown if start/end are called before calling find
    */
   @Test
   public void testStartEndBeforeFind() {
@@ -199,8 +207,8 @@ public class MatcherTest {
   }
 
   /**
-   * Test for b/6891357. Basically matches should behave like find when
-   * it comes to updating the information of the match.
+   * Test for b/6891357. Basically matches should behave like find when it comes to updating the
+   * information of the match.
    */
   @Test
   public void testMatchesUpdatesMatchInformation() {
@@ -222,14 +230,15 @@ public class MatcherTest {
 
   void helperTestMatchEndUTF16(String string, int num, final int end) {
     String pattern = "[" + string + "]";
-    RE2 re = new RE2(pattern) {
-        @Override
-        public boolean match(CharSequence input, int start, int e, int anchor,
-                             int[] group, int ngroup) {
-          assertEquals(end, e);
-          return super.match(input, start, e, anchor, group, ngroup);
-        }
-      };
+    RE2 re =
+        new RE2(pattern) {
+          @Override
+          public boolean match(
+              CharSequence input, int start, int e, int anchor, int[] group, int ngroup) {
+            assertEquals(end, e);
+            return super.match(input, start, e, anchor, group, ngroup);
+          }
+        };
     Pattern pat = new Pattern(pattern, 0, re);
     Matcher m = pat.matcher(string);
 
@@ -237,13 +246,13 @@ public class MatcherTest {
     while (m.find()) {
       found++;
     }
-    assertEquals("Matches Expected " + num + " but found " + found +
-                 ", for input " + string, num, found);
+    assertEquals(
+        "Matches Expected " + num + " but found " + found + ", for input " + string, num, found);
   }
 
   /**
-   * Test for variable length encoding, test whether RE2's match function gets
-   * the required parameter based on UTF16 codes and not chars and Runes.
+   * Test for variable length encoding, test whether RE2's match function gets the required
+   * parameter based on UTF16 codes and not chars and Runes.
    */
   @Test
   public void testMatchEndUTF16() {
@@ -254,8 +263,12 @@ public class MatcherTest {
 
     // But surrogates are encoded as two UTF16 codes, so we should expect match
     // to get 6 rather than 3.
-    String utf16 = new StringBuilder().appendCodePoint(0x10000).
-        appendCodePoint(0x10001).appendCodePoint(0x10002).toString();
+    String utf16 =
+        new StringBuilder()
+            .appendCodePoint(0x10000)
+            .appendCodePoint(0x10001)
+            .appendCodePoint(0x10002)
+            .toString();
     assertEquals(utf16, "\uD800\uDC00\uD800\uDC01\uD800\uDC02");
     helperTestMatchEndUTF16(utf16, 3, 6);
   }
@@ -279,7 +292,7 @@ public class MatcherTest {
     Matcher m = p.matcher("one cat two cats in the yard");
     StringBuilder sb = new StringBuilder();
     while (m.find()) {
-        m.appendReplacement(sb, "dog");
+      m.appendReplacement(sb, "dog");
     }
     m.appendTail(sb);
     m.appendTail(sb);
@@ -295,15 +308,13 @@ public class MatcherTest {
 
     buffer = new StringBuffer();
     matcher.appendReplacement(buffer, "foo");
-    assertEquals("1st time",
-        "zzfoo", buffer.toString());
+    assertEquals("1st time", "zzfoo", buffer.toString());
 
     assertTrue(matcher.find(0));
 
     buffer = new StringBuffer();
     matcher.appendReplacement(buffer, "foo");
-    assertEquals("2nd time",
-        "zzfoo", buffer.toString());
+    assertEquals("2nd time", "zzfoo", buffer.toString());
   }
 
   @Test
@@ -315,15 +326,13 @@ public class MatcherTest {
 
     buffer = new StringBuilder();
     matcher.appendReplacement(buffer, "foo");
-    assertEquals("1st time",
-        "zzfoo", buffer.toString());
+    assertEquals("1st time", "zzfoo", buffer.toString());
 
     assertTrue(matcher.find(0));
 
     buffer = new StringBuilder();
     matcher.appendReplacement(buffer, "foo");
-    assertEquals("2nd time",
-        "zzfoo", buffer.toString());
+    assertEquals("2nd time", "zzfoo", buffer.toString());
   }
 
   @Test

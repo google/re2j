@@ -34,13 +34,13 @@ public class FindTest {
     // The n and x parameters construct a [][]int by extracting n
     // sequences from x.  This represents n matches with len(x)/n
     // submatches each.
-    Test(String pat, String text, int n, int ... x) {
+    Test(String pat, String text, int n, int... x) {
       this.pat = pat;
       this.text = text;
       this.textUTF8 = GoTestUtils.utf8(text);
       this.matches = new int[n][];
       if (n > 0) {
-        int runLength =  x.length / n;
+        int runLength = x.length / n;
         for (int j = 0, i = 0; i < n; i++) {
           matches[i] = new int[runLength];
           System.arraycopy(x, j, matches[i], 0, runLength);
@@ -63,10 +63,11 @@ public class FindTest {
     }
 
     String submatchString(int i, int j) {
-      return GoTestUtils.fromUTF8(submatchBytes(i, j));  // yikes
+      return GoTestUtils.fromUTF8(submatchBytes(i, j)); // yikes
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return String.format("pat=%s text=%s", pat, text);
     }
   }
@@ -107,7 +108,6 @@ public class FindTest {
     new Test("(((a|b|c)*)(d))", "abcd", 1, 0, 4, 0, 4, 0, 3, 2, 3, 3, 4),
     new Test("\\a\\f\\n\\r\\t\\v", "\007\f\n\r\t\013", 1, 0, 6),
     new Test("[\\a\\f\\n\\r\\t\\v]+", "\007\f\n\r\t\013", 1, 0, 6),
-
     new Test("a*(|(b))c*", "aacc", 1, 0, 4, 2, 2, -1, -1),
     new Test("(.*).*", "ab", 1, 0, 2, 0, 2),
     new Test("[.]", ".", 1, 0, 1),
@@ -155,23 +155,98 @@ public class FindTest {
     new Test("(?i)\\W", "s", 0),
 
     // can backslash-escape any punctuation
-    new Test("\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\{\\|\\}\\~",
-             "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~", 1, 0, 31),
-    new Test("[\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\{\\|\\}\\~]+",
-             "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~", 1, 0, 31),
+    new Test(
+        "\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\{\\|\\}\\~",
+        "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~",
+        1,
+        0,
+        31),
+    new Test(
+        "[\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\{\\|\\}\\~]+",
+        "!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~",
+        1,
+        0,
+        31),
     new Test("\\`", "`", 1, 0, 1),
     new Test("[\\`]+", "`", 1, 0, 1),
 
     // long set of matches
-    new Test(".", "qwertyuiopasdfghjklzxcvbnm1234567890", 36,
-             0, 1, 1, 2, 2, 3, 3, 4, 4, 5,
-             5, 6, 6, 7, 7, 8, 8, 9, 9, 10,
-             10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
-             15, 16, 16, 17, 17, 18, 18, 19, 19, 20,
-             20, 21, 21, 22, 22, 23, 23, 24, 24, 25,
-             25, 26, 26, 27, 27, 28, 28, 29, 29, 30,
-             30, 31, 31, 32, 32, 33, 33, 34, 34, 35,
-             35, 36),
+    new Test(
+        ".",
+        "qwertyuiopasdfghjklzxcvbnm1234567890",
+        36,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        7,
+        7,
+        8,
+        8,
+        9,
+        9,
+        10,
+        10,
+        11,
+        11,
+        12,
+        12,
+        13,
+        13,
+        14,
+        14,
+        15,
+        15,
+        16,
+        16,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        20,
+        20,
+        21,
+        21,
+        22,
+        22,
+        23,
+        23,
+        24,
+        24,
+        25,
+        25,
+        26,
+        26,
+        27,
+        27,
+        28,
+        28,
+        29,
+        29,
+        30,
+        30,
+        31,
+        31,
+        32,
+        32,
+        33,
+        33,
+        34,
+        34,
+        35,
+        35,
+        36),
   };
 
   @Parameters
@@ -203,8 +278,12 @@ public class FindTest {
     } else {
       byte[] expect = test.submatchBytes(0, 0);
       if (!Arrays.equals(expect, result)) {
-        fail(String.format("findUTF8: expected %s; got %s: %s", GoTestUtils.fromUTF8(expect),
-            GoTestUtils.fromUTF8(result), test));
+        fail(
+            String.format(
+                "findUTF8: expected %s; got %s: %s",
+                GoTestUtils.fromUTF8(expect),
+                GoTestUtils.fromUTF8(result),
+                test));
       }
     }
   }
@@ -231,8 +310,8 @@ public class FindTest {
     }
   }
 
-  private void testFindIndexCommon(String testName, Test test, int[] result,
-                                   boolean resultIndicesAreUTF8) {
+  private void testFindIndexCommon(
+      String testName, Test test, int[] result, boolean resultIndicesAreUTF8) {
     if (test.matches.length == 0 && GoTestUtils.len(result) == 0) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
@@ -243,18 +322,23 @@ public class FindTest {
       if (!resultIndicesAreUTF8) {
         result = GoTestUtils.utf16IndicesToUtf8(result, test.text);
       }
-      int[] expect = test.matches[0];  // UTF-8 indices
+      int[] expect = test.matches[0]; // UTF-8 indices
       if (expect[0] != result[0] || expect[1] != result[1]) {
-        fail(String.format("%s: expected %s got %s: %s", testName,
-               Arrays.toString(expect), Arrays.toString(result), test));
+        fail(
+            String.format(
+                "%s: expected %s got %s: %s",
+                testName,
+                Arrays.toString(expect),
+                Arrays.toString(result),
+                test));
       }
     }
   }
 
   @org.junit.Test
   public void testFindUTF8Index() {
-    testFindIndexCommon("testFindUTF8Index", test,
-        RE2.compile(test.pat).findUTF8Index(test.textUTF8), true);
+    testFindIndexCommon(
+        "testFindUTF8Index", test, RE2.compile(test.pat).findUTF8Index(test.textUTF8), true);
   }
 
   @org.junit.Test
@@ -276,14 +360,23 @@ public class FindTest {
       throw new AssertionError("findAllUTF8: expected match; got none: " + test);
     } else {
       if (test.matches.length != result.size()) {
-        fail(String.format("findAllUTF8: expected %d matches; got %d: %s", test.matches.length,
-            result.size(), test));
+        fail(
+            String.format(
+                "findAllUTF8: expected %d matches; got %d: %s",
+                test.matches.length,
+                result.size(),
+                test));
       }
       for (int i = 0; i < test.matches.length; i++) {
         byte[] expect = test.submatchBytes(i, 0);
         if (!Arrays.equals(expect, result.get(i))) {
-          fail(String.format("findAllUTF8: match %d: expected %s; got %s: %s", i / 2,
-              GoTestUtils.fromUTF8(expect), GoTestUtils.fromUTF8(result.get(i)), test));
+          fail(
+              String.format(
+                  "findAllUTF8: match %d: expected %s; got %s: %s",
+                  i / 2,
+                  GoTestUtils.fromUTF8(expect),
+                  GoTestUtils.fromUTF8(result.get(i)),
+                  test));
         }
       }
     }
@@ -300,8 +393,12 @@ public class FindTest {
       fail(String.format("findAll: expected match; got none: %s", test));
     } else {
       if (test.matches.length != result.size()) {
-        fail(String.format("findAll: expected %d matches; got %d: %s", test.matches.length,
-            result.size(), test));
+        fail(
+            String.format(
+                "findAll: expected %d matches; got %d: %s",
+                test.matches.length,
+                result.size(),
+                test));
       }
       for (int i = 0; i < test.matches.length; i++) {
         String expect = test.submatchString(i, 0);
@@ -312,9 +409,8 @@ public class FindTest {
     }
   }
 
-  private void testFindAllIndexCommon(String testName, Test test,
-                                      List<int[]> result,
-                                      boolean resultIndicesAreUTF8) {
+  private void testFindAllIndexCommon(
+      String testName, Test test, List<int[]> result, boolean resultIndicesAreUTF8) {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
@@ -323,8 +419,13 @@ public class FindTest {
       fail(String.format("%s: expected match; got none: %s", testName, test));
     } else {
       if (test.matches.length != result.size()) {
-        fail(String.format("%s: expected %d matches; got %d: %s", testName,
-               test.matches.length, result.size(), test));
+        fail(
+            String.format(
+                "%s: expected %d matches; got %d: %s",
+                testName,
+                test.matches.length,
+                result.size(),
+                test));
       }
       for (int k = 0; k < test.matches.length; k++) {
         int[] e = test.matches[k];
@@ -333,10 +434,14 @@ public class FindTest {
           res = GoTestUtils.utf16IndicesToUtf8(res, test.text);
         }
         if (e[0] != res[0] || e[1] != res[1]) {
-          fail(String.format("%s: match %d: expected %s; got %s: %s", testName, k,
-                 Arrays.toString(e),  // (only 1st two elements matter here)
-                 Arrays.toString(res),
-                 test));
+          fail(
+              String.format(
+                  "%s: match %d: expected %s; got %s: %s",
+                  testName,
+                  k,
+                  Arrays.toString(e), // (only 1st two elements matter here)
+                  Arrays.toString(res),
+                  test));
         }
       }
     }
@@ -344,24 +449,32 @@ public class FindTest {
 
   @org.junit.Test
   public void testFindAllUTF8Index() {
-    testFindAllIndexCommon("testFindAllUTF8Index", test,
-        RE2.compile(test.pat).findAllUTF8Index(test.textUTF8, -1), true);
+    testFindAllIndexCommon(
+        "testFindAllUTF8Index",
+        test,
+        RE2.compile(test.pat).findAllUTF8Index(test.textUTF8, -1),
+        true);
   }
 
   @org.junit.Test
   public void testFindAllIndex() {
-    testFindAllIndexCommon("testFindAllIndex", test,
-        RE2.compile(test.pat).findAllIndex(test.text, -1), false);
+    testFindAllIndexCommon(
+        "testFindAllIndex", test, RE2.compile(test.pat).findAllIndex(test.text, -1), false);
   }
 
   // Now come the Submatch cases.
 
-  private void testSubmatchBytes(String testName, FindTest.Test test,
-                                 int n, byte[][] result) {
+  private void testSubmatchBytes(String testName, FindTest.Test test, int n, byte[][] result) {
     int[] submatches = test.matches[n];
     if (submatches.length != GoTestUtils.len(result) * 2) {
-      fail(String.format("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, GoTestUtils.len(result), test));
+      fail(
+          String.format(
+              "%s %d: expected %d submatches; got %d: %s",
+              testName,
+              n,
+              submatches.length / 2,
+              GoTestUtils.len(result),
+              test));
     }
     for (int k = 0; k < GoTestUtils.len(result); k++) {
       if (submatches[k * 2] == -1) {
@@ -372,8 +485,14 @@ public class FindTest {
       }
       byte[] expect = test.submatchBytes(n, k);
       if (!Arrays.equals(expect, result[k])) {
-        fail(String.format("%s %d: expected %s; got %s: %s", testName, n,
-            GoTestUtils.fromUTF8(expect), GoTestUtils.fromUTF8(result[k]), test));
+        fail(
+            String.format(
+                "%s %d: expected %s; got %s: %s",
+                testName,
+                n,
+                GoTestUtils.fromUTF8(expect),
+                GoTestUtils.fromUTF8(result[k]),
+                test));
       }
     }
   }
@@ -393,26 +512,31 @@ public class FindTest {
   }
 
   // (Go: testSubmatchString)
-  private void testSubmatch(String testName, Test test, int n,
-                            String[] result) {
+  private void testSubmatch(String testName, Test test, int n, String[] result) {
     int[] submatches = test.matches[n];
     if (submatches.length != GoTestUtils.len(result) * 2) {
-      fail(String.format("%s %d: expected %d submatches; got %d: %s",
-             testName, n, submatches.length / 2, GoTestUtils.len(result), test));
+      fail(
+          String.format(
+              "%s %d: expected %d submatches; got %d: %s",
+              testName,
+              n,
+              submatches.length / 2,
+              GoTestUtils.len(result),
+              test));
     }
     for (int k = 0; k < submatches.length; k += 2) {
       if (submatches[k] == -1) {
         if (result[k / 2] != null && !result[k / 2].isEmpty()) {
-          fail(String.format("%s %d: expected null got %s: %s",
-                 testName, n, Arrays.toString(result), test));
+          fail(
+              String.format(
+                  "%s %d: expected null got %s: %s", testName, n, Arrays.toString(result), test));
         }
         continue;
       }
-      System.err.println(testName+ "  "+ test + " "+ n + " " + k + " ");
+      System.err.println(testName + "  " + test + " " + n + " " + k + " ");
       String expect = test.submatchString(n, k / 2);
       if (!expect.equals(result[k / 2])) {
-        fail(String.format("%s %d: expected %s got %s: %s",
-               testName, n, expect, result, test));
+        fail(String.format("%s %d: expected %s got %s: %s", testName, n, expect, result, test));
       }
     }
   }
@@ -432,12 +556,18 @@ public class FindTest {
     }
   }
 
-  private void testSubmatchIndices(String testName, Test test, int n,
-                                   int[] result, boolean resultIndicesAreUTF8) {
+  private void testSubmatchIndices(
+      String testName, Test test, int n, int[] result, boolean resultIndicesAreUTF8) {
     int[] expect = test.matches[n];
     if (expect.length != GoTestUtils.len(result)) {
-      fail(String.format("%s %d: expected %d matches; got %d: %s",
-             testName, n, expect.length / 2, GoTestUtils.len(result) / 2, test));
+      fail(
+          String.format(
+              "%s %d: expected %d matches; got %d: %s",
+              testName,
+              n,
+              expect.length / 2,
+              GoTestUtils.len(result) / 2,
+              test));
       return;
     }
     if (!resultIndicesAreUTF8) {
@@ -445,18 +575,20 @@ public class FindTest {
     }
     for (int k = 0; k < expect.length; ++k) {
       if (expect[k] != result[k]) {
-        fail(String.format("%s %d: submatch error: expected %s got %s: %s",
-               testName, n,
-               Arrays.toString(expect),
-               Arrays.toString(result),
-               test));
+        fail(
+            String.format(
+                "%s %d: submatch error: expected %s got %s: %s",
+                testName,
+                n,
+                Arrays.toString(expect),
+                Arrays.toString(result),
+                test));
       }
     }
   }
 
-  private void testFindSubmatchIndexCommon(String testName, Test test,
-                                           int[] result,
-                                           boolean resultIndicesAreUTF8) {
+  private void testFindSubmatchIndexCommon(
+      String testName, Test test, int[] result, boolean resultIndicesAreUTF8) {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
@@ -470,15 +602,21 @@ public class FindTest {
 
   @org.junit.Test
   public void testFindUTF8SubmatchIndex() {
-    testFindSubmatchIndexCommon("testFindSubmatchIndex", test, RE2.compile(test.pat)
-        .findUTF8SubmatchIndex(test.textUTF8), true);
+    testFindSubmatchIndexCommon(
+        "testFindSubmatchIndex",
+        test,
+        RE2.compile(test.pat).findUTF8SubmatchIndex(test.textUTF8),
+        true);
   }
 
   // (Go: TestFindStringSubmatchIndex)
   @org.junit.Test
   public void testFindSubmatchIndex() {
-    testFindSubmatchIndexCommon("testFindStringSubmatchIndex", test, RE2.compile(test.pat)
-        .findSubmatchIndex(test.text), false);
+    testFindSubmatchIndexCommon(
+        "testFindStringSubmatchIndex",
+        test,
+        RE2.compile(test.pat).findSubmatchIndex(test.text),
+        false);
   }
 
   // Now come the monster AllSubmatch cases.
@@ -494,8 +632,9 @@ public class FindTest {
     } else if (test.matches.length > 0 && result == null) {
       fail(String.format("expected match; got none: %s", test));
     } else if (test.matches.length != result.size()) {
-      fail(String.format("expected %d matches; got %d: %s", test.matches.length, result.size(),
-          test));
+      fail(
+          String.format(
+              "expected %d matches; got %d: %s", test.matches.length, result.size(), test));
     } else {
       for (int k = 0; k < test.matches.length; ++k) {
         testSubmatchBytes("testFindAllSubmatch", test, k, result.get(k));
@@ -513,8 +652,9 @@ public class FindTest {
     } else if (test.matches.length > 0 && result == null) {
       fail(String.format("expected match; got none: %s", test));
     } else if (test.matches.length != result.size()) {
-      fail(String.format("expected %d matches; got %d: %s", test.matches.length, result.size(),
-          test));
+      fail(
+          String.format(
+              "expected %d matches; got %d: %s", test.matches.length, result.size(), test));
     } else {
       for (int k = 0; k < test.matches.length; ++k) {
         testSubmatch("testFindAllStringSubmatch", test, k, result.get(k));
@@ -523,9 +663,8 @@ public class FindTest {
   }
 
   // (Go: testFindSubmatchIndex)
-  private void testFindAllSubmatchIndexCommon(String testName, Test test,
-                                              List<int[]> result,
-                                              boolean resultIndicesAreUTF8) {
+  private void testFindAllSubmatchIndexCommon(
+      String testName, Test test, List<int[]> result, boolean resultIndicesAreUTF8) {
     if (test.matches.length == 0 && result == null) {
       // ok
     } else if (test.matches.length == 0 && result != null) {
@@ -533,12 +672,16 @@ public class FindTest {
     } else if (test.matches.length > 0 && result == null) {
       fail(String.format("%s: expected match; got none: %s", testName, test));
     } else if (test.matches.length != result.size()) {
-      fail(String.format("%s: expected %d matches; got %d: %s",
-             testName, test.matches.length, result.size(), test));
+      fail(
+          String.format(
+              "%s: expected %d matches; got %d: %s",
+              testName,
+              test.matches.length,
+              result.size(),
+              test));
     } else {
       for (int k = 0; k < test.matches.length; ++k) {
-        testSubmatchIndices(testName, test, k, result.get(k),
-                            resultIndicesAreUTF8);
+        testSubmatchIndices(testName, test, k, result.get(k), resultIndicesAreUTF8);
       }
     }
   }
@@ -546,15 +689,21 @@ public class FindTest {
   // (Go: TestFindAllSubmatchIndex)
   @org.junit.Test
   public void testFindAllUTF8SubmatchIndex() {
-    testFindAllSubmatchIndexCommon("testFindAllUTF8SubmatchIndex", test, RE2.compile(test.pat)
-        .findAllUTF8SubmatchIndex(test.textUTF8, -1), true);
+    testFindAllSubmatchIndexCommon(
+        "testFindAllUTF8SubmatchIndex",
+        test,
+        RE2.compile(test.pat).findAllUTF8SubmatchIndex(test.textUTF8, -1),
+        true);
   }
 
   // (Go: TestFindAllStringSubmatchIndex)
   @org.junit.Test
   public void testFindAllSubmatchIndex() {
-    testFindAllSubmatchIndexCommon("testFindAllSubmatchIndex", test, RE2.compile(test.pat)
-        .findAllSubmatchIndex(test.text, -1), false);
+    testFindAllSubmatchIndexCommon(
+        "testFindAllSubmatchIndex",
+        test,
+        RE2.compile(test.pat).findAllSubmatchIndex(test.text, -1),
+        false);
   }
 
   // The find_test.go benchmarks are ported to Benchmarks.java.

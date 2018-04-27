@@ -23,32 +23,21 @@ import java.util.List;
 class Parser {
 
   // Unexpected error
-  private static final String ERR_INTERNAL_ERROR =
-      "regexp/syntax: internal error";
+  private static final String ERR_INTERNAL_ERROR = "regexp/syntax: internal error";
 
   // Parse errors
-  private static final String ERR_INVALID_CHAR_CLASS =
-      "invalid character class";
-  private static final String ERR_INVALID_CHAR_RANGE =
-      "invalid character class range";
-  private static final String ERR_INVALID_ESCAPE =
-      "invalid escape sequence";
-  private static final String ERR_INVALID_NAMED_CAPTURE =
-      "invalid named capture";
-  private static final String ERR_INVALID_PERL_OP =
-      "invalid or unsupported Perl syntax";
-  private static final String ERR_INVALID_REPEAT_OP =
-      "invalid nested repetition operator";
-  private static final String ERR_INVALID_REPEAT_SIZE =
-      "invalid repeat count";
-  private static final String ERR_MISSING_BRACKET =
-      "missing closing ]";
-  private static final String ERR_MISSING_PAREN =
-      "missing closing )";
+  private static final String ERR_INVALID_CHAR_CLASS = "invalid character class";
+  private static final String ERR_INVALID_CHAR_RANGE = "invalid character class range";
+  private static final String ERR_INVALID_ESCAPE = "invalid escape sequence";
+  private static final String ERR_INVALID_NAMED_CAPTURE = "invalid named capture";
+  private static final String ERR_INVALID_PERL_OP = "invalid or unsupported Perl syntax";
+  private static final String ERR_INVALID_REPEAT_OP = "invalid nested repetition operator";
+  private static final String ERR_INVALID_REPEAT_SIZE = "invalid repeat count";
+  private static final String ERR_MISSING_BRACKET = "missing closing ]";
+  private static final String ERR_MISSING_PAREN = "missing closing )";
   private static final String ERR_MISSING_REPEAT_ARGUMENT =
       "missing argument to repetition operator";
-  private static final String ERR_TRAILING_BACKSLASH =
-      "trailing backslash at end of expression";
+  private static final String ERR_TRAILING_BACKSLASH = "trailing backslash at end of expression";
 
   // Hack to expose ArrayList.removeRange().
   private static class Stack extends ArrayList<Regexp> {
@@ -61,12 +50,12 @@ class Parser {
   private final String wholeRegexp;
   // Flags control the behavior of the parser and record information about
   // regexp context.
-  private int flags;     // parse mode flags
+  private int flags; // parse mode flags
 
   // Stack of parsed expressions.
   private final Stack stack = new Stack();
   private Regexp free;
-  private int numCap = 0;  // number of capturing groups seen
+  private int numCap = 0; // number of capturing groups seen
 
   Parser(String wholeRegexp, int flags) {
     this.wholeRegexp = wholeRegexp;
@@ -112,27 +101,25 @@ class Parser {
   // push pushes the regexp re onto the parse stack and returns the regexp.
   // Returns null for a CHAR_CLASS that can be merged with the top-of-stack.
   private Regexp push(Regexp re) {
-    if (re.op == Regexp.Op.CHAR_CLASS &&
-        re.runes.length == 2 &&
-        re.runes[0] == re.runes[1]) {
+    if (re.op == Regexp.Op.CHAR_CLASS && re.runes.length == 2 && re.runes[0] == re.runes[1]) {
       // Collapse range [x-x] -> single rune x.
       if (maybeConcat(re.runes[0], flags & ~RE2.FOLD_CASE)) {
         return null;
       }
       re.op = Regexp.Op.LITERAL;
-      re.runes = new int[] { re.runes[0] };
+      re.runes = new int[] {re.runes[0]};
       re.flags = flags & ~RE2.FOLD_CASE;
-    } else if ((re.op == Regexp.Op.CHAR_CLASS &&
-                re.runes.length == 4 &&
-                re.runes[0] == re.runes[1] &&
-                re.runes[2] == re.runes[3] &&
-                Unicode.simpleFold(re.runes[0]) == re.runes[2] &&
-                Unicode.simpleFold(re.runes[2]) == re.runes[0]) ||
-               (re.op == Regexp.Op.CHAR_CLASS &&
-                re.runes.length == 2 &&
-                re.runes[0] + 1 == re.runes[1] &&
-                Unicode.simpleFold(re.runes[0]) == re.runes[1] &&
-                Unicode.simpleFold(re.runes[1]) == re.runes[0])) {
+    } else if ((re.op == Regexp.Op.CHAR_CLASS
+            && re.runes.length == 4
+            && re.runes[0] == re.runes[1]
+            && re.runes[2] == re.runes[3]
+            && Unicode.simpleFold(re.runes[0]) == re.runes[2]
+            && Unicode.simpleFold(re.runes[2]) == re.runes[0])
+        || (re.op == Regexp.Op.CHAR_CLASS
+            && re.runes.length == 2
+            && re.runes[0] + 1 == re.runes[1]
+            && Unicode.simpleFold(re.runes[0]) == re.runes[1]
+            && Unicode.simpleFold(re.runes[1]) == re.runes[0])) {
       // Case-insensitive rune like [Aa] or [Δδ].
       if (maybeConcat(re.runes[0], flags | RE2.FOLD_CASE)) {
         return null;
@@ -140,7 +127,7 @@ class Parser {
 
       // Rewrite as (case-insensitive) literal.
       re.op = Regexp.Op.LITERAL;
-      re.runes = new int[] { re.runes[0] };
+      re.runes = new int[] {re.runes[0]};
       re.flags = flags | RE2.FOLD_CASE;
     } else {
       // Incremental concatenation.
@@ -167,9 +154,9 @@ class Parser {
     }
     Regexp re1 = stack.get(n - 1);
     Regexp re2 = stack.get(n - 2);
-    if (re1.op != Regexp.Op.LITERAL ||
-        re2.op != Regexp.Op.LITERAL ||
-        (re1.flags & RE2.FOLD_CASE) != (re2.flags & RE2.FOLD_CASE)) {
+    if (re1.op != Regexp.Op.LITERAL
+        || re2.op != Regexp.Op.LITERAL
+        || (re1.flags & RE2.FOLD_CASE) != (re2.flags & RE2.FOLD_CASE)) {
       return false;
     }
 
@@ -178,14 +165,14 @@ class Parser {
 
     // Reuse re1 if possible.
     if (r >= 0) {
-      re1.runes = new int[] { r };
+      re1.runes = new int[] {r};
       re1.flags = flags;
       return true;
     }
 
     pop();
     reuse(re1);
-    return false;  // did not push r
+    return false; // did not push r
   }
 
   // newLiteral returns a new LITERAL Regexp with the given flags
@@ -195,7 +182,7 @@ class Parser {
     if ((flags & RE2.FOLD_CASE) != 0) {
       r = minFoldRune(r);
     }
-    re.runes = new int[] { r };
+    re.runes = new int[] {r};
     return re;
   }
 
@@ -233,38 +220,35 @@ class Parser {
   // Pre: t is positioned after the initial repetition operator.
   // Post: t advances past an optional perl-mode '?', or stays put.
   //       Or, it fails with PatternSyntaxException.
-  private void repeat(Regexp.Op op, int min, int max, int beforePos,
-                      StringIterator t, int lastRepeatPos)
+  private void repeat(
+      Regexp.Op op, int min, int max, int beforePos, StringIterator t, int lastRepeatPos)
       throws PatternSyntaxException {
     int flags = this.flags;
     if ((flags & RE2.PERL_X) != 0) {
       if (t.more() && t.lookingAt('?')) {
-        t.skip(1);  // '?'
+        t.skip(1); // '?'
         flags ^= RE2.NON_GREEDY;
       }
       if (lastRepeatPos != -1) {
         // In Perl it is not allowed to stack repetition operators:
         // a** is a syntax error, not a doubled star, and a++ means
         // something else entirely, which we don't support!
-        throw new PatternSyntaxException(
-            ERR_INVALID_REPEAT_OP, t.from(lastRepeatPos));
+        throw new PatternSyntaxException(ERR_INVALID_REPEAT_OP, t.from(lastRepeatPos));
       }
     }
     int n = stack.size();
     if (n == 0) {
-      throw new PatternSyntaxException(
-          ERR_MISSING_REPEAT_ARGUMENT, t.from(beforePos));
+      throw new PatternSyntaxException(ERR_MISSING_REPEAT_ARGUMENT, t.from(beforePos));
     }
     Regexp sub = stack.get(n - 1);
     if (sub.op.isPseudo()) {
-      throw new PatternSyntaxException(
-          ERR_MISSING_REPEAT_ARGUMENT, t.from(beforePos));
+      throw new PatternSyntaxException(ERR_MISSING_REPEAT_ARGUMENT, t.from(beforePos));
     }
     Regexp re = newRegexp(op);
     re.min = min;
     re.max = max;
     re.flags = flags;
-    re.subs = new Regexp[] { sub };
+    re.subs = new Regexp[] {sub};
     stack.set(n - 1, re);
   }
 
@@ -311,18 +295,16 @@ class Parser {
     switch (re.op) {
       case CHAR_CLASS:
         re.runes = new CharClass(re.runes).cleanClass().toArray();
-        if (re.runes.length == 2 &&
-            re.runes[0] == 0 &&
-            re.runes[1] == Unicode.MAX_RUNE) {
+        if (re.runes.length == 2 && re.runes[0] == 0 && re.runes[1] == Unicode.MAX_RUNE) {
           re.runes = null;
           re.op = Regexp.Op.ANY_CHAR;
           return;
         }
-        if (re.runes.length == 4 &&
-            re.runes[0] == 0 &&
-            re.runes[1] == '\n' - 1 &&
-            re.runes[2] == '\n' + 1 &&
-            re.runes[3] == Unicode.MAX_RUNE) {
+        if (re.runes.length == 4
+            && re.runes[0] == 0
+            && re.runes[1] == '\n' - 1
+            && re.runes[2] == '\n' + 1
+            && re.runes[3] == Unicode.MAX_RUNE) {
           re.runes = null;
           re.op = Regexp.Op.ANY_CHAR_NOT_NL;
           return;
@@ -400,9 +382,9 @@ class Parser {
     // In the comments we'll use the logical notation of go slices, e.g. sub[i]
     // even though the Java code will read array[s + i].
 
-    int s = 0;                  // offset of first |sub| within array.
-    int lensub = array.length;  // = len(sub)
-    int lenout = 0;             // = len(out)
+    int s = 0; // offset of first |sub| within array.
+    int lensub = array.length; // = len(sub)
+    int lenout = 0; // = len(out)
 
     // Round 1: Factor out common literal prefixes.
     // Note: (str, strlen) and (istr, istrlen) are like Go slices
@@ -437,9 +419,7 @@ class Parser {
 
         if (iflags == strflags) {
           int same = 0;
-          while (same < strlen &&
-                 same < istrlen &&
-                 str[same] == istr[same]) {
+          while (same < strlen && same < istrlen && str[same] == istr[same]) {
             same++;
           }
           if (same > 0) {
@@ -471,10 +451,9 @@ class Parser {
           array[s + j] = removeLeadingString(array[s + j], strlen);
         }
         // Recurse.
-        Regexp suffix =
-            collapse(subarray(array, s + start, s + i), Regexp.Op.ALTERNATE);
+        Regexp suffix = collapse(subarray(array, s + start, s + i), Regexp.Op.ALTERNATE);
         Regexp re = newRegexp(Regexp.Op.CONCAT);
-        re.subs = new Regexp[] { prefix, suffix };
+        re.subs = new Regexp[] {prefix, suffix};
         array[lenout++] = re;
       }
 
@@ -522,14 +501,13 @@ class Parser {
         // Construct factored form: prefix(suffix1|suffix2|...)
         Regexp prefix = first;
         for (int j = start; j < i; j++) {
-          boolean reuse = j != start;  // prefix came from sub[start]
+          boolean reuse = j != start; // prefix came from sub[start]
           array[s + j] = removeLeadingRegexp(array[s + j], reuse);
         }
         // recurse
-        Regexp suffix =
-            collapse(subarray(array, s + start, s + i), Regexp.Op.ALTERNATE);
+        Regexp suffix = collapse(subarray(array, s + start, s + i), Regexp.Op.ALTERNATE);
         Regexp re = newRegexp(Regexp.Op.CONCAT);
-        re.subs = new Regexp[] { prefix, suffix };
+        re.subs = new Regexp[] {prefix, suffix};
         array[lenout++] = re;
       }
 
@@ -567,8 +545,8 @@ class Parser {
         int max = start;
         for (int j = start + 1; j < i; j++) {
           Regexp subMax = array[s + max], subJ = array[s + j];
-          if (subMax.op.ordinal() < subJ.op.ordinal() ||
-              subMax.op == subJ.op && subMax.runes.length < subJ.runes.length) {
+          if (subMax.op.ordinal() < subJ.op.ordinal()
+              || subMax.op == subJ.op && subMax.runes.length < subJ.runes.length) {
             max = j;
           }
         }
@@ -599,9 +577,9 @@ class Parser {
     start = 0;
     lenout = 0;
     for (int i = 0; i < lensub; ++i) {
-      if (i + 1 < lensub &&
-          array[s + i].op == Regexp.Op.EMPTY_MATCH &&
-          array[s + i + 1].op == Regexp.Op.EMPTY_MATCH) {
+      if (i + 1 < lensub
+          && array[s + i].op == Regexp.Op.EMPTY_MATCH
+          && array[s + i + 1].op == Regexp.Op.EMPTY_MATCH) {
         continue;
       }
       array[lenout++] = array[s + i];
@@ -630,12 +608,13 @@ class Parser {
             re.op = Regexp.Op.EMPTY_MATCH;
             re.subs = null;
             break;
-          case 2: {
-            Regexp old = re;
-            re = re.subs[1];
-            reuse(old);
-            break;
-          }
+          case 2:
+            {
+              Regexp old = re;
+              re = re.subs[1];
+              reuse(old);
+              break;
+            }
           default:
             re.subs = subarray(re.subs, 1, re.subs.length);
             break;
@@ -720,13 +699,17 @@ class Parser {
   //   lookingAt().
   // Only use pop() to advance over possibly non-ASCII runes.
   private static class StringIterator {
-    private final String str;  // a stream of UTF-16 codes
-    private int pos = 0;  // current position in UTF-16 string
+    private final String str; // a stream of UTF-16 codes
+    private int pos = 0; // current position in UTF-16 string
 
-    StringIterator(String str) { this.str = str; }
+    StringIterator(String str) {
+      this.str = str;
+    }
 
     // Returns the cursor position.  Do not interpret the result!
-    int pos() { return pos; }
+    int pos() {
+      return pos;
+    }
 
     // Resets the cursor position to a previous value returned by pos().
     void rewindTo(int pos) {
@@ -788,17 +771,16 @@ class Parser {
       return str.substring(beforePos, pos);
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return rest();
     }
   }
 
   /**
-   * Parse regular expression pattern {@var pattern} with mode flags
-   * {@var flags}.
+   * Parse regular expression pattern {@var pattern} with mode flags {@var flags}.
    */
-  static Regexp parse(String pattern, int flags)
-      throws PatternSyntaxException {
+  static Regexp parse(String pattern, int flags) throws PatternSyntaxException {
     return new Parser(pattern, flags).parseInternal();
   }
 
@@ -813,7 +795,7 @@ class Parser {
     StringIterator t = new StringIterator(wholeRegexp);
     while (t.more()) {
       int repeatPos = -1;
-   bigswitch:
+      bigswitch:
       switch (t.peek()) {
         default:
           literal(t.pop());
@@ -826,17 +808,17 @@ class Parser {
             break;
           }
           op(Regexp.Op.LEFT_PAREN).cap = ++numCap;
-          t.skip(1);  // '('
+          t.skip(1); // '('
           break;
 
         case '|':
           parseVerticalBar();
-          t.skip(1);  // '|'
+          t.skip(1); // '|'
           break;
 
         case ')':
           parseRightParen();
-          t.skip(1);  // ')'
+          t.skip(1); // ')'
           break;
 
         case '^':
@@ -845,7 +827,7 @@ class Parser {
           } else {
             op(Regexp.Op.BEGIN_LINE);
           }
-          t.skip(1);  // '^'
+          t.skip(1); // '^'
           break;
 
         case '$':
@@ -854,7 +836,7 @@ class Parser {
           } else {
             op(Regexp.Op.END_LINE);
           }
-          t.skip(1);  // '$'
+          t.skip(1); // '$'
           break;
 
         case '.':
@@ -863,7 +845,7 @@ class Parser {
           } else {
             op(Regexp.Op.ANY_CHAR_NOT_NL);
           }
-          t.skip(1);  // '.'
+          t.skip(1); // '.'
           break;
 
         case '[':
@@ -872,113 +854,123 @@ class Parser {
 
         case '*':
         case '+':
-        case '?': {
-          repeatPos = t.pos();
-          Regexp.Op op = null;
-          switch (t.pop()) {
-            case '*': op = Regexp.Op.STAR;  break;
-            case '+': op = Regexp.Op.PLUS;  break;
-            case '?': op = Regexp.Op.QUEST; break;
-          }
-          repeat(op, min, max, repeatPos, t, lastRepeatPos);
-          // (min and max are now dead.)
-          break;
-        }
-        case '{': {
-          repeatPos = t.pos();
-          int minMax = parseRepeat(t);
-          if (minMax < 0) {
-            // If the repeat cannot be parsed, { is a literal.
-            t.rewindTo(repeatPos);
-            literal(t.pop());  // '{'
-            break;
-          }
-          min = minMax >> 16;
-          max = (short) (minMax & 0xffff);  // sign extend
-          repeat(Regexp.Op.REPEAT, min, max, repeatPos, t, lastRepeatPos);
-          break;
-        }
-
-        case '\\': {
-          int savedPos = t.pos();
-          t.skip(1);  // '\\'
-          if ((flags & RE2.PERL_X) != 0 && t.more()) {
-            int c = t.pop();
-            switch (c) {
-              case 'A':
-                op(Regexp.Op.BEGIN_TEXT);
-                break bigswitch;
-              case 'b':
-                op(Regexp.Op.WORD_BOUNDARY);
-                break bigswitch;
-              case 'B':
-                op(Regexp.Op.NO_WORD_BOUNDARY);
-                break bigswitch;
-              case 'C':
-                // any byte; not supported
-                throw new PatternSyntaxException(ERR_INVALID_ESCAPE, "\\C");
-              case 'Q': {
-                // \Q ... \E: the ... is always literals
-                String lit = t.rest();
-                int i = lit.indexOf("\\E");
-                if (i >= 0) {
-                  lit = lit.substring(0, i);
-                }
-                t.skipString(lit);
-                t.skipString("\\E");
-                push(literalRegexp(lit, flags));
-                break bigswitch;
-              }
-              case 'z':
-                op(Regexp.Op.END_TEXT);
-                break bigswitch;
-              default:
-                t.rewindTo(savedPos);
+        case '?':
+          {
+            repeatPos = t.pos();
+            Regexp.Op op = null;
+            switch (t.pop()) {
+              case '*':
+                op = Regexp.Op.STAR;
+                break;
+              case '+':
+                op = Regexp.Op.PLUS;
+                break;
+              case '?':
+                op = Regexp.Op.QUEST;
                 break;
             }
+            repeat(op, min, max, repeatPos, t, lastRepeatPos);
+            // (min and max are now dead.)
+            break;
+          }
+        case '{':
+          {
+            repeatPos = t.pos();
+            int minMax = parseRepeat(t);
+            if (minMax < 0) {
+              // If the repeat cannot be parsed, { is a literal.
+              t.rewindTo(repeatPos);
+              literal(t.pop()); // '{'
+              break;
+            }
+            min = minMax >> 16;
+            max = (short) (minMax & 0xffff); // sign extend
+            repeat(Regexp.Op.REPEAT, min, max, repeatPos, t, lastRepeatPos);
+            break;
           }
 
-          Regexp re = newRegexp(Regexp.Op.CHAR_CLASS);
-          re.flags = flags;
+        case '\\':
+          {
+            int savedPos = t.pos();
+            t.skip(1); // '\\'
+            if ((flags & RE2.PERL_X) != 0 && t.more()) {
+              int c = t.pop();
+              switch (c) {
+                case 'A':
+                  op(Regexp.Op.BEGIN_TEXT);
+                  break bigswitch;
+                case 'b':
+                  op(Regexp.Op.WORD_BOUNDARY);
+                  break bigswitch;
+                case 'B':
+                  op(Regexp.Op.NO_WORD_BOUNDARY);
+                  break bigswitch;
+                case 'C':
+                  // any byte; not supported
+                  throw new PatternSyntaxException(ERR_INVALID_ESCAPE, "\\C");
+                case 'Q':
+                  {
+                    // \Q ... \E: the ... is always literals
+                    String lit = t.rest();
+                    int i = lit.indexOf("\\E");
+                    if (i >= 0) {
+                      lit = lit.substring(0, i);
+                    }
+                    t.skipString(lit);
+                    t.skipString("\\E");
+                    push(literalRegexp(lit, flags));
+                    break bigswitch;
+                  }
+                case 'z':
+                  op(Regexp.Op.END_TEXT);
+                  break bigswitch;
+                default:
+                  t.rewindTo(savedPos);
+                  break;
+              }
+            }
 
-          // Look for Unicode character group like \p{Han}
-          if (t.lookingAt("\\p") || t.lookingAt("\\P")) {
+            Regexp re = newRegexp(Regexp.Op.CHAR_CLASS);
+            re.flags = flags;
+
+            // Look for Unicode character group like \p{Han}
+            if (t.lookingAt("\\p") || t.lookingAt("\\P")) {
+              CharClass cc = new CharClass();
+              if (parseUnicodeClass(t, cc)) {
+                re.runes = cc.toArray();
+                push(re);
+                break bigswitch;
+              }
+            }
+
+            // Perl character class escape.
             CharClass cc = new CharClass();
-            if (parseUnicodeClass(t, cc)) {
+            if (parsePerlClassEscape(t, cc)) {
               re.runes = cc.toArray();
               push(re);
               break bigswitch;
             }
+
+            t.rewindTo(savedPos);
+            reuse(re);
+
+            // Ordinary single-character escape.
+            literal(parseEscape(t));
+            break;
           }
-
-          // Perl character class escape.
-          CharClass cc = new CharClass();
-          if (parsePerlClassEscape(t, cc)) {
-            re.runes = cc.toArray();
-            push(re);
-            break bigswitch;
-          }
-
-          t.rewindTo(savedPos);
-          reuse(re);
-
-          // Ordinary single-character escape.
-          literal(parseEscape(t));
-          break;
-        }
       }
       lastRepeatPos = repeatPos;
     }
 
     concat();
     if (swapVerticalBar()) {
-      pop();  // pop vertical bar
+      pop(); // pop vertical bar
     }
     alternate();
 
     int n = stack.size();
     if (n != 1) {
-              throw new PatternSyntaxException(ERR_MISSING_PAREN, wholeRegexp);
+      throw new PatternSyntaxException(ERR_MISSING_PAREN, wholeRegexp);
     }
     return stack.get(0);
   }
@@ -993,14 +985,13 @@ class Parser {
   //
   // On success, advances |t| beyond the repeat; otherwise |t.pos()| is
   // undefined.
-  private static int parseRepeat(StringIterator t)
-      throws PatternSyntaxException {
+  private static int parseRepeat(StringIterator t) throws PatternSyntaxException {
     int start = t.pos();
     if (!t.more() || !t.lookingAt('{')) {
       return -1;
     }
-    t.skip(1);  // '{'
-    int min = parseInt(t);  // (can be -2)
+    t.skip(1); // '{'
+    int min = parseInt(t); // (can be -2)
     if (min == -1) {
       return -1;
     }
@@ -1011,26 +1002,25 @@ class Parser {
     if (!t.lookingAt(',')) {
       max = min;
     } else {
-      t.skip(1);  // ','
+      t.skip(1); // ','
       if (!t.more()) {
         return -1;
       }
       if (t.lookingAt('}')) {
         max = -1;
-      } else if ((max = parseInt(t)) == -1) {  // (can be -2)
+      } else if ((max = parseInt(t)) == -1) { // (can be -2)
         return -1;
       }
     }
     if (!t.more() || !t.lookingAt('}')) {
       return -1;
     }
-    t.skip(1);  // '}'
-    if (min < 0 || min > 1000 ||
-        max == -2 || max > 1000 || max >= 0 && min > max) {
+    t.skip(1); // '}'
+    if (min < 0 || min > 1000 || max == -2 || max > 1000 || max >= 0 && min > max) {
       // Numbers were negative or too big, or max is present and min > max.
       throw new PatternSyntaxException(ERR_INVALID_REPEAT_SIZE, t.from(start));
     }
-    return (min << 16) | (max & 0xffff);  // success
+    return (min << 16) | (max & 0xffff); // success
   }
 
   // parsePerlFlags parses a Perl flag setting or non-capturing group or both,
@@ -1062,12 +1052,12 @@ class Parser {
       if (end < 0) {
         throw new PatternSyntaxException(ERR_INVALID_NAMED_CAPTURE, s);
       }
-      String name = s.substring(4, end);  // "name"
+      String name = s.substring(4, end); // "name"
       t.skipString(name);
-      t.skip(5);  // "(?P<>"
+      t.skip(5); // "(?P<>"
       if (!isValidCaptureName(name)) {
         throw new PatternSyntaxException(
-            ERR_INVALID_NAMED_CAPTURE, s.substring(0, end));  // "(?P<name>"
+            ERR_INVALID_NAMED_CAPTURE, s.substring(0, end)); // "(?P<name>"
       }
       // Like ordinary capture, but named.
       Regexp re = op(Regexp.Op.LEFT_PAREN);
@@ -1077,18 +1067,18 @@ class Parser {
     }
 
     // Non-capturing group.  Might also twiddle Perl flags.
-    t.skip(2);  // "(?"
+    t.skip(2); // "(?"
     int flags = this.flags;
     int sign = +1;
     boolean sawFlag = false;
- loop:
+    loop:
     while (t.more()) {
       int c = t.pop();
       switch (c) {
         default:
           break loop;
 
-        // Flags.
+          // Flags.
         case 'i':
           flags |= RE2.FOLD_CASE;
           sawFlag = true;
@@ -1106,7 +1096,7 @@ class Parser {
           sawFlag = true;
           break;
 
-        // Switch to negation.
+          // Switch to negation.
         case '-':
           if (sign < 0) {
             break loop;
@@ -1118,7 +1108,7 @@ class Parser {
           sawFlag = false;
           break;
 
-        // End of flags, starting group or not.
+          // End of flags, starting group or not.
         case ':':
         case ')':
           if (sign < 0) {
@@ -1163,26 +1153,25 @@ class Parser {
     int start = t.pos();
     int c;
     while (t.more() && (c = t.peek()) >= '0' && c <= '9') {
-      t.skip(1);  // digit
+      t.skip(1); // digit
     }
     String n = t.from(start);
-    if (n.isEmpty() ||
-        n.length() > 1 && n.charAt(0) == '0') {  // disallow leading zeros
-      return -1;  // bad format
+    if (n.isEmpty() || n.length() > 1 && n.charAt(0) == '0') { // disallow leading zeros
+      return -1; // bad format
     }
     if (n.length() > 8) {
-      return -2;  // overflow
+      return -2; // overflow
     }
-    return Integer.valueOf(n, 10);  // can't fail
+    return Integer.valueOf(n, 10); // can't fail
   }
 
   // can this be represented as a character class?
   // single-rune literal string, char class, ., and .|\n.
   private static boolean isCharClass(Regexp re) {
-    return (re.op == Regexp.Op.LITERAL && re.runes.length == 1 ||
-            re.op == Regexp.Op.CHAR_CLASS ||
-            re.op == Regexp.Op.ANY_CHAR_NOT_NL ||
-            re.op == Regexp.Op.ANY_CHAR);
+    return (re.op == Regexp.Op.LITERAL && re.runes.length == 1
+        || re.op == Regexp.Op.CHAR_CLASS
+        || re.op == Regexp.Op.ANY_CHAR_NOT_NL
+        || re.op == Regexp.Op.ANY_CHAR);
   }
 
   // does re match r?
@@ -1235,9 +1224,7 @@ class Parser {
       case CHAR_CLASS:
         // src is simpler, so either literal or char class
         if (src.op == Regexp.Op.LITERAL) {
-          dst.runes = new CharClass(dst.runes).
-              appendLiteral(src.runes[0], src.flags).
-              toArray();
+          dst.runes = new CharClass(dst.runes).appendLiteral(src.runes[0], src.flags).toArray();
         } else {
           dst.runes = new CharClass(dst.runes).appendClass(src.runes).toArray();
         }
@@ -1248,10 +1235,11 @@ class Parser {
           break;
         }
         dst.op = Regexp.Op.CHAR_CLASS;
-        dst.runes = new CharClass().
-            appendLiteral(dst.runes[0], dst.flags).
-            appendLiteral(src.runes[0], src.flags).
-            toArray();
+        dst.runes =
+            new CharClass()
+                .appendLiteral(dst.runes[0], dst.flags)
+                .appendLiteral(src.runes[0], src.flags)
+                .toArray();
         break;
     }
   }
@@ -1263,10 +1251,10 @@ class Parser {
     // If above and below vertical bar are literal or char class,
     // can merge into a single char class.
     int n = stack.size();
-    if (n >= 3 &&
-        stack.get(n - 2).op == Regexp.Op.VERTICAL_BAR &&
-        isCharClass(stack.get(n - 1)) &&
-        isCharClass(stack.get(n - 3))) {
+    if (n >= 3
+        && stack.get(n - 2).op == Regexp.Op.VERTICAL_BAR
+        && isCharClass(stack.get(n - 1))
+        && isCharClass(stack.get(n - 3))) {
       Regexp re1 = stack.get(n - 1);
       Regexp re3 = stack.get(n - 3);
       // Make re3 the more complex of the two.
@@ -1303,7 +1291,7 @@ class Parser {
   private void parseRightParen() throws PatternSyntaxException {
     concat();
     if (swapVerticalBar()) {
-      pop();  // pop vertical bar
+      pop(); // pop vertical bar
     }
     alternate();
 
@@ -1323,7 +1311,7 @@ class Parser {
       push(re1);
     } else {
       re2.op = Regexp.Op.CAPTURE;
-      re2.subs = new Regexp[] { re1 };
+      re2.subs = new Regexp[] {re1};
       push(re2);
     }
   }
@@ -1331,16 +1319,15 @@ class Parser {
   // parseEscape parses an escape sequence at the beginning of s
   // and returns the rune.
   // Pre: t at '\\'.  Post: after escape.
-  @SuppressWarnings("fallthrough")  // disables *all* fallthru checking. Lame.
-  private static int parseEscape(StringIterator t)
-      throws PatternSyntaxException {
+  @SuppressWarnings("fallthrough") // disables *all* fallthru checking. Lame.
+  private static int parseEscape(StringIterator t) throws PatternSyntaxException {
     int startPos = t.pos();
-    t.skip(1);  // '\\'
+    t.skip(1); // '\\'
     if (!t.more()) {
       throw new PatternSyntaxException(ERR_TRAILING_BACKSLASH);
     }
     int c = t.pop();
- bigswitch:
+    bigswitch:
     switch (c) {
       default:
         if (!Utils.isalnum(c)) {
@@ -1352,8 +1339,14 @@ class Parser {
         }
         break;
 
-      // Octal escapes.
-      case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+        // Octal escapes.
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
         // Single non-zero digit is a backreference; not supported
         if (!t.more() || t.peek() < '0' || t.peek() > '7') {
           break;
@@ -1367,7 +1360,7 @@ class Parser {
             break;
           }
           r = r * 8 + t.peek() - '0';
-          t.skip(1);  // digit
+          t.skip(1); // digit
         }
         return r;
 
@@ -1384,7 +1377,7 @@ class Parser {
           // and at least one.
           int nhex = 0;
           r = 0;
-          for (;;) {
+          for (; ; ) {
             if (!t.more()) {
               break bigswitch;
             }
@@ -1423,18 +1416,18 @@ class Parser {
         // but /[\b]/ means backspace.  We don't support that.
         // If you want a backspace, embed a literal backspace
         // character or use \x08.
-        case 'a':
-          return 7;  // No \a in Java
-        case 'f':
-          return '\f';
-        case 'n':
-          return '\n';
-        case 'r':
-          return '\r';
-        case 't':
-          return '\t';
-        case 'v':
-          return 11;  // No \v in Java
+      case 'a':
+        return 7; // No \a in Java
+      case 'f':
+        return '\f';
+      case 'n':
+        return '\n';
+      case 'r':
+        return '\r';
+      case 't':
+        return '\t';
+      case 'v':
+        return 11; // No \v in Java
     }
     throw new PatternSyntaxException(ERR_INVALID_ESCAPE, t.from(startPos));
   }
@@ -1445,8 +1438,7 @@ class Parser {
   private static int parseClassChar(StringIterator t, int wholeClassPos)
       throws PatternSyntaxException {
     if (!t.more()) {
-      throw new PatternSyntaxException(
-          ERR_MISSING_BRACKET, t.from(wholeClassPos));
+      throw new PatternSyntaxException(ERR_MISSING_BRACKET, t.from(wholeClassPos));
     }
 
     // Allow regular escape sequences even though
@@ -1464,12 +1456,14 @@ class Parser {
   // on success, undefined on failure, in which case false is returned.
   private boolean parsePerlClassEscape(StringIterator t, CharClass cc) {
     int beforePos = t.pos();
-    if ((flags & RE2.PERL_X) == 0 ||
-        !t.more() || t.pop() != '\\' ||  // consume '\\'
+    if ((flags & RE2.PERL_X) == 0
+        || !t.more()
+        || t.pop() != '\\'
+        || // consume '\\'
         !t.more()) {
       return false;
     }
-    t.pop();  // e.g. advance past 'd' in "\\d"
+    t.pop(); // e.g. advance past 'd' in "\\d"
     CharGroup g = CharGroup.PERL_GROUPS.get(t.from(beforePos));
     if (g == null) {
       return false;
@@ -1484,15 +1478,14 @@ class Parser {
   // Pre: t at "[:".  Post: t after ":]".
   // On failure (no class of than name), throws PatternSyntaxException.
   // On misparse, returns false; t.pos() is undefined.
-  private boolean parseNamedClass(StringIterator t, CharClass cc)
-      throws PatternSyntaxException {
+  private boolean parseNamedClass(StringIterator t, CharClass cc) throws PatternSyntaxException {
     // (Go precondition check deleted.)
     String cls = t.rest();
     int i = cls.indexOf(":]");
     if (i < 0) {
       return false;
     }
-    String name = cls.substring(0, i + 2);  // "[:alnum:]"
+    String name = cls.substring(0, i + 2); // "[:alnum:]"
     t.skipString(name);
     CharGroup g = CharGroup.POSIX_GROUPS.get(name);
     if (g == null) {
@@ -1534,17 +1527,15 @@ class Parser {
   // Returns false if such a pattern is not present or UNICODE_GROUPS
   // flag is not enabled; |t.pos()| is not advanced in this case.
   // Indicates error by throwing PatternSyntaxException.
-  private boolean parseUnicodeClass(StringIterator t, CharClass cc)
-      throws PatternSyntaxException {
+  private boolean parseUnicodeClass(StringIterator t, CharClass cc) throws PatternSyntaxException {
     int startPos = t.pos();
-    if ((flags & RE2.UNICODE_GROUPS) == 0 ||
-        !t.lookingAt("\\p") && !t.lookingAt("\\P")) {
+    if ((flags & RE2.UNICODE_GROUPS) == 0 || !t.lookingAt("\\p") && !t.lookingAt("\\P")) {
       return false;
     }
-    t.skip(1);  // '\\'
+    t.skip(1); // '\\'
     // Committed to parse or throw exception.
     int sign = +1;
-    int c = t.pop();  // 'p' or 'P'
+    int c = t.pop(); // 'p' or 'P'
     if (c == 'P') {
       sign = -1;
     }
@@ -1561,9 +1552,9 @@ class Parser {
         t.rewindTo(startPos);
         throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.rest());
       }
-      name = rest.substring(0, end);  // e.g. "Han"
+      name = rest.substring(0, end); // e.g. "Han"
       t.skipString(name);
-      t.skip(1);  // '}'
+      t.skip(1); // '}'
       // Don't use skip(end) because it assumes UTF-16 coding, and
       // StringIterator doesn't guarantee that.
     }
@@ -1577,11 +1568,10 @@ class Parser {
 
     Pair<int[][], int[][]> pair = unicodeTable(name);
     if (pair == null) {
-      throw new PatternSyntaxException(
-          ERR_INVALID_CHAR_RANGE, t.from(startPos));
+      throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.from(startPos));
     }
     int[][] tab = pair.first;
-    int[][] fold = pair.second;  // fold-equivalent table
+    int[][] fold = pair.second; // fold-equivalent table
 
     // Variation of CharClass.appendGroup() for tables.
     if ((flags & RE2.FOLD_CASE) == 0 || fold == null) {
@@ -1590,11 +1580,7 @@ class Parser {
       // Merge and clean tab and fold in a temporary buffer.
       // This is necessary for the negative case and just tidy
       // for the positive case.
-      int[] tmp = new CharClass().
-          appendTable(tab).
-          appendTable(fold).
-          cleanClass().
-          toArray();
+      int[] tmp = new CharClass().appendTable(tab).appendTable(fold).cleanClass().toArray();
       cc.appendClassWithSign(tmp, sign);
     }
     return true;
@@ -1607,7 +1593,7 @@ class Parser {
   // Mutates stack.  Advances iterator.  May throw.
   private void parseClass(StringIterator t) throws PatternSyntaxException {
     int startPos = t.pos();
-    t.skip(1);  // '['
+    t.skip(1); // '['
     Regexp re = newRegexp(Regexp.Op.CHAR_CLASS);
     re.flags = flags;
     CharClass cc = new CharClass();
@@ -1615,7 +1601,7 @@ class Parser {
     int sign = +1;
     if (t.more() && t.lookingAt('^')) {
       sign = -1;
-      t.skip(1);  // '^'
+      t.skip(1); // '^'
 
       // If character class does not match \n, add it here,
       // so that negation later will do the right thing.
@@ -1624,13 +1610,11 @@ class Parser {
       }
     }
 
-    boolean first = true;  // ']' and '-' are okay as first char in class
+    boolean first = true; // ']' and '-' are okay as first char in class
     while (!t.more() || t.peek() != ']' || first) {
       // POSIX: - is only okay unescaped as first or last in class.
       // Perl: - is okay anywhere.
-      if (t.more() && t.lookingAt('-') &&
-          (flags & RE2.PERL_X) == 0 &&
-          !first) {
+      if (t.more() && t.lookingAt('-') && (flags & RE2.PERL_X) == 0 && !first) {
         String s = t.rest();
         if (s.equals("-") || !s.startsWith("-]")) {
           t.rewindTo(startPos);
@@ -1664,15 +1648,14 @@ class Parser {
       int lo = parseClassChar(t, startPos);
       int hi = lo;
       if (t.more() && t.lookingAt('-')) {
-        t.skip(1);  // '-'
+        t.skip(1); // '-'
         if (t.more() && t.lookingAt(']')) {
           // [a-] means (a|-) so check for final ].
           t.skip(-1);
         } else {
           hi = parseClassChar(t, startPos);
           if (hi < lo) {
-            throw new PatternSyntaxException(
-                ERR_INVALID_CHAR_RANGE, t.from(beforePos));
+            throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.from(beforePos));
           }
         }
       }
@@ -1682,7 +1665,7 @@ class Parser {
         cc.appendFoldedRange(lo, hi);
       }
     }
-    t.skip(1);  // ']'
+    t.skip(1); // ']'
 
     cc.cleanClass();
     if (sign < 0) {
@@ -1703,13 +1686,15 @@ class Parser {
     return r;
   }
 
-  private static class Pair<F,S> {
+  private static class Pair<F, S> {
     final F first;
     final S second;
+
     Pair(F first, S second) {
       this.first = first;
       this.second = second;
     }
+
     static <F, S> Pair<F, S> of(F first, S second) {
       return new Pair<F, S>(first, second);
     }

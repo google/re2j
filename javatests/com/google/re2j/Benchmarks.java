@@ -28,13 +28,18 @@ import static org.junit.Assert.fail;
  *   mvn exec:java -Dexec.mainClass=com.google.re2j.Benchmarks -Dexec.classpathScope=test
  * </pre>
  */
-@VmOptions({"-XX:-TieredCompilation", // http://stackoverflow.com/questions/29199509
-        "-Xms8G", "-Xmx8G"}) // These seem to be necessary to avoid GC during the JDK benchmarks.
-                             // A GC during an experiment causes Caliper to discard the results.
+@VmOptions({
+  "-XX:-TieredCompilation", // http://stackoverflow.com/questions/29199509
+  "-Xms8G",
+  "-Xmx8G"
+}) // These seem to be necessary to avoid GC during the JDK benchmarks.
+// A GC during an experiment causes Caliper to discard the results.
 public class Benchmarks {
   private enum Implementation {
-    RE2J, JDK;
+    RE2J,
+    JDK;
   }
+
   @Param({"RE2J", "JDK"})
   private Implementation implementation;
 
@@ -60,13 +65,14 @@ public class Benchmarks {
 
   private interface Matcher {
     boolean match(String input);
+
     String replaceAll(String input, String replacement);
   }
 
   @BeforeExperiment
   public void setupExpressions() {
-    pathologicalBacktracking = compile("a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?"
-        + "aaaaaaaaaaaaaaaaaaaaaaaa");
+    pathologicalBacktracking =
+        compile("a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?" + "aaaaaaaaaaaaaaaaaaaaaaaa");
     literal = compile("y");
     notLiteral = compile(".y");
     matchClassMatcher = compile("[abcdw]");
@@ -142,8 +148,10 @@ public class Benchmarks {
 
   @Benchmark
   public void benchmarkMatchClass(int nreps) {
-    String x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + "w";
+    String x =
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            + "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            + "w";
     for (int i = 0; i < nreps; i++) {
       if (!matchClassMatcher.match(x)) {
         fail("no match!");
@@ -155,8 +163,10 @@ public class Benchmarks {
   public void benchmarkMatchClass_InRange(int nreps) {
     // 'b' is between 'a' and 'c', so the charclass
     // range checking is no help here.
-    String x = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-        + "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" + "c";
+    String x =
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            + "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            + "c";
     for (int i = 0; i < nreps; i++) {
       if (!inRangeMatchClassMatcher.match(x)) {
         fail("no match!");

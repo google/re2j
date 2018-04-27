@@ -17,10 +17,12 @@ public class RE2QuoteMetaTest {
     {"foo\\.\\$", "foo\\\\\\.\\\\\\$", "foo.$", "true"},
     // has escaped operators and real operators:
     {"foo.\\$", "foo\\.\\\\\\$", "foo", "false"},
-    {"!@#$%^&*()_+-=[{]}\\|,<.>/?~",
-     "!@#\\$%\\^&\\*\\(\\)_\\+-=\\[\\{\\]\\}\\\\\\|,<\\.>/\\?~",
-     "!@#",
-     "false"},
+    {
+      "!@#$%^&*()_+-=[{]}\\|,<.>/?~",
+      "!@#\\$%\\^&\\*\\(\\)_\\+-=\\[\\{\\]\\}\\\\\\|,<\\.>/\\?~",
+      "!@#",
+      "false"
+    },
   };
 
   @Parameters
@@ -55,16 +57,23 @@ public class RE2QuoteMetaTest {
       try {
         re = RE2.compile(quoted);
       } catch (PatternSyntaxException e) {
-        fail(String.format("Unexpected error compiling quoteMeta(\"%s\"): %s", pattern,
-            e.getMessage()));
+        fail(
+            String.format(
+                "Unexpected error compiling quoteMeta(\"%s\"): %s", pattern, e.getMessage()));
       }
       String src = "abc" + pattern + "def";
       String repl = "xyz";
       String replaced = re.replaceAll(src, repl);
       String expected = "abcxyzdef";
       if (!replaced.equals(expected)) {
-        fail(String.format("quoteMeta(`%s`).replace(`%s`,`%s`) = `%s`; want `%s`", pattern, src,
-            repl, replaced, expected));
+        fail(
+            String.format(
+                "quoteMeta(`%s`).replace(`%s`,`%s`) = `%s`; want `%s`",
+                pattern,
+                src,
+                repl,
+                replaced,
+                expected));
       }
     }
   }
@@ -74,11 +83,14 @@ public class RE2QuoteMetaTest {
     // Literal method needs to scan the pattern.
     RE2 re = RE2.compile(pattern);
     if (re.prefixComplete != isLiteral) {
-      fail(String.format("literalPrefix(\"%s\") = %s; want %s", pattern, re.prefixComplete, isLiteral));
+      fail(
+          String.format(
+              "literalPrefix(\"%s\") = %s; want %s", pattern, re.prefixComplete, isLiteral));
     }
     if (!re.prefix.equals(literal)) {
-      fail(String.format("literalPrefix(\"%s\") = \"%s\"; want \"%s\"", pattern, re.prefix, literal));
+      fail(
+          String.format(
+              "literalPrefix(\"%s\") = \"%s\"; want \"%s\"", pattern, re.prefix, literal));
     }
   }
-
 }

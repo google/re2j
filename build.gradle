@@ -3,6 +3,7 @@ plugins {
   id 'wrapper'
   id 'com.jfrog.bintray' version '1.7.3'
   id 'maven-publish'
+  id 'com.github.sherter.google-java-format' version '0.3.2'
 }
 
 // The name of the release we're working on. See RELEASING.md for details.
@@ -43,7 +44,7 @@ dependencies {
   testCompile 'com.google.truth:truth:0.36'
 }
 
-configurations.all {
+configurations.testRuntimeClasspath {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
       // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings
@@ -137,3 +138,13 @@ bintray {
 
   publications = ['mavenJava']
 }
+
+// If Java formatter checks fail, tell the user how to fix them.
+task printFormatHelperMessage {
+  doLast {
+    throw new GradleException('google-java-format is required.\n' +
+        'Use ./gradlew googleJavaFormat to reformat the broken files')
+  }
+}
+verifyGoogleJavaFormat.finalizedBy printFormatHelperMessage
+printFormatHelperMessage.onlyIf { verifyGoogleJavaFormat.state.failure != null }

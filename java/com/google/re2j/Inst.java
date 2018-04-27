@@ -9,10 +9,11 @@ package com.google.re2j;
 
 /**
  * A single instruction in the regular expression virtual machine.
+ *
  * @see http://swtch.com/~rsc/regexp/regexp2.html
  */
 final class Inst {
-  
+
   public static final int ALT = 1;
   public static final int ALT_MATCH = 2;
   public static final int CAPTURE = 3;
@@ -26,17 +27,19 @@ final class Inst {
   public static final int RUNE_ANY_NOT_NL = 11;
 
   int op;
-  int out;  // all but MATCH, FAIL
-  int arg;  // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
-  int[] runes;  // length==1 => exact match
-                // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
-                // REVIEWERS: why not half-open intervals?
+  int out; // all but MATCH, FAIL
+  int arg; // ALT, ALT_MATCH, CAPTURE, EMPTY_WIDTH
+  int[] runes; // length==1 => exact match
+  // otherwise a list of [lo,hi] pairs.  hi is *inclusive*.
+  // REVIEWERS: why not half-open intervals?
 
   Inst(int op) {
     this.op = op;
   }
 
-  static boolean isRuneOp(int op) { return RUNE <= op && op <= RUNE_ANY_NOT_NL; }
+  static boolean isRuneOp(int op) {
+    return RUNE <= op && op <= RUNE_ANY_NOT_NL;
+  }
 
   // MatchRune returns true if the instruction matches (and consumes) r.
   // It should only be called when op == InstRune.
@@ -49,9 +52,7 @@ final class Inst {
         return true;
       }
       if ((arg & RE2.FOLD_CASE) != 0) {
-        for (int r1 = Unicode.simpleFold(r0);
-             r1 != r0;
-             r1 = Unicode.simpleFold(r1)) {
+        for (int r1 = Unicode.simpleFold(r0); r1 != r0; r1 = Unicode.simpleFold(r1)) {
           if (r == r1) {
             return true;
           }
@@ -106,10 +107,13 @@ final class Inst {
         return "nop -> " + out;
       case RUNE:
         if (runes == null) {
-          return "rune <null>";  // can't happen
+          return "rune <null>"; // can't happen
         }
-        return "rune " + escapeRunes(runes) +
-            (((arg & RE2.FOLD_CASE) != 0) ? "/i" : "") + " -> " + out;
+        return "rune "
+            + escapeRunes(runes)
+            + (((arg & RE2.FOLD_CASE) != 0) ? "/i" : "")
+            + " -> "
+            + out;
       case RUNE1:
         return "rune1 " + escapeRunes(runes) + " -> " + out;
       case RUNE_ANY:
@@ -131,5 +135,4 @@ final class Inst {
     out.append('"');
     return out.toString();
   }
-
 }

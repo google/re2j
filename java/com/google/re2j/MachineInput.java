@@ -8,8 +8,8 @@
 package com.google.re2j;
 
 /**
- * MachineInput abstracts different representations of the input text
- * supplied to the Machine.  It provides one-character lookahead.
+ * MachineInput abstracts different representations of the input text supplied to the Machine. It
+ * provides one-character lookahead.
  */
 abstract class MachineInput {
 
@@ -19,7 +19,7 @@ abstract class MachineInput {
     return new UTF8Input(b);
   }
 
-  static MachineInput fromUTF8(byte [] b, int start, int end) {
+  static MachineInput fromUTF8(byte[] b, int start, int end) {
     return new UTF8Input(b, start, end);
   }
 
@@ -94,17 +94,17 @@ abstract class MachineInput {
       //     0080-07FF (11 bits)   110pqrst 10uvwxyz
       //     0800-FFFF (16 bits)   1110jklm 10npqrst 10uvwxyz
       // 010000-10FFFF (21 bits)   11110efg 10hijklm 10npqrst 10uvwxyz
-      int x = b[i++] & 0xff;  // zero extend
+      int x = b[i++] & 0xff; // zero extend
       if ((x & 0x80) == 0) {
         return x << 3 | 1;
-      } else if ((x & 0xE0) == 0xC0) {  // 110xxxxx
+      } else if ((x & 0xE0) == 0xC0) { // 110xxxxx
         x = x & 0x1F;
         if (i >= end) {
           return EOF;
         }
         x = x << 6 | b[i++] & 0x3F;
         return x << 3 | 2;
-      } else if ((x & 0xF0) == 0xE0) {  // 1110xxxx
+      } else if ((x & 0xF0) == 0xE0) { // 1110xxxx
         x = x & 0x0F;
         if (i + 1 >= end) {
           return EOF;
@@ -112,7 +112,7 @@ abstract class MachineInput {
         x = x << 6 | b[i++] & 0x3F;
         x = x << 6 | b[i++] & 0x3F;
         return x << 3 | 3;
-      } else {  // 11110xxx
+      } else { // 11110xxx
         x = x & 0x07;
         if (i + 2 >= end) {
           return EOF;
@@ -143,13 +143,13 @@ abstract class MachineInput {
       if (pos > this.start && pos <= this.end) {
         int start = pos - 1;
         r1 = b[start--];
-        if (r1 >= 0x80) {  // decode UTF-8
+        if (r1 >= 0x80) { // decode UTF-8
           // Find start, up to 4 bytes earlier.
           int lim = pos - 4;
           if (lim < this.start) {
             lim = this.start;
           }
-          while (start >= lim && (b[start] & 0xC0) == 0x80) {  // 10xxxxxx
+          while (start >= lim && (b[start] & 0xC0) == 0x80) { // 10xxxxxx
             start--;
           }
           if (start < this.start) {
@@ -158,14 +158,14 @@ abstract class MachineInput {
           r1 = step(start) >> 3;
         }
       }
-      int r2 = pos < this.end
-          ? (step(pos) >> 3)
-          : -1;
+      int r2 = pos < this.end ? (step(pos) >> 3) : -1;
       return Utils.emptyOpContext(r1, r2);
     }
 
     @Override
-    int endPos() { return end; }
+    int endPos() {
+      return end;
+    }
   }
 
   // |pos| and |width| are in Java "char" units.
@@ -206,17 +206,15 @@ abstract class MachineInput {
     @Override
     int context(int pos) {
       pos += start;
-      int r1 = pos > start && pos <= end
-          ? Character.codePointBefore(str, pos)
-          : -1;
-      int r2 = pos < end
-          ? Character.codePointAt(str, pos)
-          : -1;
+      int r1 = pos > start && pos <= end ? Character.codePointBefore(str, pos) : -1;
+      int r2 = pos < end ? Character.codePointAt(str, pos) : -1;
       return Utils.emptyOpContext(r1, r2);
     }
 
     @Override
-    int endPos() { return end; }
+    int endPos() {
+      return end;
+    }
 
     private int indexOf(CharSequence hayStack, String needle, int pos) {
       if (hayStack instanceof String) {

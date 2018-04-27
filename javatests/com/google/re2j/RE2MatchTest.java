@@ -25,14 +25,16 @@ public class RE2MatchTest {
     RE2 re = RE2.compile(test.pat);
     boolean m = re.match(test.text);
     if (m != (test.matches.length > 0)) {
-      fail(String.format("RE2.match failure on %s: %s should be %s", test, m,
-          test.matches.length > 0));
+      fail(
+          String.format(
+              "RE2.match failure on %s: %s should be %s", test, m, test.matches.length > 0));
     }
     // now try bytes
     m = re.matchUTF8(GoTestUtils.utf8(test.text));
     if (m != (test.matches.length > 0)) {
-      fail(String.format("RE2.matchUTF8 failure on %s: %s should be %s", test, m,
-          test.matches.length > 0));
+      fail(
+          String.format(
+              "RE2.matchUTF8 failure on %s: %s should be %s", test, m, test.matches.length > 0));
     }
   }
 
@@ -40,8 +42,9 @@ public class RE2MatchTest {
   public void testMatchFunction() {
     boolean m = RE2.match(test.pat, test.text);
     if (m != (test.matches.length > 0)) {
-      fail(String.format("RE2.match failure on %s: %s should be %s", test, m,
-          test.matches.length > 0));
+      fail(
+          String.format(
+              "RE2.match failure on %s: %s should be %s", test, m, test.matches.length > 0));
     }
   }
 }

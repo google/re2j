@@ -67,12 +67,12 @@ public class SimplifyTest {
     // The next three are illegible because Simplify inserts (?:)
     // parens instead of () parens to avoid creating extra
     // captured subexpressions.  The comments show a version with fewer parens.
-    {"(a){0,2}", "(?:(a)(a)?)?"},                       //       (aa?)?
-    {"(a){0,4}", "(?:(a)(?:(a)(?:(a)(a)?)?)?)?"},       //   (a(a(aa?)?)?)?
+    {"(a){0,2}", "(?:(a)(a)?)?"}, //       (aa?)?
+    {"(a){0,4}", "(?:(a)(?:(a)(?:(a)(a)?)?)?)?"}, //   (a(a(aa?)?)?)?
     {"(a){2,6}", "(a)(a)(?:(a)(?:(a)(?:(a)(a)?)?)?)?"}, // aa(a(a(aa?)?)?)?
-    {"a{0,2}", "(?:aa?)?"},                             //       (aa?)?
-    {"a{0,4}", "(?:a(?:a(?:aa?)?)?)?"},                 //   (a(a(aa?)?)?)?
-    {"a{2,6}", "aa(?:a(?:a(?:aa?)?)?)?"},               // aa(a(a(aa?)?)?)?
+    {"a{0,2}", "(?:aa?)?"}, //       (aa?)?
+    {"a{0,4}", "(?:a(?:a(?:aa?)?)?)?"}, //   (a(a(aa?)?)?)?
+    {"a{2,6}", "aa(?:a(?:a(?:aa?)?)?)?"}, // aa(a(a(aa?)?)?)?
     {"a{0,}", "a*"},
     {"a{1,}", "a+"},
     {"a{2,}", "aa+"},
@@ -159,10 +159,8 @@ public class SimplifyTest {
 
   @Test
   public void testSimplify() throws PatternSyntaxException {
-    Regexp re = Parser.parse(input,
-                             RE2.MATCH_NL | RE2.PERL & ~RE2.ONE_LINE);
+    Regexp re = Parser.parse(input, RE2.MATCH_NL | RE2.PERL & ~RE2.ONE_LINE);
     String s = Simplify.simplify(re).toString();
-    assertEquals(String.format("simplify(%s)", input),
-                 expected, s);
+    assertEquals(String.format("simplify(%s)", input), expected, s);
   }
 }

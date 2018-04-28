@@ -10,6 +10,7 @@ package com.google.re2j;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -166,7 +166,7 @@ public class ExecTest {
           fail(String.format("%s:%d: compile full %s: %s", file, lineno, full, e.getMessage()));
         }
         input = 0;
-      } else if (first == '-' || '0' <= first && first <= '9') {
+      } else if (first == '-' || ('0' <= first && first <= '9')) {
         // A sequence of match results.
         ncase++;
         if (re == null) {
@@ -185,9 +185,9 @@ public class ExecTest {
           // runes, so it disagrees.  Skip those cases.
           continue;
         }
-        String[] res = line.split(";");
-        if (res.length != 4) {
-          fail(String.format("%s:%d: have %d test results, want %d", file, lineno, res.length, 4));
+        List<String> res = Splitter.on(';').splitToList(line);
+        if (res.size() != 4) {
+          fail(String.format("%s:%d: have %d test results, want %d", file, lineno, res.size(), 4));
         }
         for (int i = 0; i < 4; ++i) {
           boolean partial = (i & 1) != 0, longest = (i & 2) != 0;
@@ -200,7 +200,7 @@ public class ExecTest {
             // Perhaps we should use the UTF-8 RE2 API?
             have = utf16IndicesToUtf8(have, text);
           }
-          int[] want = parseResult(file, lineno, res[i]); // UTF-8 indices
+          int[] want = parseResult(file, lineno, res.get(i)); // UTF-8 indices
           if (!Arrays.equals(want, have)) {
             System.err.format(
                 "%s:%d: %s[partial=%b,longest=%b].findSubmatchIndex(%s) = " + "%s, want %s\n",

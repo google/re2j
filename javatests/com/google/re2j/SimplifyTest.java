@@ -159,7 +159,7 @@ public class SimplifyTest {
 
   @Test
   public void testSimplify() throws PatternSyntaxException {
-    Regexp re = Parser.parse(input, RE2.MATCH_NL | RE2.PERL & ~RE2.ONE_LINE);
+    Regexp re = Parser.parse(input, RE2.MATCH_NL | (RE2.PERL & ~RE2.ONE_LINE));
     String s = Simplify.simplify(re).toString();
     assertEquals(String.format("simplify(%s)", input), expected, s);
   }

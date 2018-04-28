@@ -91,6 +91,7 @@ public class Benchmarks {
       // Boyer-Moore for anchored patterns. We should totally do that.
       final Pattern r = Pattern.compile(re);
       return new Matcher() {
+        @Override
         public boolean match(String input) {
           return r.matcher(input).find();
         }
@@ -103,6 +104,7 @@ public class Benchmarks {
     } else { // com.google.re2
       final RE2 r = RE2.compile(re);
       return new Matcher() {
+        @Override
         public boolean match(String input) {
           return r.match(input);
         }

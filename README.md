@@ -47,7 +47,6 @@ interface:
 * Matcher.hasAnchoringBounds()
 * Matcher.hasTransparentBounds()
 * Matcher.hitEnd()
-* Matcher.quoteReplacement(String)
 * Matcher.region(int, int)
 * Matcher.regionEnd()
 * Matcher.regionStart()
@@ -75,7 +74,7 @@ If you're using Maven, you can use the following snippet in your `pom.xml` to ge
 <dependency>
   <groupId>com.google.re2j</groupId>
   <artifactId>re2j</artifactId>
-  <version>1.1</version>
+  <version>1.2</version>
 </dependency>
 ```
 

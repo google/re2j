@@ -1,0 +1,139 @@
+plugins {
+  id 'java-library'
+  id 'wrapper'
+  id 'com.jfrog.bintray' version '1.7.3'
+  id 'maven-publish'
+}
+
+// The name of the release we're working on. See RELEASING.md for details.
+def versionName = '1.2'
+
+wrapper {
+  gradleVersion '4.6'
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+sourceSets {
+  main {
+    java {
+      srcDir 'java'
+    }
+  }
+  test {
+    java {
+      srcDir 'javatests'
+    }
+    resources {
+      srcDir 'testdata'
+    }
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  testCompile 'junit:junit:4.12'
+  testCompile 'com.google.caliper:caliper:1.0-beta-2'
+  testCompile 'com.google.gwt:gwt-dev:2.8.2'
+  testCompile 'com.google.gwt:gwt-user:2.8.2'
+  testCompile 'com.google.truth:truth:0.36'
+}
+
+configurations.all {
+  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+    if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+      // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings
+      // in a later version. This override can be removed when caliper is
+      // updated to a newer version.
+      details.useVersion '18.0'
+    }
+  }
+}
+
+task benchmarks(type: JavaExec) {
+  classpath = sourceSets.test.runtimeClasspath
+  main = 'com.google.re2j.Benchmarks'
+  args = []
+}
+
+def releaseVersion = '1.2'
+
+task sourceJar(type: Jar) {
+    baseName 'sources'
+
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    baseName 'javadoc'
+
+    from javadoc.destinationDir
+}
+
+def appendMavenCentralMetadata(Node node) {
+    node.appendNode('name', 'RE2/J')
+    node.appendNode('description', 'Linear time regular expressions for Java')
+    node.appendNode('url', 'http://github.com/google/re2j')
+
+    def license = node.appendNode('licenses').appendNode('license')
+    license.appendNode('name', 'Go License')
+    license.appendNode('url', 'https://golang.org/LICENSE')
+    license.appendNode('distribution', 'repo')
+
+    node.appendNode('scm').appendNode('url', 'https://github.com/google/re2j.git')
+
+    def developerInfo = node.appendNode('developers').appendNode('developer')
+    developerInfo.appendNode('id', 'dev')
+    developerInfo.appendNode('name', 'The RE2/J Contributors')
+    developerInfo.appendNode('email', 're2j-discuss@googlegroups.com')
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      from components.java
+
+      artifact sourceJar {
+        classifier 'sources'
+      }
+
+      artifact javadocJar {
+        classifier 'javadoc'
+      }
+
+      groupId 'com.google.re2j'
+      artifactId 're2j'
+      version releaseVersion
+
+      pom.withXml {
+        appendMavenCentralMetadata(asNode())
+      }
+    }
+  }
+}
+
+bintray {
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+
+  pkg {
+    repo = 'maven'
+    name = 're2j'
+    userOrg = 're2j'
+    licenses = ['Go']
+    vcsUrl = 'https://github.com/google/re2j.git'
+
+    version {
+      name = versionName
+      desc = "RE2/J ${versionName}"
+      released = new Date()
+      vcsTag = "re2j-${versionName}"
+    }
+  }
+
+  publications = ['mavenJava']
+}

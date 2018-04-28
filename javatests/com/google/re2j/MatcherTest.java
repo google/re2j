@@ -261,10 +261,23 @@ public class MatcherTest {
   }
 
   @Test
-  public void testAppendTail() {
+  public void testAppendTail_StringBuffer() {
     Pattern p = Pattern.compile("cat");
     Matcher m = p.matcher("one cat two cats in the yard");
     StringBuffer sb = new StringBuffer();
+    while (m.find()) {
+      m.appendReplacement(sb, "dog");
+    }
+    m.appendTail(sb);
+    m.appendTail(sb);
+    assertEquals("one dog two dogs in the yards in the yard", sb.toString());
+  }
+
+  @Test
+  public void testAppendTail_StringBuilder() {
+    Pattern p = Pattern.compile("cat");
+    Matcher m = p.matcher("one cat two cats in the yard");
+    StringBuilder sb = new StringBuilder();
     while (m.find()) {
         m.appendReplacement(sb, "dog");
     }
@@ -274,7 +287,7 @@ public class MatcherTest {
   }
 
   @Test
-  public void testResetOnFindInt() {
+  public void testResetOnFindInt_StringBuffer() {
     StringBuffer buffer;
     Matcher matcher = Pattern.compile("a").matcher("zza");
 
@@ -294,7 +307,27 @@ public class MatcherTest {
   }
 
   @Test
-  public void testEmptyReplacementGroups() {
+  public void testResetOnFindInt_StringBuilder() {
+    StringBuilder buffer;
+    Matcher matcher = Pattern.compile("a").matcher("zza");
+
+    assertTrue(matcher.find());
+
+    buffer = new StringBuilder();
+    matcher.appendReplacement(buffer, "foo");
+    assertEquals("1st time",
+        "zzfoo", buffer.toString());
+
+    assertTrue(matcher.find(0));
+
+    buffer = new StringBuilder();
+    matcher.appendReplacement(buffer, "foo");
+    assertEquals("2nd time",
+        "zzfoo", buffer.toString());
+  }
+
+  @Test
+  public void testEmptyReplacementGroups_StringBuffer() {
     StringBuffer buffer = new StringBuffer();
     Matcher matcher = Pattern.compile("(a)(b$)?(b)?").matcher("abc");
     assertTrue(matcher.find());
@@ -325,6 +358,38 @@ public class MatcherTest {
     assertEquals("N", buffer.toString());
   }
 
+  @Test
+  public void testEmptyReplacementGroups_StringBuilder() {
+    StringBuilder buffer = new StringBuilder();
+    Matcher matcher = Pattern.compile("(a)(b$)?(b)?").matcher("abc");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2-$3");
+    assertEquals("a--b", buffer.toString());
+    matcher.appendTail(buffer);
+    assertEquals("a--bc", buffer.toString());
+
+    buffer = new StringBuilder();
+    matcher = Pattern.compile("(a)(b$)?(b)?").matcher("ab");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2-$3");
+    matcher.appendTail(buffer);
+    assertEquals("a-b-", buffer.toString());
+
+    buffer = new StringBuilder();
+    matcher = Pattern.compile("(^b)?(b)?c").matcher("abc");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1-$2");
+    matcher.appendTail(buffer);
+    assertEquals("a-b", buffer.toString());
+
+    buffer = new StringBuilder();
+    matcher = Pattern.compile("^(.)[^-]+(-.)?(.*)").matcher("Name");
+    assertTrue(matcher.find());
+    matcher.appendReplacement(buffer, "$1$2");
+    matcher.appendTail(buffer);
+    assertEquals("N", buffer.toString());
+  }
+
   // This example is documented in the com.google.re2j package.html.
   @Test
   public void testDocumentedExample() {
@@ -347,4 +412,14 @@ public class MatcherTest {
     assertFalse(m.find());
   }
 
+  @Test
+  public void testMutableCharSequence() {
+    Pattern p = Pattern.compile("b(an)*(.)");
+    StringBuilder b = new StringBuilder("by, band, banana");
+    Matcher m = p.matcher(b);
+    assertTrue(m.find(0));
+    int start = b.indexOf("ban");
+    b.replace(b.indexOf("ban"), start + 3, "b");
+    assertTrue(m.find(b.indexOf("ban")));
+  }
 }

@@ -87,6 +87,7 @@ public final class Matcher {
    * @return the {@code Matcher} itself, for chained method calls
    */
   public Matcher reset() {
+    inputLength = inputSequence.length();
     appendPos = 0;
     hasMatch = false;
     hasGroups = false;
@@ -103,9 +104,8 @@ public final class Matcher {
     if (input == null) {
       throw new NullPointerException("input is null");
     }
-    reset();
     inputSequence = input;
-    inputLength = input.length();
+    reset();
     return this;
   }
 
@@ -334,7 +334,7 @@ public final class Matcher {
    * to the beginning of the most recent match, and then the replacement with
    * submatch groups substituted for references of the form {@code $n}, where
    * {@code n} is the group number in decimal.  It advances the append position
-   * to the position where the most recent match ended.
+   * to where the most recent match ended.
    *
    * <p>To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string
    * escapes).  The escape is only necessary when {@code $} is followed by a
@@ -352,13 +352,54 @@ public final class Matcher {
    * @throws IllegalStateException if there was no most recent match
    * @throws IndexOutOfBoundsException if replacement refers to an invalid group
    */
-  public Matcher appendReplacement(StringBuffer sb, String replacement) {
+  public Matcher appendReplacement(StringBuffer sb, String replacement)  {
     int s = start();
     int e = end();
     if (appendPos < s) {
       sb.append(substring(appendPos, s));
     }
     appendPos = e;
+    StringBuilder result = new StringBuilder();
+    appendReplacementInternal(result, replacement);
+    sb.append(result);
+    return this;
+  }
+
+  /**
+   * Appends to {@code sb} two strings: the text from the append position up
+   * to the beginning of the most recent match, and then the replacement with
+   * submatch groups substituted for references of the form {@code $n}, where
+   * {@code n} is the group number in decimal.  It advances the append position
+   * to where the most recent match ended.
+   *
+   * <p>To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string
+   * escapes).  The escape is only necessary when {@code $} is followed by a
+   * digit, but it is always allowed.  Only {@code $} and {@code \} need
+   * escaping, but any character can be escaped.
+   *
+   * <p>The group number {@code n} in {@code $n} is always at least one digit
+   * and expands to use more digits as long as the resulting number is a
+   * valid group number for this pattern.  To cut it off earlier, escape the
+   * first digit that should not be used.
+   *
+   * @param sb the {@link StringBuilder} to append to
+   * @param replacement the replacement string
+   * @return the {@code Matcher} itself, for chained method calls
+   * @throws IllegalStateException if there was no most recent match
+   * @throws IndexOutOfBoundsException if replacement refers to an invalid group
+   */
+  public Matcher appendReplacement(StringBuilder sb, String replacement) {
+    int s = start();
+    int e = end();
+    if (appendPos < s) {
+      sb.append(substring(appendPos, s));
+    }
+    appendPos = e;
+    appendReplacementInternal(sb, replacement);
+    return this;
+  }
+
+  private void appendReplacementInternal(StringBuilder sb, String replacement) {
     int last = 0;
     int i = 0;
     int m = replacement.length();
@@ -401,7 +442,6 @@ public final class Matcher {
     if (last < m) {
       sb.append(replacement.substring(last, m));
     }
-    return this;
   }
 
   /**
@@ -412,6 +452,18 @@ public final class Matcher {
    * @return the argument {@code sb}, for method chaining
    */
   public StringBuffer appendTail(StringBuffer sb) {
+    sb.append(substring(appendPos, inputLength));
+    return sb;
+  }
+
+  /**
+   * Appends to {@code sb} the substring of the input from the
+   * append position to the end of the input.
+   *
+   * @param sb the {@link StringBuilder} to append to
+   * @return the argument {@code sb}, for method chaining
+   */
+  public StringBuilder appendTail(StringBuilder sb) {
     sb.append(substring(appendPos, inputLength));
     return sb;
   }

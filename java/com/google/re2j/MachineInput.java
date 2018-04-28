@@ -102,24 +102,24 @@ abstract class MachineInput {
         if (i >= end) {
           return EOF;
         }
-        x = x << 6 | b[i++] & 0x3F;
+        x = x << 6 | (b[i++] & 0x3F);
         return x << 3 | 2;
       } else if ((x & 0xF0) == 0xE0) { // 1110xxxx
         x = x & 0x0F;
         if (i + 1 >= end) {
           return EOF;
         }
-        x = x << 6 | b[i++] & 0x3F;
-        x = x << 6 | b[i++] & 0x3F;
+        x = x << 6 | (b[i++] & 0x3F);
+        x = x << 6 | (b[i++] & 0x3F);
         return x << 3 | 3;
       } else { // 11110xxx
         x = x & 0x07;
         if (i + 2 >= end) {
           return EOF;
         }
-        x = x << 6 | b[i++] & 0x3F;
-        x = x << 6 | b[i++] & 0x3F;
-        x = x << 6 | b[i++] & 0x3F;
+        x = x << 6 | (b[i++] & 0x3F);
+        x = x << 6 | (b[i++] & 0x3F);
+        x = x << 6 | (b[i++] & 0x3F);
         return x << 3 | 4;
       }
     }

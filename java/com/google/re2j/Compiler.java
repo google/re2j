@@ -167,8 +167,8 @@ class Compiler {
     i.arg = flags;
     f.out = f.i << 1;
     // Special cases for exec machine.
-    if ((flags & RE2.FOLD_CASE) == 0 && runes.length == 1
-        || runes.length == 2 && runes[0] == runes[1]) {
+    if (((flags & RE2.FOLD_CASE) == 0 && runes.length == 1)
+        || (runes.length == 2 && runes[0] == runes[1])) {
       i.op = Inst.RUNE1;
     } else if (runes.length == 2 && runes[0] == 0 && runes[1] == Unicode.MAX_RUNE) {
       i.op = Inst.RUNE_ANY;

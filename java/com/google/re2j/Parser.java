@@ -546,7 +546,7 @@ class Parser {
         for (int j = start + 1; j < i; j++) {
           Regexp subMax = array[s + max], subJ = array[s + j];
           if (subMax.op.ordinal() < subJ.op.ordinal()
-              || subMax.op == subJ.op && subMax.runes.length < subJ.runes.length) {
+              || (subMax.op == subJ.op && subMax.runes.length < subJ.runes.length)) {
             max = j;
           }
         }
@@ -1016,7 +1016,7 @@ class Parser {
       return -1;
     }
     t.skip(1); // '}'
-    if (min < 0 || min > 1000 || max == -2 || max > 1000 || max >= 0 && min > max) {
+    if (min < 0 || min > 1000 || max == -2 || max > 1000 || (max >= 0 && min > max)) {
       // Numbers were negative or too big, or max is present and min > max.
       throw new PatternSyntaxException(ERR_INVALID_REPEAT_SIZE, t.from(start));
     }
@@ -1156,7 +1156,7 @@ class Parser {
       t.skip(1); // digit
     }
     String n = t.from(start);
-    if (n.isEmpty() || n.length() > 1 && n.charAt(0) == '0') { // disallow leading zeros
+    if (n.isEmpty() || (n.length() > 1 && n.charAt(0) == '0')) { // disallow leading zeros
       return -1; // bad format
     }
     if (n.length() > 8) {
@@ -1168,7 +1168,7 @@ class Parser {
   // can this be represented as a character class?
   // single-rune literal string, char class, ., and .|\n.
   private static boolean isCharClass(Regexp re) {
-    return (re.op == Regexp.Op.LITERAL && re.runes.length == 1
+    return ((re.op == Regexp.Op.LITERAL && re.runes.length == 1)
         || re.op == Regexp.Op.CHAR_CLASS
         || re.op == Regexp.Op.ANY_CHAR_NOT_NL
         || re.op == Regexp.Op.ANY_CHAR);
@@ -1529,7 +1529,7 @@ class Parser {
   // Indicates error by throwing PatternSyntaxException.
   private boolean parseUnicodeClass(StringIterator t, CharClass cc) throws PatternSyntaxException {
     int startPos = t.pos();
-    if ((flags & RE2.UNICODE_GROUPS) == 0 || !t.lookingAt("\\p") && !t.lookingAt("\\P")) {
+    if ((flags & RE2.UNICODE_GROUPS) == 0 || (!t.lookingAt("\\p") && !t.lookingAt("\\P"))) {
       return false;
     }
     t.skip(1); // '\\'

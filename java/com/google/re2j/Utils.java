@@ -13,7 +13,7 @@ abstract class Utils {
 
   // Returns true iff |c| is an ASCII letter or decimal digit.
   static boolean isalnum(int c) {
-    return '0' <= c && c <= '9' || 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
+    return ('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
   }
 
   // If |c| is an ASCII hex digit, returns its value, otherwise -1.
@@ -158,7 +158,7 @@ abstract class Utils {
   // during the evaluation of the \b and \B zero-width assertions.
   // These assertions are ASCII-only: the word characters are [A-Za-z0-9_].
   static boolean isWordRune(int r) {
-    return ('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9' || r == '_');
+    return (('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z') || ('0' <= r && r <= '9') || r == '_');
   }
 
   //// EMPTY_* flags

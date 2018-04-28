@@ -7,6 +7,8 @@
 
 package com.google.re2j;
 
+import java.util.Arrays;
+
 /**
  * Utilities for dealing with Unicode better than Java does.
  *
@@ -225,6 +227,101 @@ class Unicode {
       return l;
     }
     return toUpper(r);
+  }
+
+  static int[] optimizedFoldOrbit(int r) {
+    if (r >= ORBIT_MIN_VALUE) {
+      return FOLD_MAP.get(r);
+    }
+    return null;
+  }
+  
+  private static final FoldMap FOLD_MAP = new FoldMap();
+  private static final int ORBIT_MIN_VALUE = UnicodeTables.CASE_ORBIT[0][0];
+  
+  static {
+    for(int[] orbit : UnicodeTables.CASE_ORBIT) {
+      int r0 = orbit[0];
+      int[] folds = new int[3];
+      int foldsSize = 0;
+      int r1 = r0;
+      while((r1 = simpleFold(r1)) != r0) {
+        if (foldsSize >= folds.length) {
+          Arrays.copyOf(folds, folds.length * 2);
+        }
+        folds[foldsSize] = r1;
+        foldsSize++;
+      }
+      FOLD_MAP.put(r0, Arrays.copyOf(folds, foldsSize));
+    }
+  }
+
+  public static boolean areEqualsCaseInsensitive(int r0, int r1) {
+    return r0 == toUpper(r1) || r0 == toLower(r1);
+  }
+
+  /*
+    A FoldMap maps a rune to an array of runes that are equivalent to it in a case-insensitive pattern.
+   */
+  private static class FoldMap {
+    private static final int MAX_LINEAR_PROBING = 4;
+    private final int[] keys;
+    private final int[][] values;
+    private final int mask;
+
+    FoldMap() {
+      int s = findNextPositivePowerOfTwo(UnicodeTables.CASE_ORBIT.length * 4); // load of factor of 0.25 to have a max linear probing of MAX_LINEAR_PROBING
+      keys = new int[s];
+      Arrays.fill(keys,-1);
+      values = new int[s][];
+      mask = s - 1;
+    }
+
+    void put(int k, int[] fold) {
+      if (k == -1) throw new IllegalArgumentException("-1 is the empty marker");
+
+      int index = hashCode(k);
+      int maxIndex = index + MAX_LINEAR_PROBING;
+
+      do {
+        int slot = index & mask;
+        if (keys[slot] ==  -1) { // empty slot
+          values[slot] = fold;
+          keys[slot] = k;
+          return;
+        }
+        index++;
+      } while (index < maxIndex);
+
+      throw new IllegalStateException("Map is full");
+    }
+
+    int[] get(int k) {
+      int index = hashCode(k);
+      int maxIndex = index + MAX_LINEAR_PROBING;
+      do {
+        int slot = index  & mask;
+        int key = keys[slot];
+        if (key == -1) {
+          return null; // empty slot
+        }
+        if (key == k) {
+          return values[slot];
+        }
+        index++;
+      } while (index < maxIndex);
+
+      return null;
+    }
+
+    private int hashCode(int k) {
+      final int h = k * 0x9E3779B9;
+      return h ^ (h >> 16);
+    }
+
+    private int findNextPositivePowerOfTwo(final int value) {
+      return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+    }
   }
 
   private Unicode() {}  // uninstantiable

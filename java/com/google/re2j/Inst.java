@@ -44,25 +44,38 @@ final class Inst {
     // Special case: single-rune slice is from literal string, not char
     // class.
     if (runes.length == 1) {
-      int r0 = runes[0];
-      if (r == r0) {
-        return true;
-      }
-      if ((arg & RE2.FOLD_CASE) != 0) {
-        for (int r1 = Unicode.simpleFold(r0);
-             r1 != r0;
-             r1 = Unicode.simpleFold(r1)) {
-          if (r == r1) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return singleMatchRune(r);
+    }
+    
+    return multiMatchRune(r);
+  }
+
+  private boolean singleMatchRune(int r) {
+    int r0 = runes[0];
+    if (r == r0) {
+      return true;
     }
 
-    // Peek at the first few pairs.
+    if ((arg & RE2.FOLD_CASE) != 0) {
+      int[] folds = Unicode.optimizedFoldOrbit(r0);
+
+      if (folds == null) {
+        return Unicode.areEqualsCaseInsensitive(r, r0);
+      } else {
+        for(int i = 0; i < folds.length; i++) {
+          if (folds[i] == r) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  private boolean multiMatchRune(int r) {
+    // Peek at the first 5 pairs.
     // Should handle ASCII well.
-    for (int j = 0; j < runes.length && j <= 8; j += 2) {
+    int length = Math.min(runes.length, 10);
+    for (int j = 0; j < length; j += 2) {
       if (r < runes[j]) {
         return false;
       }
@@ -71,7 +84,8 @@ final class Inst {
       }
     }
 
-    // Otherwise binary search.
+    // Otherwise binary search
+    // Invariant: lo, hi, m are even.
     for (int lo = 0, hi = runes.length / 2; lo < hi; ) {
       int m = lo + (hi - lo) / 2;
       int c = runes[2 * m];

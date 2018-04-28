@@ -24,7 +24,7 @@ class UNIXBufferedReader extends Reader {
   }
 
   public String readLine() throws IOException {
-    StringBuffer s = null; // holds '\n'-free gulps of input
+    StringBuilder s = null; // holds '\n'-free gulps of input
     int istart; // index of first char
     for (; ; ) {
       // Should we refill the buffer?
@@ -62,7 +62,7 @@ class UNIXBufferedReader extends Reader {
       istart = inext;
       inext = i;
       if (s == null) {
-        s = new StringBuffer(80);
+        s = new StringBuilder(80);
       }
       s.append(buf, istart, i - istart);
     }

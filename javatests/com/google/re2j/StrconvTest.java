@@ -17,7 +17,7 @@ import org.junit.runners.Parameterized;
 public class StrconvTest {
 
   private static String rune(int r) {
-    return new StringBuffer().appendCodePoint(r).toString();
+    return new StringBuilder().appendCodePoint(r).toString();
   }
 
   private static final String[][] UNQUOTE_TESTS = {

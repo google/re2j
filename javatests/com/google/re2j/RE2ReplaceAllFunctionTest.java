@@ -11,10 +11,12 @@ import org.junit.runners.Parameterized.Parameters;
 public class RE2ReplaceAllFunctionTest {
   private static final RE2.ReplaceFunc REPLACE_XSY =
       new RE2.ReplaceFunc() {
+        @Override
         public String replace(String s) {
           return "x" + s + "y";
         }
 
+        @Override
         public String toString() {
           return "REPLACE_XSY";
         }

@@ -36,6 +36,7 @@ public class ParserTest {
 
   private static final RunePredicate IS_UPPER =
       new RunePredicate() {
+        @Override
         public boolean applies(int r) {
           return Unicode.isUpper(r);
         }
@@ -43,6 +44,7 @@ public class ParserTest {
 
   private static final RunePredicate IS_UPPER_FOLD =
       new RunePredicate() {
+        @Override
         public boolean applies(int r) {
           if (Unicode.isUpper(r)) {
             return true;

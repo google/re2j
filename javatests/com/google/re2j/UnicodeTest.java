@@ -18,12 +18,12 @@ public class UnicodeTest {
         continue;
       }
       if (last == -1 && Unicode.MIN_FOLD != i) {
-        fail(String.format("MIN_FOLD=%#U should be %#U", Unicode.MIN_FOLD, i));
+        fail(String.format("MIN_FOLD=#%04X should be #%04X", Unicode.MIN_FOLD, i));
       }
       last = i;
     }
     if (Unicode.MAX_FOLD != last) {
-      fail(String.format("MAX_FOLD=%#U should be %#U", Unicode.MAX_FOLD, last));
+      fail(String.format("MAX_FOLD=#%04X should be #%04X", Unicode.MAX_FOLD, last));
     }
   }
 

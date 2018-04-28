@@ -100,7 +100,7 @@ class Unicode {
   // isPrint reports whether the rune is printable (Unicode L/M/N/P/S or ' ').
   static boolean isPrint(int r) {
     if (r <= MAX_LATIN1) {
-      return r >= 0x20 && r < 0x7F || r >= 0xA1 && r != 0xAD;
+      return (r >= 0x20 && r < 0x7F) || (r >= 0xA1 && r != 0xAD);
     }
     return is(UnicodeTables.L, r)
         || is(UnicodeTables.M, r)

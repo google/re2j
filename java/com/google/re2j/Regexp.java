@@ -111,7 +111,7 @@ class Regexp {
         {
           Regexp sub = subs[0];
           if (sub.op.ordinal() > Op.CAPTURE.ordinal()
-              || sub.op == Op.LITERAL && sub.runes.length > 1) {
+              || (sub.op == Op.LITERAL && sub.runes.length > 1)) {
             out.append("(?:");
             sub.appendTo(out);
             out.append(')');
@@ -330,7 +330,9 @@ class Regexp {
         }
         break;
       case CAPTURE:
-        if (x.cap != y.cap || x.name != y.name || !x.subs[0].equals(y.subs[0])) {
+        if (x.cap != y.cap
+            || (x.name == null ? y.name != null : !x.name.equals(y.name))
+            || !x.subs[0].equals(y.subs[0])) {
           return false;
         }
         break;

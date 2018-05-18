@@ -89,29 +89,29 @@ public class Benchmarks {
       // The JDK implementation appears dramatically faster for these
       // inputs, possibly due to its use of right-to-left matching via
       // Boyer-Moore for anchored patterns. We should totally do that.
-      final Pattern r = Pattern.compile(re);
+      final Pattern p = Pattern.compile(re);
       return new Matcher() {
         @Override
         public boolean match(String input) {
-          return r.matcher(input).find();
+          return p.matcher(input).find();
         }
 
         @Override
         public String replaceAll(String input, String replacement) {
-          return r.matcher(input).replaceAll(replacement);
+          return p.matcher(input).replaceAll(replacement);
         }
       };
     } else { // com.google.re2
-      final RE2 r = RE2.compile(re);
+      final com.google.re2j.Pattern p = com.google.re2j.Pattern.compile(re);
       return new Matcher() {
         @Override
         public boolean match(String input) {
-          return r.match(input);
+          return p.matcher(input).find();
         }
 
         @Override
         public String replaceAll(String input, String replacement) {
-          return r.replaceAll(input, replacement);
+          return p.matcher(input).replaceAll(replacement);
         }
       };
     }

@@ -17,6 +17,10 @@ wrapper {
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+repositories {
+  mavenCentral()
+}
+
 sourceSets {
   main {
     java {
@@ -26,32 +30,26 @@ sourceSets {
   test {
     java {
       srcDir 'javatests'
+      // Benchmarks are now dealt with in their own source set below.
+      exclude 'com/google/re2j/Benchmarks.java'
     }
     resources {
       srcDir 'testdata'
     }
   }
+  // Having a separate source set for benchmarks allows us to declare benchmark dependencies
+  // separately from the rest of the project. This is useful because as of today (May 2018),
+  // Caliper (which runs our benchmarks) has a very old Guava dependency which causes problems
+  // for the rest of our test code.
+  benchmarks {
+    java {
+      srcDir 'javatests'
+      include 'com/google/re2j/Benchmarks.java'
+    }
+  }
 }
 
-repositories {
-  mavenCentral()
-}
-
-// Use error_prone_core 2.0.5, later versions require Java 8 to build and we'd
-// like to support building on Java 7.
-configurations.errorprone {
-  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
-}
-
-dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile 'com.google.caliper:caliper:1.0-beta-2'
-  testCompile 'com.google.gwt:gwt-dev:2.8.2'
-  testCompile 'com.google.gwt:gwt-user:2.8.2'
-  testCompile 'com.google.truth:truth:0.36'
-}
-
-configurations.testRuntimeClasspath {
+configurations.benchmarksCompile {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
       // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings
@@ -62,8 +60,25 @@ configurations.testRuntimeClasspath {
   }
 }
 
+dependencies {
+  testCompile 'junit:junit:4.12'
+  testCompile 'com.google.gwt:gwt-dev:2.8.2'
+  testCompile 'com.google.gwt:gwt-user:2.8.2'
+  testCompile 'com.google.truth:truth:0.36'
+
+  benchmarksCompile project
+  benchmarksCompile 'junit:junit:4.12'
+  benchmarksCompile 'com.google.caliper:caliper:1.0-beta-2'
+}
+
+// Use error_prone_core 2.0.5, later versions require Java 8 to build and we'd
+// like to support building on Java 7.
+configurations.errorprone {
+  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
+}
+
 task benchmarks(type: JavaExec) {
-  classpath = sourceSets.test.runtimeClasspath
+  classpath = configurations.benchmarksRuntime + sourceSets.benchmarks.output
   main = 'com.google.re2j.Benchmarks'
   args = []
 }

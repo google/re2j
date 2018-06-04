@@ -36,8 +36,6 @@ sourceSets {
   test {
     java {
       srcDir 'javatests'
-      // Benchmarks are now dealt with in their own source set below.
-      exclude 'com/google/re2j/Benchmarks.java'
     }
     resources {
       srcDir 'testdata'
@@ -49,8 +47,7 @@ sourceSets {
   // for the rest of our test code.
   benchmarks {
     java {
-      srcDir 'javatests'
-      include 'com/google/re2j/Benchmarks.java'
+      srcDir 'benchmarks'
     }
   }
 }

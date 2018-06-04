@@ -37,7 +37,7 @@ import static org.junit.Assert.fail;
 public class Benchmarks {
   private enum Implementation {
     RE2J,
-    JDK;
+    JDK
   }
 
   @Param({"RE2J", "JDK"})

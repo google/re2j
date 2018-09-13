@@ -17,7 +17,7 @@ cobertura.coverageFormats = ['html', 'xml']
 def versionName = '1.2'
 
 wrapper {
-  gradleVersion '4.6'
+  gradleVersion '4.9'
 }
 
 sourceCompatibility = 1.6

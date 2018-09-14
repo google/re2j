@@ -21,11 +21,17 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.fail;
 
 /**
- * Benchmarks for common RE2J operations. The easiest way to run these benchmarks is probably to do:
+ * Benchmarks for common RE2J operations. The easiest way to run these benchmarks is to run
  *
  * <pre>
- *   mvn test-compile
- *   mvn exec:java -Dexec.mainClass=com.google.re2j.Benchmarks -Dexec.classpathScope=test
+ *   ./gradlew benchmarks
+ * </pre>
+ *
+ * from the project root directory. You can pass arguments to the benchmark program using the
+ * following invocation of {@code gradlew}:
+ *
+ * <pre>
+ *   ./gradlew benchmarks --args="--help"
  * </pre>
  */
 @VmOptions({

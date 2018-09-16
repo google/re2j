@@ -86,7 +86,6 @@ configurations.errorprone {
 task benchmarks(type: JavaExec) {
   classpath = configurations.benchmarksRuntime + sourceSets.benchmarks.output
   main = 'com.google.re2j.Benchmarks'
-  args = []
 }
 
 def releaseVersion = '1.2'

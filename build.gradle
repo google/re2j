@@ -52,6 +52,11 @@ sourceSets {
   }
 }
 
+test {
+  // Allow parallel test execution.
+  maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}
+
 configurations.benchmarksCompile {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {

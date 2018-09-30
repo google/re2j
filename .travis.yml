@@ -17,3 +17,7 @@ addons:
 
 after_success:
   - ./gradlew cobertura coveralls
+
+cache:
+  directories:
+    - $HOME/.m2

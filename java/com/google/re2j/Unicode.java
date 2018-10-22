@@ -23,11 +23,6 @@ class Unicode {
   // The highest legal Latin-1 value.
   static final int MAX_LATIN1 = 0xFF;
 
-  private static final int MAX_CASE = 3;
-
-  // Represents invalid code points.
-  private static final int REPLACEMENT_CHAR = 0xFFFD;
-
   // Minimum and maximum runes involved in folding.
   // Checked during test.
   static final int MIN_FOLD = 0x0041;
@@ -109,77 +104,6 @@ class Unicode {
         || is(UnicodeTables.S, r);
   }
 
-  // A case range is conceptually a record:
-  // class CaseRange {
-  //   int lo, hi;
-  //   int upper, lower, title;
-  // }
-  // but flattened as an int[5].
-
-  // to maps the rune using the specified case mapping.
-  private static int to(int kase, int r, int[][] caseRange) {
-    if (kase < 0 || MAX_CASE <= kase) {
-      return REPLACEMENT_CHAR; // as reasonable an error as any
-    }
-    // binary search over ranges
-    for (int lo = 0, hi = caseRange.length; lo < hi; ) {
-      int m = lo + (hi - lo) / 2;
-      int[] cr = caseRange[m]; // cr = [lo, hi, upper, lower, title]
-      int crlo = cr[0];
-      int crhi = cr[1];
-      if (crlo <= r && r <= crhi) {
-        int delta = cr[2 + kase];
-        if (delta > MAX_RUNE) {
-          // In an Upper-Lower sequence, which always starts with
-          // an UpperCase letter, the real deltas always look like:
-          //      {0, 1, 0}    UpperCase (Lower is next)
-          //      {-1, 0, -1}  LowerCase (Upper, Title are previous)
-          // The characters at even offsets from the beginning of the
-          // sequence are upper case; the ones at odd offsets are lower.
-          // The correct mapping can be done by clearing or setting the low
-          // bit in the sequence offset.
-          // The constants UpperCase and TitleCase are even while LowerCase
-          // is odd so we take the low bit from kase.
-          return crlo + (((r - crlo) & ~1) | (kase & 1));
-        }
-        return r + delta;
-      }
-      if (r < crlo) {
-        hi = m;
-      } else {
-        lo = m + 1;
-      }
-    }
-    return r;
-  }
-
-  // to maps the rune to the specified case: UpperCase, LowerCase, or TitleCase.
-  private static int to(int kase, int r) {
-    return to(kase, r, UnicodeTables.CASE_RANGES);
-  }
-
-  // toUpper maps the rune to upper case.
-  static int toUpper(int r) {
-    if (r <= MAX_ASCII) {
-      if ('a' <= r && r <= 'z') {
-        r -= 'a' - 'A';
-      }
-      return r;
-    }
-    return to(UnicodeTables.UpperCase, r);
-  }
-
-  // toLower maps the rune to lower case.
-  static int toLower(int r) {
-    if (r <= MAX_ASCII) {
-      if ('A' <= r && r <= 'Z') {
-        r += 'a' - 'A';
-      }
-      return r;
-    }
-    return to(UnicodeTables.LowerCase, r);
-  }
-
   // simpleFold iterates over Unicode code points equivalent under
   // the Unicode-defined simple case folding.  Among the code points
   // equivalent to rune (including rune itself), SimpleFold returns the
@@ -216,11 +140,11 @@ class Unicode {
     // No folding specified.  This is a one- or two-element
     // equivalence class containing rune and toLower(rune)
     // and toUpper(rune) if they are different from rune.
-    int l = toLower(r);
+    int l = Characters.toLowerCase(r);
     if (l != r) {
       return l;
     }
-    return toUpper(r);
+    return Characters.toUpperCase(r);
   }
 
   private Unicode() {} // uninstantiable

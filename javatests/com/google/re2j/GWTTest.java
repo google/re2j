@@ -36,10 +36,6 @@ public class GWTTest {
     String projectRoot = System.getProperty("user.dir");
     addFiles(jar, "", new File(projectRoot, "java"));
     addFiles(jar, "", new File(projectRoot, "/target/classes"));
-    addFile(
-        jar,
-        "com/google/re2j",
-        new File(projectRoot, "/build/resources/test/com/google/re2j/RE2J.gwt.xml"));
     jar.finish();
     jar.close();
 

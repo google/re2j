@@ -1539,6 +1539,10 @@ class Parser {
     if (c == 'P') {
       sign = -1;
     }
+    if (!t.more()) {
+      t.rewindTo(startPos);
+      throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.rest());
+    }
     c = t.pop();
     String name;
     if (c != '{') {

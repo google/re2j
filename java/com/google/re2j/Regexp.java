@@ -278,6 +278,36 @@ class Regexp {
     return m;
   }
 
+  @Override
+  public int hashCode() {
+    int hashcode = op.hashCode();
+    switch (op) {
+      case END_TEXT:
+        hashcode += 31 * (flags & RE2.WAS_DOLLAR);
+        break;
+      case LITERAL:
+      case CHAR_CLASS:
+        hashcode += 31 * Arrays.hashCode(runes);
+        break;
+      case ALTERNATE:
+      case CONCAT:
+        hashcode += 31 * Arrays.deepHashCode(subs);
+        break;
+      case STAR:
+      case PLUS:
+      case QUEST:
+        hashcode += 31 * (flags & RE2.NON_GREEDY) + 31 * subs[0].hashCode();
+        break;
+      case REPEAT:
+        hashcode += 31 * min + 31 * max + 31 * subs[0].hashCode();
+        break;
+      case CAPTURE:
+        hashcode += 31 * cap + 31 * (name != null ? name.hashCode() : 0) + 31 * subs[0].hashCode();
+        break;
+    }
+    return hashcode;
+  }
+
   // equals() returns true if this and that have identical structure.
   @Override
   public boolean equals(Object that) {

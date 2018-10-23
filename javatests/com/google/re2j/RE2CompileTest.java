@@ -44,6 +44,8 @@ public class RE2CompileTest {
       {"a**", "invalid nested repetition operator: `**`"},
       {"a*+", "invalid nested repetition operator: `*+`"},
       {"\\x", "invalid escape sequence: `\\x`"},
+      {"\\p", "invalid character class range: `\\p`"},
+      {"\\p{", "invalid character class range: `\\p{`"}
     };
   }
 

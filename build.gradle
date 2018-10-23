@@ -5,6 +5,7 @@ plugins {
   id 'maven-publish'
   id 'com.github.sherter.google-java-format' version '0.3.2'
   id 'net.ltgt.errorprone' version '0.0.11'
+  id 'idea'
 
   // code coverage support
   id 'net.saliman.cobertura' version '2.5.4'
@@ -50,6 +51,15 @@ sourceSets {
     java {
       srcDir 'benchmarks'
     }
+  }
+}
+
+idea {
+  module {
+    // Unfortunately, IntelliJ ignores the `exclude` directive in the sourceSet declaration
+    // above. Without this, it complains about duplicated classes that exist both in GWT and non-
+    // GWT sources.
+    excludeDirs += file('java/com/google/re2j/super')
   }
 }
 

@@ -36,6 +36,10 @@ public class GWTTest {
     String projectRoot = System.getProperty("user.dir");
     addFiles(jar, "", new File(projectRoot, "java"));
     addFiles(jar, "", new File(projectRoot, "/target/classes"));
+    addFile(
+        jar,
+        "com/google/re2j",
+        new File(projectRoot, "/build/resources/test/com/google/re2j/RE2J-Fake.gwt.xml"));
     jar.finish();
     jar.close();
 
@@ -53,7 +57,7 @@ public class GWTTest {
                 Joiner.on(File.pathSeparatorChar)
                     .join(jarFile.getAbsolutePath(), System.getProperty("java.class.path")),
                 "com.google.gwt.dev.Compiler",
-                "com.google.re2j.RE2J")
+                "com.google.re2j.RE2J-Fake")
             .directory(gwtProjectDir.getRoot())
             .redirectErrorStream(true)
             .start();

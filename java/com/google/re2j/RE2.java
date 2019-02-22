@@ -19,9 +19,11 @@
 package com.google.re2j;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular expression, independent of
@@ -112,7 +114,8 @@ class RE2 {
 
   // Cache of machines for running regexp.
   // Accesses must be serialized using |this| monitor.
-  private final List<Machine> machine = new ArrayList<Machine>();
+  // @GuardedBy("this")
+  private final Queue<Machine> machine = new ArrayDeque<Machine>();
 
   // This is visible for testing.
   RE2(String expr) {
@@ -204,10 +207,11 @@ class RE2 {
 
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
-  synchronized Machine get() {
-    int n = machine.size();
-    if (n > 0) {
-      return machine.remove(n - 1);
+  Machine get() {
+    synchronized (this) {
+      if (!machine.isEmpty()) {
+        return machine.remove();
+      }
     }
     return new Machine(this);
   }

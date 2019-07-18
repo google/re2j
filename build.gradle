@@ -34,6 +34,10 @@ sourceSets {
       srcDir 'java'
       exclude 'com/google/re2j/super/**'
     }
+    resources {
+      srcDir 'java'
+      include 'com/google/re2j/RE2J.gwt.xml'
+    }
   }
   test {
     java {

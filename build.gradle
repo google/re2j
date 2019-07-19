@@ -34,11 +34,19 @@ sourceSets {
       srcDir 'java'
       exclude 'com/google/re2j/super/**'
     }
+  }
+
+  gwt {
+    java {
+      srcDir 'java'
+      include 'com/google/re2j/super/**'
+    }
     resources {
       srcDir 'java'
       include 'com/google/re2j/RE2J.gwt.xml'
     }
   }
+
   test {
     java {
       srcDir 'javatests'
@@ -114,6 +122,7 @@ task sourceJar(type: Jar) {
     baseName 'sources'
 
     from sourceSets.main.allJava
+    from sourceSets.gwt.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

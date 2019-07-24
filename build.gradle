@@ -4,7 +4,7 @@ plugins {
   id 'com.jfrog.bintray' version '1.8.1'
   id 'maven-publish'
   id 'com.github.sherter.google-java-format' version '0.3.2'
-  id 'net.ltgt.errorprone' version '0.0.11'
+  id 'net.ltgt.errorprone' version '0.8.1'
   id 'idea'
 
   // code coverage support
@@ -18,11 +18,11 @@ cobertura.coverageFormats = ['html', 'xml']
 def versionName = '1.3'
 
 wrapper {
-  gradleVersion '4.9'
+  gradleVersion '5.5'
 }
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 repositories {
   mavenCentral()
@@ -103,12 +103,13 @@ dependencies {
   benchmarksCompile project
   benchmarksCompile 'junit:junit:4.12'
   benchmarksCompile 'com.google.caliper:caliper:1.0-beta-2'
+
+  errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  errorproneJavac 'com.google.errorprone:error_prone_core:2.3.3'
 }
 
-// Use error_prone_core 2.0.5, later versions require Java 8 to build and we'd
-// like to support building on Java 7.
-configurations.errorprone {
-  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone.disable 'Finally'
 }
 
 task benchmarks(type: JavaExec) {

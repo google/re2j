@@ -1,8 +1,10 @@
 dist: precise
 language: java
 jdk:
+  - oraclejdk12
   - oraclejdk8
   - oraclejdk7
+  - openjdk12
   - openjdk7
 
 # Works around an issue in Travis, see

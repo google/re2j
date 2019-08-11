@@ -43,5 +43,11 @@ You can run the benchmarks by checking out the GitHub repository and then
 running the following command:
 
 ```
-$ ./gradlew benchmarks
+$ ./gradlew :benchmarks:run
+```
+
+Use the flag `-Pbenchmarks` to specify which benchmark to run:
+
+```
+$ ./gradlew :benchmarks:run -Pbenchmarks=BenchmarkCompile
 ```

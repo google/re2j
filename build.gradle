@@ -55,15 +55,6 @@ sourceSets {
       srcDir 'testdata'
     }
   }
-  // Having a separate source set for benchmarks allows us to declare benchmark dependencies
-  // separately from the rest of the project. This is useful because as of today (May 2018),
-  // Caliper (which runs our benchmarks) has a very old Guava dependency which causes problems
-  // for the rest of our test code.
-  benchmarks {
-    java {
-      srcDir 'benchmarks'
-    }
-  }
 }
 
 idea {
@@ -80,17 +71,6 @@ test {
   maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 }
 
-configurations.benchmarksCompile {
-  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-    if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
-      // Force guava 18.0, caliper:1.0-beta-2 requires it but truth:0.36 brings
-      // in a later version. This override can be removed when caliper is
-      // updated to a newer version.
-      details.useVersion '18.0'
-    }
-  }
-}
-
 dependencies {
   testCompile 'junit:junit:4.12'
   testCompile 'com.google.gwt:gwt-dev:2.8.2'
@@ -99,21 +79,12 @@ dependencies {
 
   // Cobertura requires slf4j at runtime
   testRuntime "org.slf4j:slf4j-api:1.7.10"
-
-  benchmarksCompile project
-  benchmarksCompile 'junit:junit:4.12'
-  benchmarksCompile 'com.google.caliper:caliper:1.0-beta-2'
 }
 
 // Use error_prone_core 2.0.5, later versions require Java 8 to build and we'd
 // like to support building on Java 7.
 configurations.errorprone {
   resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
-}
-
-task benchmarks(type: JavaExec) {
-  classpath = configurations.benchmarksRuntime + sourceSets.benchmarks.output
-  main = 'com.google.re2j.Benchmarks'
 }
 
 task sourceJar(type: Jar) {

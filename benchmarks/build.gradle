@@ -1,0 +1,28 @@
+// Copyright 2019 Google Inc. All Rights Reserved.
+
+plugins {
+  id 'java'
+  id 'application'
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'org.openjdk.jmh:jmh-core:1.21'
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+  implementation rootProject
+}
+
+mainClassName = 'com.google.re2j.benchmark.JmhRunner'
+
+// To customize which benchmarks are run, pass -Pbenchmarks=<pattern>
+// For example, to run a benchmark called BenchmarkCompile, you'd run:
+//
+//   ./gradlew :benchmarks:run -Pbenchmarks=BenchmarkCompile
+if (!project.hasProperty('benchmarks')) {
+  ext.benchmarks = 'Benchmark*'
+}
+
+applicationDefaultJvmArgs = ["-Dbenchmarks=$benchmarks"]

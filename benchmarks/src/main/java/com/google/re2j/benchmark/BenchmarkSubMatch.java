@@ -34,7 +34,7 @@ public class BenchmarkSubMatch {
 
   @Benchmark
   public void findPhoneNumbers(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.compile(html);
+    Implementations.Matcher matcher = pattern.matcher(html);
     int count = 0;
     while (matcher.find()) {
       bh.consume(matcher.group());

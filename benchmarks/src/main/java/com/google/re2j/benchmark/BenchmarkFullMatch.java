@@ -30,7 +30,7 @@ public class BenchmarkFullMatch {
 
   @Benchmark
   public void matched(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.compile("password");
+    Implementations.Matcher matcher = pattern.matcher("password");
     boolean matches = matcher.matches();
     if (!matches) {
       throw new AssertionError();
@@ -40,7 +40,7 @@ public class BenchmarkFullMatch {
 
   @Benchmark
   public void notMatched(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.compile("l0ngpassword");
+    Implementations.Matcher matcher = pattern.matcher("l0ngpassword");
     boolean matches = matcher.matches();
     if (matches) {
       throw new AssertionError();

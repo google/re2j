@@ -74,7 +74,7 @@ public enum Implementations {
       }
     }
 
-    public abstract Matcher compile(String str);
+    public abstract Matcher matcher(String str);
 
     public static class JdkPattern extends Pattern {
 
@@ -85,7 +85,7 @@ public enum Implementations {
       }
 
       @Override
-      public Matcher compile(String str) {
+      public Matcher matcher(String str) {
         return new Matcher.JdkMatcher(pattern.matcher(str));
       }
     }
@@ -99,7 +99,7 @@ public enum Implementations {
       }
 
       @Override
-      public Matcher compile(String str) {
+      public Matcher matcher(String str) {
         return new Matcher.Re2Matcher(pattern.matcher(str));
       }
     }

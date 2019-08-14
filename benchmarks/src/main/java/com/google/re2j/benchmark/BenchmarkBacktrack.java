@@ -31,7 +31,7 @@ public class BenchmarkBacktrack {
 
   @Benchmark
   public void matched(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.compile(repeat("a", repeats));
+    Implementations.Matcher matcher = pattern.matcher(repeat("a", repeats));
     boolean matches = matcher.matches();
     if (!matches) {
       throw new AssertionError();

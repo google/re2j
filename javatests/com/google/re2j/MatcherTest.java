@@ -468,4 +468,20 @@ public class MatcherTest {
     m.appendReplacement(b, replacement);
     return b.toString();
   }
+
+  @Test
+  public void testPatternLongestMatch() {
+    final String pattern = "(?:a+)|(?:a+ b+)";
+    final String text = "xxx aaa bbb yyy";
+    {
+      final Matcher matcher = Pattern.compile(pattern).matcher(text);
+      assertEquals(true, matcher.find());
+      assertEquals("aaa", text.substring(matcher.start(), matcher.end()));
+    }
+    {
+      final Matcher matcher = Pattern.compile(pattern, Pattern.LONGEST_MATCH).matcher(text);
+      assertEquals(true, matcher.find());
+      assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
+    }
+  }
 }

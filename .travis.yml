@@ -2,8 +2,6 @@ dist: precise
 language: java
 jdk:
   - oraclejdk8
-  - oraclejdk7
-  - openjdk7
 
 # Works around an issue in Travis, see
 # https://github.com/travis-ci/travis-ci/issues/5227.

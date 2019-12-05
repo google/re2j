@@ -98,7 +98,7 @@ public final class Pattern implements Serializable {
 
   /**
    * Creates and returns a new {@code Pattern} corresponding to compiling {@code regex} with the
-   * default flags (0).
+   * given {@code flags}.
    *
    * @param regex the regular expression
    * @param flags bitwise OR of the flag constants {@code CASE_INSENSITIVE}, {@code DOTALL}, and

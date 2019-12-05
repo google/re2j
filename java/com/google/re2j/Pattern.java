@@ -37,6 +37,11 @@ public final class Pattern implements Serializable {
    */
   public static final int DISABLE_UNICODE_GROUPS = 8;
 
+  /**
+   * Flag: matches longest possible string.
+   */
+  public static final int LONGEST_MATCH = 16;
+
   // The pattern string at construction time.
   private final String pattern;
 
@@ -117,10 +122,11 @@ public final class Pattern implements Serializable {
     if ((flags & MULTILINE) != 0) {
       flregex = "(?m)" + flregex;
     }
-    if ((flags & ~(MULTILINE | DOTALL | CASE_INSENSITIVE | DISABLE_UNICODE_GROUPS)) != 0) {
+    if ((flags & ~(MULTILINE | DOTALL | CASE_INSENSITIVE | DISABLE_UNICODE_GROUPS | LONGEST_MATCH))
+        != 0) {
       throw new IllegalArgumentException(
           "Flags should only be a combination "
-              + "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS");
+              + "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS, LONGEST_MATCH");
     }
     return compile(flregex, regex, flags);
   }
@@ -133,7 +139,8 @@ public final class Pattern implements Serializable {
     if ((flags & DISABLE_UNICODE_GROUPS) != 0) {
       re2Flags &= ~RE2.UNICODE_GROUPS;
     }
-    return new Pattern(regex, flags, RE2.compileImpl(flregex, re2Flags, /*longest=*/ false));
+    return new Pattern(
+        regex, flags, RE2.compileImpl(flregex, re2Flags, (flags & LONGEST_MATCH) != 0));
   }
 
   /**

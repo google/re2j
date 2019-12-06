@@ -123,18 +123,8 @@ class Unicode {
   //
   static int simpleFold(int r) {
     // Consult caseOrbit table for special cases.
-    int lo = 0;
-    int hi = UnicodeTables.CASE_ORBIT.length;
-    while (lo < hi) {
-      int m = lo + (hi - lo) / 2;
-      if (UnicodeTables.CASE_ORBIT[m][0] < r) {
-        lo = m + 1;
-      } else {
-        hi = m;
-      }
-    }
-    if (lo < UnicodeTables.CASE_ORBIT.length && UnicodeTables.CASE_ORBIT[lo][0] == r) {
-      return UnicodeTables.CASE_ORBIT[lo][1];
+    if (r < UnicodeTables.CASE_ORBIT.length && UnicodeTables.CASE_ORBIT[r] != 0) {
+      return UnicodeTables.CASE_ORBIT[r];
     }
 
     // No folding specified.  This is a one- or two-element

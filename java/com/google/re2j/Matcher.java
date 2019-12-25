@@ -2,7 +2,9 @@
 
 package com.google.re2j;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a specific input. Its interface
@@ -224,12 +226,47 @@ public final class Matcher {
   }
 
   /**
+   * Parses the most recent matches of all the groups into a Map. Group 0 will be included.
+   *
+   * @return Map with the subgroup numbers as keys.
+   */
+  public Map<Integer, String> matchResultUnnamed() {
+    Map<Integer, String> matchResult = new HashMap<Integer, String>();
+    for (int i = 0; i < groupCount; i++) {
+      matchResult.put(i, group(i));
+    }
+    return matchResult;
+  }
+
+  /**
+   * Parses the most recent matches of all the named groups into a Map.
+   *
+   * @return Map with the named groups as keys.
+   */
+  public Map<String, String> matchResultNamed() {
+    Map<String, String> matchResult = new HashMap<String, String>();
+    for (String groupName : groupNames()) {
+      matchResult.put(groupName, group(groupName));
+    }
+    return matchResult;
+  }
+
+  /**
    * Returns the number of subgroups in this pattern.
    *
    * @return the number of subgroups; the overall match (group 0) does not count
    */
   public int groupCount() {
     return groupCount;
+  }
+
+  /**
+   * Returns the name of all groups in this pattern.
+   *
+   * @return the name of all groups;
+   */
+  public Set<String> groupNames() {
+    return namedGroups.keySet();
   }
 
   /** Helper: finds subgroup information if needed for group. */

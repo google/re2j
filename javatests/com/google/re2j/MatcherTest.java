@@ -7,6 +7,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -461,6 +466,63 @@ public class MatcherTest {
     } catch (IllegalArgumentException expected) {
       // Expected
     }
+  }
+
+  @Test
+  public void testMatchResultUnnamedGroups() {
+    Pattern p = Pattern.compile("(f(b*a(r+)){0,10})" + "(bag)?(zzz)?");
+    Matcher m = p.matcher("fbbarrrrrbag");
+
+    Map<Integer, String> expectedMatchResult =
+        new HashMap<Integer, String>() {
+          {
+            put(0, "fbbarrrrrbag");
+            put(1, "fbbarrrrr");
+            put(2, "bbarrrrr");
+            put(3, "rrrrr");
+            put(4, "bag");
+          }
+        };
+
+    m.find();
+    Map<Integer, String> matchResult = m.matchResultUnnamed();
+    System.out.println("Heureka: " + matchResult);
+    assertEquals(matchResult, expectedMatchResult);
+  }
+
+  @Test
+  public void testMatchResultNamedGroups() {
+    Pattern p =
+        Pattern.compile(
+            "(?P<baz>f(?P<foo>b*a(?P<another>r+)){0,10})" + "(?P<bag>bag)?(?P<nomatch>zzz)?");
+    Matcher m = p.matcher("fbbarrrrrbag");
+
+    Map<String, String> expectedMatchResult =
+        new HashMap<String, String>() {
+          {
+            put("nomatch", null);
+            put("foo", "bbarrrrr");
+            put("another", "rrrrr");
+            put("bag", "bag");
+            put("baz", "fbbarrrrr");
+          }
+        };
+
+    m.find();
+    Map<String, String> matchResult = m.matchResultNamed();
+    assertEquals(matchResult, expectedMatchResult);
+  }
+
+  @Test
+  public void testGroupNames() {
+    Pattern p =
+        Pattern.compile(
+            "(?P<baz>f(?P<foo>b*a(?P<another>r+)){0,10})" + "(?P<bag>bag)?(?P<nomatch>zzz)?");
+    Matcher m = p.matcher("fbbarrrrrbag");
+
+    assertEquals(
+        m.groupNames(),
+        new HashSet<String>(Arrays.asList("baz", "foo", "another", "bag", "nomatch")));
   }
 
   private String appendReplacement(Matcher m, String replacement) {

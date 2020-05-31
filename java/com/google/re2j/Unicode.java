@@ -75,23 +75,6 @@ class Unicode {
     return is(UnicodeTables.Upper, r);
   }
 
-  // isLower reports whether the rune is a lower case letter.
-  static boolean isLower(int r) {
-    // See comment in isGraphic.
-    if (r <= MAX_LATIN1) {
-      return Character.isLowerCase((char) r);
-    }
-    return is(UnicodeTables.Lower, r);
-  }
-
-  // isTitle reports whether the rune is a title case letter.
-  static boolean isTitle(int r) {
-    if (r <= MAX_LATIN1) {
-      return false;
-    }
-    return is(UnicodeTables.Title, r);
-  }
-
   // isPrint reports whether the rune is printable (Unicode L/M/N/P/S or ' ').
   static boolean isPrint(int r) {
     if (r <= MAX_LATIN1) {

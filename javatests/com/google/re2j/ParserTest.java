@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
 
+import com.google.common.truth.Truth;
 import org.junit.Test;
 
 /**
@@ -286,7 +287,7 @@ public class ParserTest {
   // - Java UTF-16 things.
 
   @Test
-  public void testParseSimple() throws Exception {
+  public void testParseSimple() {
     testParseDump(PARSE_TESTS, TEST_FLAGS);
   }
 
@@ -346,9 +347,7 @@ public class ParserTest {
       try {
         Regexp re = Parser.parse(test[0], flags);
         String d = dump(re);
-        if (!test[1].equals(d)) {
-          fail(String.format("parse/dump of " + test[0] + " expected " + test[1] + ", got " + d));
-        }
+        Truth.assertWithMessage("parse/dump of " + test[0]).that(d).isEqualTo(test[1]);
       } catch (PatternSyntaxException e) {
         throw new RuntimeException("Parsing failed: " + test[0], e);
       }

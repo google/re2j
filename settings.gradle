@@ -1,3 +1,4 @@
 rootProject.name = 're2j'
 
 include ':benchmarks'
+include ':unicode'

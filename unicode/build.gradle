@@ -1,0 +1,17 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+mainClassName = 'com.google.re2j.UnicodeTablesGenerator'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'com.google.googlejavaformat:google-java-format:1.0'
+  compile 'com.squareup:javapoet:1.12.1'
+  compile 'com.ibm.icu:icu4j:4.8.2'
+  compile 'com.google.guava:guava:29.0-jre'
+}

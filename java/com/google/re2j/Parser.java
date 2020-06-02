@@ -1411,6 +1411,9 @@ class Parser {
 
         // Easy case: two hex digits.
         int x = Utils.unhex(c);
+        if (!t.more()) {
+          break;
+        }
         c = t.pop();
         int y = Utils.unhex(c);
         if (x < 0 || y < 0) {

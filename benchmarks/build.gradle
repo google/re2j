@@ -15,14 +15,12 @@ dependencies {
   implementation rootProject
 }
 
-mainClassName = 'com.google.re2j.benchmark.JmhRunner'
+mainClassName = 'org.openjdk.jmh.Main'
 
-// To customize which benchmarks are run, pass -Pbenchmarks=<pattern>
-// For example, to run a benchmark called BenchmarkCompile, you'd run:
-//
-//   ./gradlew :benchmarks:run -Pbenchmarks=BenchmarkCompile
-if (!project.hasProperty('benchmarks')) {
-  ext.benchmarks = 'Benchmark*'
+// By default, run all the benchmarks, 1 fork, 5 warmup iterations, 1 second
+// per warmup, 5 measurement iterations, 1 second per measurement iteration.
+tasks.run.args 'Benchmarks*', '-f', '1', '-wi', '5', '-w', '1', '-r', '1', '-bm', 'avgt'
+tasks.run.doFirst {
+  println(String.format("Running JMH benchmarks with args [%s]", tasks.run.args.join(" ")))
+  println("For command line help, see ./gradlew :benchmarks:run -- --args='-h'")
 }
-
-applicationDefaultJvmArgs = ["-Dbenchmarks=$benchmarks"]

@@ -46,8 +46,11 @@ running the following command:
 $ ./gradlew :benchmarks:run
 ```
 
-Use the flag `-Pbenchmarks` to specify which benchmark to run:
+Benchmarks are implemented in [JMH][1], which has a rich command-line
+interface. For help, see
 
 ```
-$ ./gradlew :benchmarks:run -Pbenchmarks=BenchmarkCompile
+$ ./gradlew :benchmarks:run -- --args='-h'
 ```
+
+[1]: https://openjdk.java.net/projects/code-tools/jmh/

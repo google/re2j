@@ -487,7 +487,12 @@ class Parser {
       Regexp ifirst = null;
       if (i < lensub) {
         ifirst = leadingRegexp(array[s + i]);
-        if (first != null && first.equals(ifirst)) {
+        if (first != null
+            && first.equals(ifirst)
+            && (isCharClass(first)
+                || (first.op == Regexp.Op.REPEAT
+                    && first.min == first.max
+                    && isCharClass(first.subs[0])))) {
           continue;
         }
       }

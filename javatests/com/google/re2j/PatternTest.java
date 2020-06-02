@@ -2,6 +2,7 @@
 
 package com.google.re2j;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -150,6 +151,20 @@ public class PatternTest {
     ApiTestUtils.testGroupCount("(.*)(\\(a\\)b)(.*)a", 3);
   }
 
+  // See https://github.com/google/re2j/issues/93.
+  @Test
+  public void testIssue93() {
+    Pattern p1 = Pattern.compile("(a.*?c)|a.*?b");
+    Pattern p2 = Pattern.compile("a.*?c|a.*?b");
+
+    Matcher m1 = p1.matcher("abc");
+    m1.find();
+    Matcher m2 = p2.matcher("abc");
+    m2.find();
+
+    assertThat(m2.group()).isEqualTo(m1.group());
+  }
+
   @Test
   public void testQuote() {
     ApiTestUtils.testMatchesRE2(Pattern.quote("ab+c"), 0, "ab+c", "abc");
@@ -188,9 +203,9 @@ public class PatternTest {
     Pattern pattern2 = Pattern.compile("abc");
     Pattern pattern3 = Pattern.compile("def");
     Pattern pattern4 = Pattern.compile("abc", Pattern.CASE_INSENSITIVE);
-    Truth.assertThat(pattern1).isEqualTo(pattern2);
-    Truth.assertThat(pattern1).isNotEqualTo(pattern3);
-    Truth.assertThat(pattern1.hashCode()).isEqualTo(pattern2.hashCode());
-    Truth.assertThat(pattern1).isNotEqualTo(pattern4);
+    assertThat(pattern1).isEqualTo(pattern2);
+    assertThat(pattern1).isNotEqualTo(pattern3);
+    assertThat(pattern1.hashCode()).isEqualTo(pattern2.hashCode());
+    assertThat(pattern1).isNotEqualTo(pattern4);
   }
 }

@@ -530,6 +530,8 @@ public class ParserTest {
     "a{100000,}",
     // Group names may not be repeated
     "(?P<foo>bar)(?P<foo>baz)",
+    "\\x", // https://github.com/google/re2j/issues/103
+    "\\xv", // https://github.com/google/re2j/issues/103
   };
 
   private static final String[] ONLY_PERL = {

@@ -927,7 +927,9 @@ class Parser {
                     }
                     t.skipString(lit);
                     t.skipString("\\E");
-                    push(literalRegexp(lit, flags));
+                    for (int j = 0; j < lit.length(); j++) {
+                      literal(lit.charAt(j));
+                    }
                     break bigswitch;
                   }
                 case 'z':

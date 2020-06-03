@@ -213,6 +213,7 @@ public class ParserTest {
     // Test Perl quoted literals
     {"\\Q+|*?{[\\E", "str{+|*?{[}"},
     {"\\Q+\\E+", "plus{lit{+}}"},
+    {"\\Qab\\E+", "cat{lit{a}plus{lit{b}}}"},
     {"\\Q\\\\E", "lit{\\}"},
     {"\\Q\\\\\\E", "str{\\\\}"},
 

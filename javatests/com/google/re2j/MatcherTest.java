@@ -7,6 +7,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.truth.Truth;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -467,6 +468,23 @@ public class MatcherTest {
     StringBuilder b = new StringBuilder();
     m.appendReplacement(b, replacement);
     return b.toString();
+  }
+
+  // See https://github.com/google/re2j/issues/96.
+  // Ensures that RE2J generates the correct zero-width assertions (e.g. END_LINE, END_TEXT) when matching on
+  // a substring of a larger input. For example:
+  //
+  // pattern: (\d{2} ?(\d|[a-z])?)($|[^a-zA-Z])
+  // input: "22 bored"
+  //
+  // pattern.find(input) is true matcher.group(0) will contain "22 b". When retrieving group(1) from this matcher,
+  // RE2J re-matches the group, but only considers "22 b" as the input. If it incorrectly treats 'b' as END_OF_LINE
+  // and END_OF_TEXT, then group(1) will contain "22 b" when it should actually contain "22".
+  @Test
+  public void testGroupZeroWidthAssertions() {
+    Matcher m = Pattern.compile("(\\d{2} ?(\\d|[a-z])?)($|[^a-zA-Z])").matcher("22 bored");
+    Truth.assertThat(m.find()).isTrue();
+    Truth.assertThat(m.group(1)).isEqualTo("22");
   }
 
   @Test

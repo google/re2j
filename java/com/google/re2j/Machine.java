@@ -252,8 +252,9 @@ class Machine {
         }
         add(runq, prog.start, pos, matchcap, flag, null);
       }
-      flag = Utils.emptyOpContext(rune, rune1);
-      step(runq, nextq, pos, pos + width, rune, flag, anchor, pos == in.endPos());
+      int nextPos = pos + width;
+      flag = in.context(nextPos);
+      step(runq, nextq, pos, nextPos, rune, flag, anchor, pos == in.endPos());
       if (width == 0) { // EOF
         break;
       }

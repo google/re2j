@@ -206,8 +206,8 @@ abstract class MachineInput {
     @Override
     int context(int pos) {
       pos += start;
-      int r1 = pos > start && pos <= end ? Character.codePointBefore(str, pos) : -1;
-      int r2 = pos < end ? Character.codePointAt(str, pos) : -1;
+      int r1 = pos > 0 && pos <= str.length() ? Character.codePointBefore(str, pos) : -1;
+      int r2 = pos < str.length() ? Character.codePointAt(str, pos) : -1;
       return Utils.emptyOpContext(r1, r2);
     }
 

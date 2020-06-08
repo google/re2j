@@ -12,9 +12,7 @@
 package com.google.re2j;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,7 +57,7 @@ class Parser {
   private final Stack stack = new Stack();
   private Regexp free;
   private int numCap = 0; // number of capturing groups seen
-  private Map<String, Integer> namedGroups = new HashMap<String, Integer>();
+  private final Map<String, Integer> namedGroups = new HashMap<String, Integer>();
 
   Parser(String wholeRegexp, int flags) {
     this.wholeRegexp = wholeRegexp;
@@ -296,24 +294,19 @@ class Parser {
 
   // cleanAlt cleans re for eventual inclusion in an alternation.
   private void cleanAlt(Regexp re) {
-    switch (re.op) {
-      case CHAR_CLASS:
-        re.runes = new CharClass(re.runes).cleanClass().toArray();
-        if (re.runes.length == 2 && re.runes[0] == 0 && re.runes[1] == Unicode.MAX_RUNE) {
-          re.runes = null;
-          re.op = Regexp.Op.ANY_CHAR;
-          return;
-        }
-        if (re.runes.length == 4
-            && re.runes[0] == 0
-            && re.runes[1] == '\n' - 1
-            && re.runes[2] == '\n' + 1
-            && re.runes[3] == Unicode.MAX_RUNE) {
-          re.runes = null;
-          re.op = Regexp.Op.ANY_CHAR_NOT_NL;
-          return;
-        }
-        break;
+    if (re.op == Regexp.Op.CHAR_CLASS) {
+      re.runes = new CharClass(re.runes).cleanClass().toArray();
+      if (re.runes.length == 2 && re.runes[0] == 0 && re.runes[1] == Unicode.MAX_RUNE) {
+        re.runes = null;
+        re.op = Regexp.Op.ANY_CHAR;
+      } else if (re.runes.length == 4
+          && re.runes[0] == 0
+          && re.runes[1] == '\n' - 1
+          && re.runes[2] == '\n' + 1
+          && re.runes[3] == Unicode.MAX_RUNE) {
+        re.runes = null;
+        re.op = Regexp.Op.ANY_CHAR_NOT_NL;
+      }
     }
   }
 

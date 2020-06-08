@@ -2,6 +2,8 @@
 
 package com.google.re2j;
 
+import com.google.common.truth.Truth;
+
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -17,48 +19,8 @@ import java.util.Arrays;
 public class ApiTestUtils {
 
   /**
-   * Asserts that IllegalArgumentException is thrown from compile with flags.
-   */
-  public static void assertCompileFails(String regex, int flag) {
-    try {
-      Pattern.compile(regex, flag);
-      fail(
-          "Compiling Pattern with regex: "
-              + regex
-              + " and flag: "
-              + flag
-              + " passed, when it should have failed.");
-    } catch (IllegalArgumentException e) {
-      if (!"Flags UNIX_LINES and COMMENTS unsupported".equals(e.getMessage())) {
-        throw e;
-      }
-    }
-  }
-
-  /**
-   * Asserts all strings in array equal.
-   */
-  public static void assertArrayEquals(Object[] expected, Object[] actual) {
-    assertEquals(
-        "Arrays have unequal length, therefore can't be equal to "
-            + "each other. Expected: "
-            + Arrays.toString(expected)
-            + " Actual: "
-            + Arrays.toString(actual),
-        expected.length,
-        actual.length);
-    for (int idx = 0; idx < expected.length; ++idx) {
-      assertEquals("Index: " + idx + " is unequal in the arrays", expected[idx], actual[idx]);
-    }
-  }
-
-  /**
    * Tests that both RE2's and JDK's pattern class act as we expect them. The regular expression
    * {@code regexp} matches the string {@code match} and doesn't match {@code nonMatch}
-   *
-   * @param regexp
-   * @param match
-   * @param nonMatch
    */
   public static void testMatches(String regexp, String match, String nonMatch) {
     String errorString = "Pattern with regexp: " + regexp;
@@ -112,17 +74,6 @@ public class ApiTestUtils {
     assertFalse(errorString + " matches: " + nonMatch, p.matches(nonMatch));
   }
 
-  public static void testMatchesRE2(
-      String regexp, int flags, String[] matches, String[] nonMatches) {
-    Pattern p = Pattern.compile(regexp, flags);
-    for (String s : matches) {
-      assertTrue(p.matches(s));
-    }
-    for (String s : nonMatches) {
-      assertFalse(p.matches(s));
-    }
-  }
-
   /**
    * Tests that both RE2 and JDK split the string on the regex in the same way, and that that way
    * matches our expectations.
@@ -132,8 +83,9 @@ public class ApiTestUtils {
   }
 
   public static void testSplit(String regexp, String text, int limit, String[] expected) {
-    assertArrayEquals(expected, java.util.regex.Pattern.compile(regexp).split(text, limit));
-    assertArrayEquals(expected, Pattern.compile(regexp).split(text, limit));
+    Truth.assertThat(java.util.regex.Pattern.compile(regexp).split(text, limit))
+        .isEqualTo(expected);
+    Truth.assertThat(Pattern.compile(regexp).split(text, limit)).isEqualTo(expected);
   }
 
   // Helper methods for RE2Matcher's test.
@@ -185,7 +137,7 @@ public class ApiTestUtils {
     // RE2
     Pattern p = Pattern.compile(regexp);
     Matcher matchString = p.matcher(text);
-    assertEquals(true, matchString.find());
+    assertTrue(matchString.find());
     assertEquals(output[0], matchString.group());
     for (int i = 0; i < output.length; i++) {
       assertEquals(output[i], matchString.group(i));
@@ -197,7 +149,7 @@ public class ApiTestUtils {
     java.util.regex.Matcher matchStringj = pj.matcher(text);
     // java.util.regex.Matcher matchBytes =
     //   p.matcher(text.getBytes(Charsets.UTF_8));
-    assertEquals(true, matchStringj.find());
+    assertTrue(matchStringj.find());
     // assertEquals(true, matchBytes.find());
     assertEquals(output[0], matchStringj.group());
     // assertEquals(output[0], matchBytes.group());

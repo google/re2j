@@ -6,6 +6,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import com.google.common.truth.Truth;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -50,7 +50,6 @@ public class PatternTest {
 
   @Test
   public void testSyntaxError() {
-    boolean caught = false;
     try {
       Pattern.compile("abc(");
       fail("should have thrown");
@@ -59,9 +58,7 @@ public class PatternTest {
       assertNotSame("", e.getDescription());
       assertNotSame("", e.getMessage());
       assertEquals("abc(", e.getPattern());
-      caught = true;
     }
-    assertEquals(true, caught);
   }
 
   @Test
@@ -89,8 +86,8 @@ public class PatternTest {
   }
 
   private void testFind(String regexp, int flag, String match, String nonMatch) {
-    assertEquals(true, Pattern.compile(regexp, flag).matcher(match).find());
-    assertEquals(false, Pattern.compile(regexp, flag).matcher(nonMatch).find());
+    assertTrue(Pattern.compile(regexp, flag).matcher(match).find());
+    assertFalse(Pattern.compile(regexp, flag).matcher(nonMatch).find());
   }
 
   @Test

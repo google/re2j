@@ -312,8 +312,8 @@ public class ExecTest {
           }
           int lo = -1, hi = -2;
           try {
-            lo = Integer.valueOf(pair.substring(0, k));
-            hi = Integer.valueOf(pair.substring(k + 1));
+            lo = Integer.parseInt(pair.substring(0, k));
+            hi = Integer.parseInt(pair.substring(k + 1));
           } catch (NumberFormatException e) {
             /* fall through */
           }

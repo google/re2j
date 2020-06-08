@@ -13,7 +13,7 @@ package com.google.re2j;
  */
 abstract class MachineInput {
 
-  static final int EOF = (-1 << 3) | 0;
+  static final int EOF = (-1 << 3);
 
   static MachineInput fromUTF8(byte[] b) {
     return new UTF8Input(b);

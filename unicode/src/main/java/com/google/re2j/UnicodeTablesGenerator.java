@@ -11,6 +11,7 @@ import com.ibm.icu.lang.UCharacterCategory;
 import com.ibm.icu.lang.UCharacterEnums;
 import com.ibm.icu.lang.UProperty;
 import com.ibm.icu.lang.UScript;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -44,7 +45,7 @@ public class UnicodeTablesGenerator {
   private final TypeSpec.Builder unicodeTables =
       TypeSpec.classBuilder("UnicodeTables").addModifiers(Modifier.FINAL);
 
-  private final Map<Integer, Integer> sortedOrbits = generateCaseFoldOrbits();
+  private final SortedMap<Integer, Integer> sortedOrbits = generateCaseFoldOrbits();
 
   public static void main(String[] args) {
     new UnicodeTablesGenerator();
@@ -99,17 +100,22 @@ public class UnicodeTablesGenerator {
       scriptRange.add(i);
     }
 
-    // Emit code fold orbits
+    // Emit code fold orbits. In order to avoid a binary search at runtime, this code emits a sparse
+    // array of codepoint to the next codepoint in a case folding orbit, e.g.
+    // k -> K -> K (Kelvin) -> k.
     {
       FieldSpec.Builder caseOrbitField =
-          FieldSpec.builder(int[][].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
-      StringBuilder initializer = new StringBuilder("{\n");
+          FieldSpec.builder(char[].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
+      CodeBlock.Builder staticInitBlock = CodeBlock.builder();
+      staticInitBlock.addStatement("CASE_ORBIT = new char[$L]", sortedOrbits.lastKey() + 1);
       for (Map.Entry<Integer, Integer> entry : sortedOrbits.entrySet()) {
-        initializer.append(String.format("{0x%04X, 0x%04X},\n", entry.getKey(), entry.getValue()));
+        staticInitBlock.addStatement(
+            "CASE_ORBIT[0x$L] = 0x$L",
+            Integer.toHexString(entry.getKey()),
+            Integer.toHexString(entry.getValue()));
       }
-      initializer.append("}");
-      caseOrbitField.initializer(initializer.toString());
       unicodeTables.addField(caseOrbitField.build());
+      unicodeTables.addStaticBlock(staticInitBlock.build());
     }
 
     // Emit range maps (e.g. Lu -> ranges of lowercase symbols).

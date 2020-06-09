@@ -74,7 +74,7 @@ If you're using Maven, you can use the following snippet in your `pom.xml` to ge
 <dependency>
   <groupId>com.google.re2j</groupId>
   <artifactId>re2j</artifactId>
-  <version>1.3</version>
+  <version>1.4</version>
 </dependency>
 ```
 

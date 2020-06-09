@@ -4,6 +4,7 @@ package com.google.re2j;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -409,7 +410,7 @@ public class MatcherTest {
     m.reset();
     assertTrue(m.find());
     assertEquals("by", m.group(0));
-    assertEquals(null, m.group(1));
+    assertNull(m.group(1));
     assertEquals("y", m.group(2));
     assertTrue(m.find());
     assertEquals("band", m.group(0));
@@ -451,7 +452,7 @@ public class MatcherTest {
     assertEquals("bag", m.group("bag"));
     assertEquals(9, m.start("bag"));
     assertEquals(12, m.end("bag"));
-    assertEquals(null, m.group("nomatch"));
+    assertNull(m.group("nomatch"));
     assertEquals(-1, m.start("nomatch"));
     assertEquals(-1, m.end("nomatch"));
     assertEquals("whatbbarrrrreverbag", appendReplacement(m, "what$2ever${bag}"));
@@ -493,12 +494,12 @@ public class MatcherTest {
     final String text = "xxx aaa bbb yyy";
     {
       final Matcher matcher = Pattern.compile(pattern).matcher(text);
-      assertEquals(true, matcher.find());
+      assertTrue(matcher.find());
       assertEquals("aaa", text.substring(matcher.start(), matcher.end()));
     }
     {
       final Matcher matcher = Pattern.compile(pattern, Pattern.LONGEST_MATCH).matcher(text);
-      assertEquals(true, matcher.find());
+      assertTrue(matcher.find());
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
     }
   }

@@ -595,11 +595,7 @@ class RE2 {
    */
   // This is visible for testing.
   int[] findIndex(String s) {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
-    if (a == null) {
-      return null;
-    }
-    return a;
+    return doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
   }
 
   /**

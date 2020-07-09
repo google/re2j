@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 The Go Authors. All rights reserved.
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
 // Generated at 2020-06-09T16:20:06.352Z by Java 1.8.0_181 using Unicode version 6.0.0.0.
 // Do not change this file, your edits will be lost. Instead change UnicodeTablesGenerator.java.
 package com.google.re2j;

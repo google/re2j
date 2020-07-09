@@ -1,5 +1,9 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
-
+/*
+ * Copyright (c) 2020 The Go Authors. All rights reserved.
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
 package com.google.re2j;
 
 import java.io.UnsupportedEncodingException;

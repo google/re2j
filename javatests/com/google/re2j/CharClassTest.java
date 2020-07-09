@@ -1,8 +1,9 @@
-// Copyright 2011 Google Inc. All Rights Reserved.
-//
-// Partly plundered from third_party/re2/testing/charclass_test.cc,
-// updated to account for proper Unicode case folding.
-
+/*
+ * Copyright (c) 2020 The Go Authors. All rights reserved.
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
 package com.google.re2j;
 
 import static com.google.re2j.Utils.stringToRunes;

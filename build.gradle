@@ -77,10 +77,17 @@ idea {
 test {
   // Allow parallel test execution.
   maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+  useJUnitPlatform()
 }
 
 dependencies {
-  testCompile 'junit:junit:4.12'
+  testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
+  testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.2"
+  testImplementation "junit:junit:4.13"
+  testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.2"
+  testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
+
   testCompile 'com.google.gwt:gwt-dev:2.8.2'
   testCompile 'com.google.gwt:gwt-user:2.8.2'
   testCompile 'com.google.truth:truth:0.36'

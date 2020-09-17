@@ -13,16 +13,14 @@
 
 package com.google.re2j;
 
-import static org.junit.Assert.fail;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import static org.junit.Assert.fail;
 
-@RunWith(Parameterized.class)
 public class FindTest {
 
   // For each pattern/text pair, what is the expected output of each
@@ -251,21 +249,15 @@ public class FindTest {
         36),
   };
 
-  @Parameters
   public static Test[] testCases() {
     return FIND_TESTS;
   }
 
-  private final Test test;
-
-  public FindTest(Test test) {
-    this.test = test;
-  }
-
   // First the simple cases.
 
-  @org.junit.Test
-  public void testFindUTF8() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindUTF8(Test test) {
     RE2 re = RE2.compile(test.pat);
     if (!re.toString().equals(test.pat)) {
       fail(String.format("RE2.toString() = \"%s\"; should be \"%s\"", re.toString(), test.pat));
@@ -290,8 +282,9 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFind() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFind(Test test) {
     String result = RE2.compile(test.pat).find(test.text);
     if (test.matches.length == 0 && result.isEmpty()) {
       // ok
@@ -337,22 +330,25 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFindUTF8Index() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindUTF8Index(Test test) {
     testFindIndexCommon(
         "testFindUTF8Index", test, RE2.compile(test.pat).findUTF8Index(test.textUTF8), true);
   }
 
-  @org.junit.Test
-  public void testFindIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindIndex(Test test) {
     int[] result = RE2.compile(test.pat).findIndex(test.text);
     testFindIndexCommon("testFindIndex", test, result, false);
   }
 
   // Now come the simple All cases.
 
-  @org.junit.Test
-  public void testFindAllUTF8() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllUTF8(Test test) {
     List<byte[]> result = RE2.compile(test.pat).findAllUTF8(test.textUTF8, -1);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -384,8 +380,9 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFindAll() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAll(Test test) {
     List<String> result = RE2.compile(test.pat).findAll(test.text, -1);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -449,8 +446,9 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFindAllUTF8Index() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllUTF8Index(Test test) {
     testFindAllIndexCommon(
         "testFindAllUTF8Index",
         test,
@@ -458,8 +456,9 @@ public class FindTest {
         true);
   }
 
-  @org.junit.Test
-  public void testFindAllIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllIndex(Test test) {
     testFindAllIndexCommon(
         "testFindAllIndex", test, RE2.compile(test.pat).findAllIndex(test.text, -1), false);
   }
@@ -481,7 +480,9 @@ public class FindTest {
     for (int k = 0; k < GoTestUtils.len(result); k++) {
       if (submatches[k * 2] == -1) {
         if (result[k] != null) {
-          fail(String.format("%s %d: expected null got %s: %s", testName, n, Arrays.toString(result), test));
+          fail(
+              String.format(
+                  "%s %d: expected null got %s: %s", testName, n, Arrays.toString(result), test));
         }
         continue;
       }
@@ -499,8 +500,9 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFindUTF8Submatch() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindUTF8Submatch(Test test) {
     byte[][] result = RE2.compile(test.pat).findUTF8Submatch(test.textUTF8);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -538,14 +540,22 @@ public class FindTest {
       System.err.println(testName + "  " + test + " " + n + " " + k + " ");
       String expect = test.submatchString(n, k / 2);
       if (!expect.equals(result[k / 2])) {
-        fail(String.format("%s %d: expected %s got %s: %s", testName, n, expect, Arrays.toString(result), test));
+        fail(
+            String.format(
+                "%s %d: expected %s got %s: %s",
+                testName,
+                n,
+                expect,
+                Arrays.toString(result),
+                test));
       }
     }
   }
 
   // (Go: TestFindStringSubmatch)
-  @org.junit.Test
-  public void testFindSubmatch() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindSubmatch(Test test) {
     String[] result = RE2.compile(test.pat).findSubmatch(test.text);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -602,8 +612,9 @@ public class FindTest {
     }
   }
 
-  @org.junit.Test
-  public void testFindUTF8SubmatchIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindUTF8SubmatchIndex(Test test) {
     testFindSubmatchIndexCommon(
         "testFindSubmatchIndex",
         test,
@@ -612,8 +623,9 @@ public class FindTest {
   }
 
   // (Go: TestFindStringSubmatchIndex)
-  @org.junit.Test
-  public void testFindSubmatchIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindSubmatchIndex(Test test) {
     testFindSubmatchIndexCommon(
         "testFindStringSubmatchIndex",
         test,
@@ -624,8 +636,9 @@ public class FindTest {
   // Now come the monster AllSubmatch cases.
 
   // (Go: TestFindAllSubmatch)
-  @org.junit.Test
-  public void testFindAllUTF8Submatch() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllUTF8Submatch(Test test) {
     List<byte[][]> result = RE2.compile(test.pat).findAllUTF8Submatch(test.textUTF8, -1);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -645,8 +658,9 @@ public class FindTest {
   }
 
   // (Go: TestFindAllStringSubmatch)
-  @org.junit.Test
-  public void testFindAllSubmatch() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllSubmatch(Test test) {
     List<String[]> result = RE2.compile(test.pat).findAllSubmatch(test.text, -1);
     if (test.matches.length == 0 && result == null) {
       // ok
@@ -690,8 +704,9 @@ public class FindTest {
   }
 
   // (Go: TestFindAllSubmatchIndex)
-  @org.junit.Test
-  public void testFindAllUTF8SubmatchIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllUTF8SubmatchIndex(Test test) {
     testFindAllSubmatchIndexCommon(
         "testFindAllUTF8SubmatchIndex",
         test,
@@ -700,8 +715,9 @@ public class FindTest {
   }
 
   // (Go: TestFindAllStringSubmatchIndex)
-  @org.junit.Test
-  public void testFindAllSubmatchIndex() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testFindAllSubmatchIndex(Test test) {
     testFindAllSubmatchIndexCommon(
         "testFindAllSubmatchIndex",
         test,

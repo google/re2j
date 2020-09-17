@@ -68,7 +68,6 @@ import org.junit.runners.JUnit4;
 //
 // At time of writing, re2.txt is 32 MB but compresses to 760 kB,
 // so we store re2.txt.gz in the repository and decompress it on the fly.
-@RunWith(JUnit4.class)
 public class ExecTest {
 
   @Test

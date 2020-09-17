@@ -7,15 +7,12 @@
 package com.google.re2j;
 
 import com.google.common.truth.Truth;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 
-@RunWith(Parameterized.class)
 public class RegexpHashcodeEqualsTest {
-  @Parameterized.Parameters
   public static Iterable<Object[]> testCases() {
     return Arrays.asList(
         new Object[][] {
@@ -33,19 +30,9 @@ public class RegexpHashcodeEqualsTest {
         });
   }
 
-  @Parameterized.Parameter public String a;
-
-  @Parameterized.Parameter(1)
-  public String b;
-
-  @Parameterized.Parameter(2)
-  public boolean areEqual;
-
-  @Parameterized.Parameter(3)
-  public int mode;
-
-  @Test
-  public void testEquals() {
+  @ParameterizedTest
+  @MethodSource("testCases")
+  public void testEquals(String a, String b, boolean areEqual, int mode) {
     Regexp ra = Parser.parse(a, mode);
     Regexp rb = Parser.parse(b, mode);
     if (areEqual) {

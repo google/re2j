@@ -11,6 +11,7 @@ import static com.google.re2j.Utils.stringToRunes;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.Formatter;
 
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ public class CharClassTest {
   }
 
   private static void assertClass(CharClass cc, int... expected) {
-    int actual[] = cc.toArray();
+    int[] actual = cc.toArray();
     if (!Arrays.equals(actual, expected)) {
       throw new AssertionError(
           "Incorrect CharClass value:\n"
@@ -129,7 +130,7 @@ public class CharClassTest {
     // These cases are derived directly from the program logic:
 
     // Range is full: folding can't add more.
-    assertClass(cc().appendFoldedRange(10, 0x10ff0), 10, 0x10ff0);
+    assertClass(cc().appendFoldedRange(10, Unicode.MAX_FOLD + 1), 10, Unicode.MAX_FOLD + 1);
 
     // Range is outside folding possibilities.
     assertClass(cc().appendFoldedRange(' ', '&'), ' ', '&');
@@ -139,13 +140,13 @@ public class CharClassTest {
 
     // [MAX_FOLD...] needs no folding
     assertClass(
-        cc().appendFoldedRange(0x10400, 0x104f0),
-        0x10450,
-        0x104f0,
-        0x10400,
-        0x10426, // lowercase Deseret
-        0x10426,
-        0x1044f); // uppercase Deseret, abutting.
+        cc().appendFoldedRange(0x1E941, 0x1E946),
+        0x1E944,
+        0x1E946,
+        0x1E941, // ADLAM SMALL LETTER ZAL
+        0x1E943, // ADLAM SMALL LETTER SHA, abutting.
+        0x1E91F, // ADLAM CAPITAL LETTER ZAL
+        0x1E921); // ADLAM CAPITAL LETTER SHA
   }
 
   @Test

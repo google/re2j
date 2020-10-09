@@ -23,7 +23,7 @@ plugins {
 cobertura.coverageFormats = ['html', 'xml']
 
 // The name of the release we're working on. See RELEASING.md for details.
-def versionName = '1.4'
+def versionName = '1.5'
 
 wrapper {
   gradleVersion '4.9'

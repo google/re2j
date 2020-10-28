@@ -99,6 +99,7 @@ class Machine {
   private int[] matchcap;
   private int ncap;
 
+  // Pointer to form a linked stack for the pool of Machines.
   Machine next;
 
   /**

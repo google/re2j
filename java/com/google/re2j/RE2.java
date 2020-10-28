@@ -219,10 +219,13 @@ class RE2 {
     // entire stack, and stashing it in a pop-only stack guarded by a lock. This also reduces
     // contention on the AtomicReference between putters and the getter.
     synchronized (this) {
+      // Pop machine from head of toGet free list.
       if (toGet == null) {
+        // Move a batch from the lock lock-free stack if empty.
         toGet = pooled.getAndSet(null);
       }
       if (toGet != null) {
+        // Pop a machine off the stack.
         Machine got = toGet;
         toGet = got.next;
         got.next = null;
@@ -245,13 +248,11 @@ class RE2 {
   // simultaneous matches run using |this|.  (The cache empties when |this|
   // gets garbage collected or reset is called)
   void put(Machine m) {
-    while (true) {
-      Machine head = pooled.get();
+    Machine head;
+    do {
+      head = pooled.get();
       m.next = head;
-      if (pooled.compareAndSet(head, m)) {
-        break;
-      }
-    }
+    } while (!pooled.compareAndSet(head, m));
   }
 
   @Override

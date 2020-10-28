@@ -99,6 +99,8 @@ class Machine {
   private int[] matchcap;
   private int ncap;
 
+  Machine next;
+
   /**
    * Constructs a matching Machine for the specified {@code RE2}.
    */

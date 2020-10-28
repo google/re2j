@@ -22,12 +22,11 @@ package com.google.re2j;
 
 import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular expression, independent of
@@ -116,10 +115,12 @@ class RE2 {
   boolean prefixComplete; // true iff prefix is the entire regexp
   int prefixRune; // first rune in prefix
 
-  // Cache of machines for running regexp.
-  // Accesses must be serialized using |this| monitor.
+  // Cache of machines for running regexp. Forms a Treiber stack.
+  private final AtomicReference<Machine> pooled = new AtomicReference<Machine>();
+  // Linked stack for consumption by get(), moved over from pooled in batches.
   // @GuardedBy("this")
-  private final Queue<Machine> machine = new ArrayDeque<Machine>();
+  private Machine toGet;
+
   public Map<String, Integer> namedGroups;
 
   // This is visible for testing.
@@ -214,25 +215,43 @@ class RE2 {
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
   Machine get() {
+    // Treiber stack (if reusing nodes) suffers from ABA problem on pop. Avoid by unlinking the
+    // entire stack, and stashing it in a pop-only stack guarded by a lock. This also reduces
+    // contention on the AtomicReference between putters and the getter.
     synchronized (this) {
-      if (!machine.isEmpty()) {
-        return machine.remove();
+      if (toGet == null) {
+        toGet = pooled.getAndSet(null);
+      }
+      if (toGet != null) {
+        Machine got = toGet;
+        toGet = got.next;
+        got.next = null;
+        return got;
       }
     }
     return new Machine(this);
   }
 
   // Clears the memory associated with this machine.
-  synchronized void reset() {
-    machine.clear();
+  void reset() {
+    synchronized (this) {
+      toGet = null;
+    }
+    pooled.set(null);
   }
 
   // put() returns a machine to |this|'s machine cache.  There is no attempt to
   // limit the size of the cache, so it will grow to the maximum number of
   // simultaneous matches run using |this|.  (The cache empties when |this|
-  // gets garbage collected.)
-  synchronized void put(Machine m) {
-    machine.add(m);
+  // gets garbage collected or reset is called)
+  void put(Machine m) {
+    while (true) {
+      Machine head = pooled.get();
+      m.next = head;
+      if (pooled.compareAndSet(head, m)) {
+        break;
+      }
+    }
   }
 
   @Override

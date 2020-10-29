@@ -117,9 +117,6 @@ class RE2 {
 
   // Cache of machines for running regexp. Forms a Treiber stack.
   private final AtomicReference<Machine> pooled = new AtomicReference<Machine>();
-  // Linked stack for consumption by get(), moved over from pooled in batches.
-  // @GuardedBy("this")
-  private Machine toGet;
 
   public Map<String, Integer> namedGroups;
 
@@ -215,31 +212,16 @@ class RE2 {
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
   Machine get() {
-    // Treiber stack (if reusing nodes) suffers from ABA problem on pop. Avoid by unlinking the
-    // entire stack, and stashing it in a pop-only stack guarded by a lock. This also reduces
-    // contention on the AtomicReference between putters and the getter.
-    synchronized (this) {
-      // Pop machine from head of toGet free list.
-      if (toGet == null) {
-        // Move a batch from the lock lock-free stack if empty.
-        toGet = pooled.getAndSet(null);
-      }
-      if (toGet != null) {
-        // Pop a machine off the stack.
-        Machine got = toGet;
-        toGet = got.next;
-        got.next = null;
-        return got;
-      }
-    }
-    return new Machine(this);
+    // Pop a machine off the stack if available.
+    Machine head;
+    do {
+      head = pooled.get();
+    } while (head != null && !pooled.compareAndSet(head, head.next));
+    return head;
   }
 
   // Clears the memory associated with this machine.
   void reset() {
-    synchronized (this) {
-      toGet = null;
-    }
     pooled.set(null);
   }
 
@@ -247,10 +229,22 @@ class RE2 {
   // limit the size of the cache, so it will grow to the maximum number of
   // simultaneous matches run using |this|.  (The cache empties when |this|
   // gets garbage collected or reset is called)
-  void put(Machine m) {
+  void put(Machine m, boolean isNewNode) {
+    // To avoid allocation in the single-thread or uncontended case, reuse a node only if
+    // it was the only element in the stack when it was popped, and it's the only element
+    // in the stack when it's pushed back after use.
     Machine head;
     do {
       head = pooled.get();
+      if (!isNewNode && head != null) {
+        // If an element had a non-null next pointer and it was previously in the stack, another
+        // thread might be trying to pop it out right now, and if it sees the same node now in the
+        // stack the pop will succeed, but the new top of the stack will be the stale value of next.
+        // Allocate a new Machine so that the CAS will not succeed if this node has been popped and
+        // re-pushed.
+        m = new Machine(m);
+        isNewNode = true;
+      }
       m.next = head;
     } while (!pooled.compareAndSet(head, m));
   }
@@ -265,9 +259,20 @@ class RE2 {
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
     Machine m = get();
+    // The Treiber stack cannot reuse nodes, unless the node to be reused has only ever been at
+    // the bottom of the stack (i.e., next == null).
+    boolean isNewNode = false;
+    if (m == null) {
+      m = new Machine(this);
+      isNewNode = true;
+    } else if (m.next != null) {
+      m = new Machine(m);
+      isNewNode = true;
+    }
+
     m.init(ncap);
     int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
-    put(m);
+    put(m, isNewNode);
     return cap;
   }
 

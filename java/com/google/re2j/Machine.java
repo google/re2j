@@ -113,6 +113,19 @@ class Machine {
     this.matchcap = new int[prog.numCap < 2 ? 2 : prog.numCap];
   }
 
+  /** Copy constructor, but does not include {@code next} */
+  Machine(Machine copy) {
+    this.re2 = copy.re2;
+    this.prog = copy.prog;
+    this.q0 = copy.q0;
+    this.q1 = copy.q1;
+    this.pool = copy.pool;
+    this.poolSize = copy.poolSize;
+    this.matched = copy.matched;
+    this.matchcap = copy.matchcap;
+    this.ncap = copy.ncap;
+  }
+
   // init() reinitializes an existing Machine for re-use on a new input.
   void init(int ncap) {
     // length change need new arrays

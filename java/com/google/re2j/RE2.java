@@ -237,11 +237,11 @@ class RE2 {
     do {
       head = pooled.get();
       if (!isNewNode && head != null) {
-        // If an element had a non-null next pointer and it was previously in the stack, another
-        // thread might be trying to pop it out right now, and if it sees the same node now in the
-        // stack the pop will succeed, but the new top of the stack will be the stale value of next.
-        // Allocate a new Machine so that the CAS will not succeed if this node has been popped and
-        // re-pushed.
+        // If an element had a null next pointer and it was previously in the stack, another thread
+        // might be trying to pop it out right now, and if it sees the same node now in the
+        // stack the pop will succeed, but the new top of the stack will be the stale (null) value
+        // of next. Allocate a new Machine so that the CAS will not succeed if this node has been
+        // popped and re-pushed.
         m = new Machine(m);
         isNewNode = true;
       }

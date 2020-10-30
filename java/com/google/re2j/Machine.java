@@ -99,7 +99,9 @@ class Machine {
   private int[] matchcap;
   private int ncap;
 
-  // Pointer to form a linked stack for the pool of Machines.
+  // Make sure to include new fields in the copy constructor
+
+  // Pointer to form a linked stack for the pool of Machines. Not included in copy constructor.
   Machine next;
 
   /**
@@ -115,6 +117,7 @@ class Machine {
 
   /** Copy constructor, but does not include {@code next} */
   Machine(Machine copy) {
+    // Make sure to include any new fields here
     this.re2 = copy.re2;
     this.prog = copy.prog;
     this.q0 = copy.q0;

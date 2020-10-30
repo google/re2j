@@ -228,22 +228,22 @@ class RE2 {
   // put() returns a machine to |this|'s machine cache.  There is no attempt to
   // limit the size of the cache, so it will grow to the maximum number of
   // simultaneous matches run using |this|.  (The cache empties when |this|
-  // gets garbage collected or reset is called)
-  void put(Machine m, boolean isNewNode) {
+  // gets garbage collected or reset is called.)
+  void put(Machine m, boolean isNew) {
     // To avoid allocation in the single-thread or uncontended case, reuse a node only if
     // it was the only element in the stack when it was popped, and it's the only element
     // in the stack when it's pushed back after use.
     Machine head;
     do {
       head = pooled.get();
-      if (!isNewNode && head != null) {
+      if (!isNew && head != null) {
         // If an element had a null next pointer and it was previously in the stack, another thread
         // might be trying to pop it out right now, and if it sees the same node now in the
         // stack the pop will succeed, but the new top of the stack will be the stale (null) value
         // of next. Allocate a new Machine so that the CAS will not succeed if this node has been
         // popped and re-pushed.
         m = new Machine(m);
-        isNewNode = true;
+        isNew = true;
       }
       m.next = head;
     } while (!pooled.compareAndSet(head, m));
@@ -261,18 +261,18 @@ class RE2 {
     Machine m = get();
     // The Treiber stack cannot reuse nodes, unless the node to be reused has only ever been at
     // the bottom of the stack (i.e., next == null).
-    boolean isNewNode = false;
+    boolean isNew = false;
     if (m == null) {
       m = new Machine(this);
-      isNewNode = true;
+      isNew = true;
     } else if (m.next != null) {
       m = new Machine(m);
-      isNewNode = true;
+      isNew = true;
     }
 
     m.init(ncap);
     int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
-    put(m, isNewNode);
+    put(m, isNew);
     return cap;
   }
 

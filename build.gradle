@@ -194,6 +194,7 @@ allprojects {
     header rootProject.file('LICENSE.header')
     ext.year = Calendar.getInstance().get(Calendar.YEAR)
     strictCheck true
+    skipExistingHeaders true
 
     mapping {
       // Without this, the plugin adds javadoc-style comments to the top

@@ -13,12 +13,15 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import java.util.Collections;
+import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,6 +40,16 @@ public class PatternTest {
     Pattern p = Pattern.compile("abc");
     assertEquals("abc", p.pattern());
     assertEquals(0, p.flags());
+  }
+
+  @Test
+  public void testCompileExceptionWithDuplicateGroups() {
+    try {
+      Pattern.compile("(?P<any>.*)(?P<any>.*");
+      fail();
+    } catch (PatternSyntaxException e) {
+      assertEquals("error parsing regexp: duplicate capture group name: `any`", e.getMessage());
+    }
   }
 
   @Test
@@ -150,6 +163,18 @@ public class PatternTest {
     ApiTestUtils.testGroupCount("(.*)((a)b)(.*)a", 4);
     ApiTestUtils.testGroupCount("(.*)(\\(ab)(.*)a", 3);
     ApiTestUtils.testGroupCount("(.*)(\\(a\\)b)(.*)a", 3);
+  }
+
+  @Test
+  public void testNamedGroups() {
+    assertNamedGroupsEquals(Collections.<String, Integer>emptyMap(), "hello");
+    assertNamedGroupsEquals(Collections.<String, Integer>emptyMap(), "(.*)");
+    assertNamedGroupsEquals(ImmutableMap.of("any", 1), "(?P<any>.*)");
+    assertNamedGroupsEquals(ImmutableMap.of("foo", 1, "bar", 2), "(?P<foo>.*)(?P<bar>.*)");
+  }
+
+  private static void assertNamedGroupsEquals(Map<String, Integer> expected, String pattern) {
+    assertEquals(expected, Pattern.compile(pattern).namedGroups());
   }
 
   // See https://github.com/google/re2j/issues/93.

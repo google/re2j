@@ -7,6 +7,8 @@
 package com.google.re2j;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A compiled representation of an RE2 regular expression, mimicking the
@@ -267,6 +269,14 @@ public final class Pattern implements Serializable {
    */
   public int groupCount() {
     return re2.numberOfCapturingGroups();
+  }
+
+  /**
+   * Return a map of the capturing groups in this matcher's pattern, where key is the name and value
+   * is the index of the group in the pattern.
+   */
+  public Map<String, Integer> namedGroups() {
+    return Collections.unmodifiableMap(re2.namedGroups);
   }
 
   Object readResolve() {

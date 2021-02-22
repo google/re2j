@@ -9,6 +9,7 @@
 
 package com.google.re2j;
 
+import java.util.Arrays;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -20,16 +21,23 @@ public class RE2Test {
   public void testFullMatch() {
     assertTrue(new RE2("ab+c").match("abbbbbc", 0, 7, RE2.ANCHOR_BOTH, null, 0));
     assertFalse(new RE2("ab+c").match("xabbbbbc", 0, 8, RE2.ANCHOR_BOTH, null, 0));
+
+    assertTrue(new RE2("ab+c").match(MatcherInput.utf8("abbbbbc"), 0, 7, RE2.ANCHOR_BOTH, null, 0));
+    assertFalse(
+        new RE2("ab+c").match(MatcherInput.utf8("xabbbbbc"), 0, 8, RE2.ANCHOR_BOTH, null, 0));
   }
 
   @Test
   public void testFindEnd() {
     RE2 r = new RE2("abc.*def");
-    assertTrue(r.match("yyyabcxxxdefzzz", 0, 15, RE2.UNANCHORED, null, 0));
-    assertTrue(r.match("yyyabcxxxdefzzz", 0, 12, RE2.UNANCHORED, null, 0));
-    assertTrue(r.match("yyyabcxxxdefzzz", 3, 15, RE2.UNANCHORED, null, 0));
-    assertTrue(r.match("yyyabcxxxdefzzz", 3, 12, RE2.UNANCHORED, null, 0));
-    assertFalse(r.match("yyyabcxxxdefzzz", 4, 12, RE2.UNANCHORED, null, 0));
-    assertFalse(r.match("yyyabcxxxdefzzz", 3, 11, RE2.UNANCHORED, null, 0));
+    String s = "yyyabcxxxdefzzz";
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf8(s), MatcherInput.utf16(s))) {
+      assertTrue(r.match(input, 0, 15, RE2.UNANCHORED, null, 0));
+      assertTrue(r.match(input, 0, 12, RE2.UNANCHORED, null, 0));
+      assertTrue(r.match(input, 3, 15, RE2.UNANCHORED, null, 0));
+      assertTrue(r.match(input, 3, 12, RE2.UNANCHORED, null, 0));
+      assertFalse(r.match(input, 4, 12, RE2.UNANCHORED, null, 0));
+      assertFalse(r.match(input, 3, 11, RE2.UNANCHORED, null, 0));
+    }
   }
 }

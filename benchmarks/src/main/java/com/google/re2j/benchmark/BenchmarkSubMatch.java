@@ -27,8 +27,12 @@ public class BenchmarkSubMatch {
   @Param({"JDK", "RE2J"})
   private Implementations impl;
 
-  private String html =
-      new String(readFile("google-maps-contact-info.html"), StandardCharsets.UTF_8);
+  @Param({"true", "false"})
+  private boolean binary;
+
+  byte[] bytes = readFile("google-maps-contact-info.html");
+  private String html = new String(bytes, StandardCharsets.UTF_8);
+
   private Implementations.Pattern pattern;
 
   @Setup
@@ -38,7 +42,7 @@ public class BenchmarkSubMatch {
 
   @Benchmark
   public void findPhoneNumbers(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.matcher(html);
+    Implementations.Matcher matcher = binary ? pattern.matcher(bytes) : pattern.matcher(html);
     int count = 0;
     while (matcher.find()) {
       bh.consume(matcher.group());

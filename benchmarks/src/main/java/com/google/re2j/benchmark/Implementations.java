@@ -80,6 +80,8 @@ public enum Implementations {
 
     public abstract Matcher matcher(String str);
 
+    public abstract Matcher matcher(byte[] bytes);
+
     public static class JdkPattern extends Pattern {
 
       private final java.util.regex.Pattern pattern;
@@ -91,6 +93,11 @@ public enum Implementations {
       @Override
       public Matcher matcher(String str) {
         return new Matcher.JdkMatcher(pattern.matcher(str));
+      }
+
+      @Override
+      public Matcher matcher(byte[] bytes) {
+        return new Matcher.JdkMatcher(pattern.matcher(new String(bytes)));
       }
     }
 
@@ -105,6 +112,11 @@ public enum Implementations {
       @Override
       public Matcher matcher(String str) {
         return new Matcher.Re2Matcher(pattern.matcher(str));
+      }
+
+      @Override
+      public Matcher matcher(byte[] bytes) {
+        return new Matcher.Re2Matcher(pattern.matcher(bytes));
       }
     }
   }

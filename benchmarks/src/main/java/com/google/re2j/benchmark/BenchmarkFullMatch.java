@@ -6,6 +6,8 @@
  */
 package com.google.re2j.benchmark;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
@@ -23,7 +25,16 @@ public class BenchmarkFullMatch {
   @Param({"JDK", "RE2J"})
   private Implementations impl;
 
+  @Param({"true", "false"})
+  private boolean binary;
+
   private Implementations.Pattern pattern;
+
+  private String password = "password";
+  private byte[] password_bytes = password.getBytes(UTF_8);
+
+  private String l0ngpassword = "l0ngpassword";
+  private byte[] l0ngpassword_bytes = "l0ngpassword".getBytes(UTF_8);
 
   @Setup
   public void setup() {
@@ -34,7 +45,8 @@ public class BenchmarkFullMatch {
 
   @Benchmark
   public void matched(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.matcher("password");
+    Implementations.Matcher matcher =
+        binary ? pattern.matcher(password_bytes) : pattern.matcher(password);
     boolean matches = matcher.matches();
     if (!matches) {
       throw new AssertionError();
@@ -44,7 +56,8 @@ public class BenchmarkFullMatch {
 
   @Benchmark
   public void notMatched(Blackhole bh) {
-    Implementations.Matcher matcher = pattern.matcher("l0ngpassword");
+    Implementations.Matcher matcher =
+        binary ? pattern.matcher(l0ngpassword_bytes) : pattern.matcher(l0ngpassword);
     boolean matches = matcher.matches();
     if (matches) {
       throw new AssertionError();

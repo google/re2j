@@ -161,7 +161,15 @@ public final class Pattern implements Serializable {
     return compile(regex).matcher(input).matches();
   }
 
+  public static boolean matches(String regex, byte[] input) {
+    return compile(regex).matcher(input).matches();
+  }
+
   public boolean matches(String input) {
+    return this.matcher(input).matches();
+  }
+
+  public boolean matches(byte[] input) {
     return this.matcher(input).matches();
   }
 
@@ -171,6 +179,15 @@ public final class Pattern implements Serializable {
    * @param input the input string
    */
   public Matcher matcher(CharSequence input) {
+    return new Matcher(this, input);
+  }
+
+  public Matcher matcher(byte[] input) {
+    return new Matcher(this, MatcherInput.utf8(input));
+  }
+
+  // This is visible for testing.
+  Matcher matcher(MatcherInput input) {
     return new Matcher(this, input);
   }
 

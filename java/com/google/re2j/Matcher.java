@@ -6,6 +6,7 @@
  */
 package com.google.re2j;
 
+import com.google.re2j.MatcherInput.Encoding;
 import java.util.Map;
 
 /**
@@ -48,7 +49,7 @@ public final class Matcher {
   // The number of submatches (groups) in the pattern.
   private final int groupCount;
 
-  private CharSequence inputSequence;
+  private MatcherInput matcherInput;
 
   // The input length in UTF16 codes.
   private int inputLength;
@@ -83,6 +84,11 @@ public final class Matcher {
     reset(input);
   }
 
+  Matcher(Pattern pattern, MatcherInput input) {
+    this(pattern);
+    reset(input);
+  }
+
   /** Returns the {@code Pattern} associated with this {@code Matcher}. */
   public Pattern pattern() {
     return pattern;
@@ -94,7 +100,7 @@ public final class Matcher {
    * @return the {@code Matcher} itself, for chained method calls
    */
   public Matcher reset() {
-    inputLength = inputSequence.length();
+    inputLength = matcherInput.length();
     appendPos = 0;
     hasMatch = false;
     hasGroups = false;
@@ -108,10 +114,24 @@ public final class Matcher {
    * @return the {@code Matcher} itself, for chained method calls
    */
   public Matcher reset(CharSequence input) {
+    return reset(MatcherInput.utf16(input));
+  }
+
+  /**
+   * Resets the {@code Matcher} and changes the input.
+   *
+   * @param bytes utf8 bytes of the input string.
+   * @return the {@code Matcher} itself, for chained method calls
+   */
+  public Matcher reset(byte[] bytes) {
+    return reset(MatcherInput.utf8(bytes));
+  }
+
+  private Matcher reset(MatcherInput input) {
     if (input == null) {
       throw new NullPointerException("input is null");
     }
-    inputSequence = input;
+    matcherInput = input;
     reset();
     return this;
   }
@@ -261,7 +281,7 @@ public final class Matcher {
     }
 
     boolean ok =
-        pattern.re2().match(inputSequence, groups[0], end, anchorFlag, groups, 1 + groupCount);
+        pattern.re2().match(matcherInput, groups[0], end, anchorFlag, groups, 1 + groupCount);
     // Must match - hasMatch says that the last call with these
     // parameters worked just fine.
     if (!ok) {
@@ -328,7 +348,7 @@ public final class Matcher {
   private boolean genMatch(int startByte, int anchor) {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
-    boolean ok = pattern.re2().match(inputSequence, startByte, inputLength, anchor, groups, 1);
+    boolean ok = pattern.re2().match(matcherInput, startByte, inputLength, anchor, groups, 1);
     if (!ok) {
       return false;
     }
@@ -341,8 +361,13 @@ public final class Matcher {
 
   /** Helper: return substring for [start, end). */
   String substring(int start, int end) {
+    // UTF_8 is matched in binary mode. So slice the bytes.
+    if (matcherInput.getEncoding() == Encoding.UTF_8) {
+      return new String(matcherInput.asBytes(), start, end - start);
+    }
+
     // This is fast for both StringBuilder and String.
-    return inputSequence.subSequence(start, end).toString();
+    return matcherInput.asCharSequence().subSequence(start, end).toString();
   }
 
   /** Helper for Pattern: return input length. */
@@ -492,7 +517,7 @@ public final class Matcher {
       }
     }
     if (last < m) {
-      sb.append(replacement.substring(last, m));
+      sb.append(replacement, last, m);
     }
   }
 

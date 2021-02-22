@@ -20,6 +20,7 @@
 
 package com.google.re2j;
 
+import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -257,6 +258,10 @@ class RE2 {
     return doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 0) != null;
   }
 
+  boolean match(CharSequence input, int start, int end, int anchor, int[] group, int ngroup) {
+    return match(MatcherInput.utf16(input), start, end, anchor, group, ngroup);
+  }
+
   /**
    * Matches the regular expression against input starting at position start and ending at position
    * end, with the given anchoring. Records the submatch boundaries in group, which is [start, end)
@@ -271,7 +276,7 @@ class RE2 {
    * @param ngroup the number of array pairs to fill in
    * @return true if a match was found
    */
-  boolean match(CharSequence input, int start, int end, int anchor, int[] group, int ngroup) {
+  boolean match(MatcherInput input, int start, int end, int anchor, int[] group, int ngroup) {
     if (start > end) {
       return false;
     }
@@ -282,7 +287,11 @@ class RE2 {
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    int[] groupMatch = doExecute(MachineInput.fromUTF16(input, 0, end), start, anchor, 2 * ngroup);
+    MachineInput machineInput =
+        input.getEncoding() == Encoding.UTF_16
+            ? MachineInput.fromUTF16(input.asCharSequence(), 0, end)
+            : MachineInput.fromUTF8(input.asBytes(), 0, end);
+    int[] groupMatch = doExecute(machineInput, start, anchor, 2 * ngroup);
 
     if (groupMatch == null) {
       return false;

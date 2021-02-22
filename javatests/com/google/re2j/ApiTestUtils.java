@@ -13,6 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -36,6 +37,11 @@ public class ApiTestUtils {
         java.util.regex.Pattern.matches(regexp, nonMatch));
     assertTrue(errorString + " doesn't match: " + match, Pattern.matches(regexp, match));
     assertFalse(errorString + " matches: " + nonMatch, Pattern.matches(regexp, nonMatch));
+
+    assertTrue(
+        errorString + " doesn't match: " + match, Pattern.matches(regexp, getUtf8Bytes(match)));
+    assertFalse(
+        errorString + " matches: " + nonMatch, Pattern.matches(regexp, getUtf8Bytes(nonMatch)));
   }
 
   // Test matches via a matcher.
@@ -52,6 +58,9 @@ public class ApiTestUtils {
     Pattern pr = Pattern.compile(regexp);
     assertTrue(
         "Pattern with regexp: " + regexp + " doesn't match: " + match, pr.matcher(match).matches());
+    assertTrue(
+        "Pattern with regexp: " + regexp + " doesn't match: " + match,
+        pr.matcher(getUtf8Bytes(match)).matches());
   }
 
   public static void testMatcherNotMatches(String regexp, String nonMatch) {
@@ -62,6 +71,9 @@ public class ApiTestUtils {
     Pattern pr = Pattern.compile(regexp);
     assertFalse(
         "Pattern with regexp: " + regexp + " matches: " + nonMatch, pr.matcher(nonMatch).matches());
+    assertFalse(
+        "Pattern with regexp: " + regexp + " matches: " + nonMatch,
+        pr.matcher(getUtf8Bytes(nonMatch)).matches());
   }
 
   /**
@@ -75,7 +87,9 @@ public class ApiTestUtils {
     Pattern p = Pattern.compile(regexp, flags);
     String errorString = "Pattern with regexp: " + regexp + " and flags: " + flags;
     assertTrue(errorString + " doesn't match: " + match, p.matches(match));
+    assertTrue(errorString + " doesn't match: " + match, p.matches(getUtf8Bytes(match)));
     assertFalse(errorString + " matches: " + nonMatch, p.matches(nonMatch));
+    assertFalse(errorString + " matches: " + nonMatch, p.matches(getUtf8Bytes(nonMatch)));
   }
 
   /**
@@ -97,9 +111,12 @@ public class ApiTestUtils {
   // Tests that both RE2 and JDK's Matchers do the same replaceFist.
   public static void testReplaceAll(String orig, String regex, String repl, String actual) {
     Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(orig);
-    String replaced = m.replaceAll(repl);
-    assertEquals(actual, replaced);
+    String replaced;
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf16(orig), MatcherInput.utf8(orig))) {
+      Matcher m = p.matcher(input);
+      replaced = m.replaceAll(repl);
+      assertEquals(actual, replaced);
+    }
 
     // JDK's
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regex);
@@ -111,9 +128,12 @@ public class ApiTestUtils {
   // Tests that both RE2 and JDK's Matchers do the same replaceFist.
   public static void testReplaceFirst(String orig, String regex, String repl, String actual) {
     Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(orig);
-    String replaced = m.replaceFirst(repl);
-    assertEquals(actual, replaced);
+    String replaced;
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf16(orig), MatcherInput.utf8(orig))) {
+      Matcher m = p.matcher(orig);
+      replaced = m.replaceFirst(repl);
+      assertEquals(actual, replaced);
+    }
 
     // JDK's
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regex);
@@ -127,8 +147,10 @@ public class ApiTestUtils {
     // RE2
     Pattern p = Pattern.compile(pattern);
     Matcher m = p.matcher("x");
+    Matcher m2 = p.matcher(getUtf8Bytes("x"));
     assertEquals(count, p.groupCount());
     assertEquals(count, m.groupCount());
+    assertEquals(count, m2.groupCount());
 
     // JDK
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(pattern);
@@ -140,13 +162,15 @@ public class ApiTestUtils {
   public static void testGroup(String text, String regexp, String[] output) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
-    assertTrue(matchString.find());
-    assertEquals(output[0], matchString.group());
-    for (int i = 0; i < output.length; i++) {
-      assertEquals(output[i], matchString.group(i));
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf16(text), MatcherInput.utf8(text))) {
+      Matcher matchString = p.matcher(input);
+      assertTrue(matchString.find());
+      assertEquals(output[0], matchString.group());
+      for (int i = 0; i < output.length; i++) {
+        assertEquals(output[i], matchString.group(i));
+      }
+      assertEquals(output.length - 1, matchString.groupCount());
     }
-    assertEquals(output.length - 1, matchString.groupCount());
 
     // JDK
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regexp);
@@ -166,12 +190,14 @@ public class ApiTestUtils {
   public static void testFind(String text, String regexp, int start, String output) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
-    // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
-    assertTrue(matchString.find(start));
-    // assertTrue(matchBytes.find(start));
-    assertEquals(output, matchString.group());
-    // assertEquals(output, matchBytes.group());
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf16(text), MatcherInput.utf8(text))) {
+      Matcher matchString = p.matcher(input);
+      // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
+      assertTrue(matchString.find(start));
+      // assertTrue(matchBytes.find(start));
+      assertEquals(output, matchString.group());
+      // assertEquals(output, matchBytes.group());
+    }
 
     // JDK
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regexp);
@@ -183,10 +209,12 @@ public class ApiTestUtils {
   public static void testFindNoMatch(String text, String regexp, int start) {
     // RE2
     Pattern p = Pattern.compile(regexp);
-    Matcher matchString = p.matcher(text);
-    // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
-    assertFalse(matchString.find(start));
-    // assertFalse(matchBytes.find(start));
+    for (MatcherInput input : Arrays.asList(MatcherInput.utf16(text), MatcherInput.utf8(text))) {
+      Matcher matchString = p.matcher(input);
+      // RE2Matcher matchBytes = p.matcher(text.getBytes(Charsets.UTF_8));
+      assertFalse(matchString.find(start));
+      // assertFalse(matchBytes.find(start));
+    }
 
     // JDK
     java.util.regex.Pattern pj = java.util.regex.Pattern.compile(regexp);
@@ -204,6 +232,11 @@ public class ApiTestUtils {
 
   public static void verifyLookingAt(String text, String regexp, boolean output) {
     assertEquals(output, Pattern.compile(regexp).matcher(text).lookingAt());
+    assertEquals(output, Pattern.compile(regexp).matcher(getUtf8Bytes(text)).lookingAt());
     assertEquals(output, java.util.regex.Pattern.compile(regexp).matcher(text).lookingAt());
+  }
+
+  private static byte[] getUtf8Bytes(String string) {
+    return string.getBytes(Charset.forName("UTF-8"));
   }
 }

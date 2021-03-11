@@ -99,6 +99,11 @@ class Machine {
   private int[] matchcap;
   private int ncap;
 
+  // Make sure to include new fields in the copy constructor
+
+  // Pointer to form a linked stack for the pool of Machines. Not included in copy constructor.
+  Machine next;
+
   /**
    * Constructs a matching Machine for the specified {@code RE2}.
    */
@@ -108,6 +113,20 @@ class Machine {
     this.q0 = new Queue(prog.numInst());
     this.q1 = new Queue(prog.numInst());
     this.matchcap = new int[prog.numCap < 2 ? 2 : prog.numCap];
+  }
+
+  /** Copy constructor, but does not include {@code next} */
+  Machine(Machine copy) {
+    // Make sure to include any new fields here
+    this.re2 = copy.re2;
+    this.prog = copy.prog;
+    this.q0 = copy.q0;
+    this.q1 = copy.q1;
+    this.pool = copy.pool;
+    this.poolSize = copy.poolSize;
+    this.matched = copy.matched;
+    this.matchcap = copy.matchcap;
+    this.ncap = copy.ncap;
   }
 
   // init() reinitializes an existing Machine for re-use on a new input.

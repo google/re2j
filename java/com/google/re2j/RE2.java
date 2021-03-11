@@ -22,12 +22,11 @@ package com.google.re2j;
 
 import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An RE2 class instance is a compiled representation of an RE2 regular expression, independent of
@@ -116,10 +115,9 @@ class RE2 {
   boolean prefixComplete; // true iff prefix is the entire regexp
   int prefixRune; // first rune in prefix
 
-  // Cache of machines for running regexp.
-  // Accesses must be serialized using |this| monitor.
-  // @GuardedBy("this")
-  private final Queue<Machine> machine = new ArrayDeque<Machine>();
+  // Cache of machines for running regexp. Forms a Treiber stack.
+  private final AtomicReference<Machine> pooled = new AtomicReference<Machine>();
+
   public Map<String, Integer> namedGroups;
 
   // This is visible for testing.
@@ -214,25 +212,41 @@ class RE2 {
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
   Machine get() {
-    synchronized (this) {
-      if (!machine.isEmpty()) {
-        return machine.remove();
-      }
-    }
-    return new Machine(this);
+    // Pop a machine off the stack if available.
+    Machine head;
+    do {
+      head = pooled.get();
+    } while (head != null && !pooled.compareAndSet(head, head.next));
+    return head;
   }
 
   // Clears the memory associated with this machine.
-  synchronized void reset() {
-    machine.clear();
+  void reset() {
+    pooled.set(null);
   }
 
   // put() returns a machine to |this|'s machine cache.  There is no attempt to
   // limit the size of the cache, so it will grow to the maximum number of
   // simultaneous matches run using |this|.  (The cache empties when |this|
-  // gets garbage collected.)
-  synchronized void put(Machine m) {
-    machine.add(m);
+  // gets garbage collected or reset is called.)
+  void put(Machine m, boolean isNew) {
+    // To avoid allocation in the single-thread or uncontended case, reuse a node only if
+    // it was the only element in the stack when it was popped, and it's the only element
+    // in the stack when it's pushed back after use.
+    Machine head;
+    do {
+      head = pooled.get();
+      if (!isNew && head != null) {
+        // If an element had a null next pointer and it was previously in the stack, another thread
+        // might be trying to pop it out right now, and if it sees the same node now in the
+        // stack the pop will succeed, but the new top of the stack will be the stale (null) value
+        // of next. Allocate a new Machine so that the CAS will not succeed if this node has been
+        // popped and re-pushed.
+        m = new Machine(m);
+        isNew = true;
+      }
+      m.next = head;
+    } while (!pooled.compareAndSet(head, m));
   }
 
   @Override
@@ -245,9 +259,20 @@ class RE2 {
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
     Machine m = get();
+    // The Treiber stack cannot reuse nodes, unless the node to be reused has only ever been at
+    // the bottom of the stack (i.e., next == null).
+    boolean isNew = false;
+    if (m == null) {
+      m = new Machine(this);
+      isNew = true;
+    } else if (m.next != null) {
+      m = new Machine(m);
+      isNew = true;
+    }
+
     m.init(ncap);
     int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
-    put(m);
+    put(m, isNew);
     return cap;
   }
 

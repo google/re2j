@@ -81,8 +81,8 @@ test {
 
 dependencies {
   testCompile 'junit:junit:4.12'
-  testCompile 'com.google.gwt:gwt-dev:2.8.2'
-  testCompile 'com.google.gwt:gwt-user:2.8.2'
+  testCompile 'com.google.gwt:gwt-dev:2.9.0'
+  testCompile 'com.google.gwt:gwt-user:2.9.0'
   testCompile 'com.google.truth:truth:0.36'
 
   // Cobertura requires slf4j at runtime

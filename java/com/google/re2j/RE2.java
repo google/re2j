@@ -229,6 +229,7 @@ class RE2 {
   // limit the size of the cache, so it will grow to the maximum number of
   // simultaneous matches run using |this|.  (The cache empties when |this|
   // gets garbage collected or reset is called.)
+  @SuppressWarnings("MakeAlwaysEqual") // for ErrorProne, see below
   void put(Machine m, boolean isNew) {
     // To avoid allocation in the single-thread or uncontended case, reuse a node only if
     // it was the only element in the stack when it was popped, and it's the only element
@@ -245,7 +246,33 @@ class RE2 {
         m = new Machine(m);
         isNew = true;
       }
-      m.next = head;
+
+      // Without this comparison, TSAN will complain about a race condition:
+      // Thread A, B, and C all attempt to do a match on the same pattern.
+      //
+      // A: Allocates Machine 1; executes match; put machine 1. State is now:
+      //
+      // pooled -> machine 1 -> null
+      //
+      // B reads pooled, sees machine 1
+      //
+      // C reads pooled, sees machine 1
+      //
+      // B successfully CASes pooled to null
+      //
+      // B executes match; put machine 1, which involves setting machine1.next to
+      // null (even though it's already null); preempted before CAS
+      //
+      // C resumes, and reads machine1.next in order to execute cas(head, head.next)
+      //
+      // There is no happens-before relationship between B's redundant null write
+      // and C's read, thus triggering TSAN.
+      //
+      // A future release of ErrorProne may want to make the assignment unconditionally. The
+      // @SuppressWarning("MakeAlwaysEqual") on this method is intended to prevent that from happening.
+      if (m.next != head) {
+        m.next = head;
+      }
     } while (!pooled.compareAndSet(head, m));
   }
 

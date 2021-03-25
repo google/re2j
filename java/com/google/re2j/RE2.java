@@ -245,7 +245,9 @@ class RE2 {
         m = new Machine(m);
         isNew = true;
       }
-      m.next = head;
+      if (m.next != head) {
+        m.next = head;
+      }
     } while (!pooled.compareAndSet(head, m));
   }
 

@@ -249,6 +249,7 @@ public class FindTest {
         35,
         35,
         36),
+    new Test("(|a)*", "aa", 3, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2),
   };
 
   @Parameters
@@ -538,7 +539,14 @@ public class FindTest {
       System.err.println(testName + "  " + test + " " + n + " " + k + " ");
       String expect = test.submatchString(n, k / 2);
       if (!expect.equals(result[k / 2])) {
-        fail(String.format("%s %d: expected %s got %s: %s", testName, n, expect, result, test));
+        fail(
+            String.format(
+                "%s %d: expected %s got %s: %s",
+                testName,
+                n,
+                expect,
+                Arrays.toString(result),
+                test));
       }
     }
   }

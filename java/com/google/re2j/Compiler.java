@@ -24,6 +24,7 @@ class Compiler {
   private static class Frag {
     final int i; // an instruction address (pc).
     int out; // a patch list; see explanation in Prog.java
+    boolean nullable; // whether the fragment can match the empty string
 
     Frag() {
       this(0, 0);
@@ -34,8 +35,13 @@ class Compiler {
     }
 
     Frag(int i, int out) {
+      this(i, out, false);
+    }
+
+    Frag(int i, int out, boolean nullable) {
       this.i = i;
       this.out = out;
+      this.nullable = nullable;
     }
   }
 
@@ -56,7 +62,7 @@ class Compiler {
   private Frag newInst(int op) {
     // TODO(rsc): impose length limit.
     prog.addInst(op);
-    return new Frag(prog.numInst() - 1);
+    return new Frag(prog.numInst() - 1, 0, true);
   }
 
   // Returns a no-op fragment.  Sometimes unavoidable.
@@ -90,7 +96,7 @@ class Compiler {
     }
     // TODO(rsc): elide nop
     prog.patch(f1.out, f2.i);
-    return new Frag(f1.i, f2.out);
+    return new Frag(f1.i, f2.out, f1.nullable && f2.nullable);
   }
 
   // Given fragments for a and b, returns fragment for a|b.
@@ -107,6 +113,26 @@ class Compiler {
     i.out = f1.i;
     i.arg = f2.i;
     f.out = prog.append(f1.out, f2.out);
+    f.nullable = f1.nullable || f2.nullable;
+    return f;
+  }
+
+  // loop returns the fragment for the main loop of a plus or star.
+  // For plus, it can be used directly. with f1.i as the entry.
+  // For star, it can be used directly when f1 can't match an empty string.
+  // (When f1 can match an empty string, f1* must be implemented as (f1+)?
+  // to get the priority match order correct.)
+  private Frag loop(Frag f1, boolean nongreedy) {
+    Frag f = newInst(Inst.ALT);
+    Inst i = prog.getInst(f.i);
+    if (nongreedy) {
+      i.arg = f1.i;
+      f.out = f.i << 1;
+    } else {
+      i.out = f1.i;
+      f.out = f.i << 1 | 1;
+    }
+    prog.patch(f1.out, f.i);
     return f;
   }
 
@@ -127,22 +153,15 @@ class Compiler {
 
   // Given a fragment a, returns a fragment for a* or a*? (if nongreedy)
   private Frag star(Frag f1, boolean nongreedy) {
-    Frag f = newInst(Inst.ALT);
-    Inst i = prog.getInst(f.i);
-    if (nongreedy) {
-      i.arg = f1.i;
-      f.out = f.i << 1;
-    } else {
-      i.out = f1.i;
-      f.out = f.i << 1 | 1;
+    if (f1.nullable) {
+      return quest(plus(f1, nongreedy), nongreedy);
     }
-    prog.patch(f1.out, f.i);
-    return f;
+    return loop(f1, nongreedy);
   }
 
   // Given a fragment for a, returns a fragment for a+ or a+? (if nongreedy)
   private Frag plus(Frag f1, boolean nongreedy) {
-    return new Frag(f1.i, star(f1, nongreedy).out);
+    return new Frag(f1.i, loop(f1, nongreedy).out, f1.nullable);
   }
 
   // op is a bitmask of EMPTY_* flags.
@@ -160,6 +179,7 @@ class Compiler {
   // flags : parser flags
   private Frag rune(int[] runes, int flags) {
     Frag f = newInst(Inst.RUNE);
+    f.nullable = false;
     Inst i = prog.getInst(f.i);
     i.runes = runes;
     flags &= RE2.FOLD_CASE; // only relevant flag is FoldCase

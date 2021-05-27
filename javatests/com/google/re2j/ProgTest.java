@@ -94,6 +94,25 @@ public class ProgTest {
       "(?:(?:^).)",
       "0       fail\n" + "1*      empty 4 -> 2\n" + "2       anynotnl -> 3\n" + "3       match\n"
     },
+    {
+      "(?:|a)+",
+      "0       fail\n"
+          + "1       nop -> 4\n"
+          + "2       rune1 \"a\" -> 4\n"
+          + "3*      alt -> 1, 2\n"
+          + "4       alt -> 3, 5\n"
+          + "5       match\n"
+    },
+    {
+      "(?:|a)*",
+      "0       fail\n"
+          + "1       nop -> 4\n"
+          + "2       rune1 \"a\" -> 4\n"
+          + "3       alt -> 1, 2\n"
+          + "4       alt -> 3, 6\n"
+          + "5*      alt -> 3, 6\n"
+          + "6       match\n"
+    },
   };
 
   private final String input;

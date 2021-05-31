@@ -7,7 +7,9 @@
 package com.google.re2j;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -223,38 +225,58 @@ public final class Pattern implements Serializable {
 
   /** Helper: run split on m's input. */
   private String[] split(Matcher m, int limit) {
-    int matchCount = 0;
-    int arraySize = 0;
+    List<String> result = new ArrayList<String>();
+    int emptiesSkipped = 0;
     int last = 0;
+
     while (m.find()) {
-      matchCount++;
-      if (limit != 0 || last < m.start()) {
-        arraySize = matchCount;
+      if (last == 0 && m.end() == 0) {
+        // Zero-width match at the beginning, skip (JDK8+ behavior).
+        last = m.end();
+        continue;
       }
+
+      if (limit > 0 && result.size() == limit - 1) {
+        // no more room for matches
+        break;
+      }
+
+      if (last == m.start()) {
+        if (limit == 0) {
+          // Empty match, may or may not be trailing.
+          emptiesSkipped++;
+          last = m.end();
+          continue;
+        }
+      } else {
+        // If emptiesSkipped > 0 then limit == 0 and we have non-trailing empty matches to add before
+        // this non-empty match.
+        while (emptiesSkipped > 0) {
+          result.add("");
+          emptiesSkipped--;
+        }
+      }
+
+      result.add(m.substring(last, m.start()));
       last = m.end();
-    }
-    if (last < m.inputLength() || limit != 0) {
-      matchCount++;
-      arraySize = matchCount;
     }
 
-    int trunc = 0;
-    if (limit > 0 && arraySize > limit) {
-      arraySize = limit;
-      trunc = 1;
+    if (limit == 0 && last != m.inputLength()) {
+      // Unlimited match, no more delimiters but we have a non-empty input at the end. Catch up any skipped empty
+      // matches, then emit the final match.
+      while (emptiesSkipped > 0) {
+        result.add("");
+        emptiesSkipped--;
+      }
+
+      result.add(m.substring(last, m.inputLength()));
     }
-    String[] array = new String[arraySize];
-    int i = 0;
-    last = 0;
-    m.reset();
-    while (m.find() && i < arraySize - trunc) {
-      array[i++] = m.substring(last, m.start());
-      last = m.end();
+
+    if (limit != 0 || result.isEmpty()) {
+      result.add(m.substring(last, m.inputLength()));
     }
-    if (i < arraySize) {
-      array[i] = m.substring(last, m.inputLength());
-    }
-    return array;
+
+    return result.toArray(new String[0]);
   }
 
   /**

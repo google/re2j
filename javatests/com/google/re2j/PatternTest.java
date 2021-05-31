@@ -148,16 +148,20 @@ public class PatternTest {
     // http://docs.oracle.com/javase/1.5.0/docs/api/java/util/regex/Pattern.html#split(java.lang.CharSequence, int)
 
     String s = "boo:and:foo";
-    String regexp1 = ":";
-    String regexp2 = "o";
 
-    ApiTestUtils.testSplit(regexp1, s, 2, new String[] {"boo", "and:foo"});
-    ApiTestUtils.testSplit(regexp1, s, 5, new String[] {"boo", "and", "foo"});
-    ApiTestUtils.testSplit(regexp1, s, -2, new String[] {"boo", "and", "foo"});
-    ApiTestUtils.testSplit(regexp2, s, 5, new String[] {"b", "", ":and:f", "", ""});
-    ApiTestUtils.testSplit(regexp2, s, -2, new String[] {"b", "", ":and:f", "", ""});
-    ApiTestUtils.testSplit(regexp2, s, 0, new String[] {"b", "", ":and:f"});
-    ApiTestUtils.testSplit(regexp2, s, new String[] {"b", "", ":and:f"});
+    ApiTestUtils.testSplit(":", s, 2, new String[] {"boo", "and:foo"});
+    ApiTestUtils.testSplit(":", s, 5, new String[] {"boo", "and", "foo"});
+    ApiTestUtils.testSplit(":", s, -2, new String[] {"boo", "and", "foo"});
+    ApiTestUtils.testSplit("o", s, 5, new String[] {"b", "", ":and:f", "", ""});
+    ApiTestUtils.testSplit("o", s, -2, new String[] {"b", "", ":and:f", "", ""});
+    ApiTestUtils.testSplit("o", s, 0, new String[] {"b", "", ":and:f"});
+    ApiTestUtils.testSplit("o", s, new String[] {"b", "", ":and:f"});
+
+    // From https://github.com/google/re2j/issues/131.
+    ApiTestUtils.testSplit("x*", "foo", new String[] {"f", "o", "o"});
+    ApiTestUtils.testSplit("x*", "foo", 1, new String[] {"foo"});
+    ApiTestUtils.testSplit("x*", "f", 2, new String[] {"f", ""});
+    ApiTestUtils.testSplit(":", ":a::b", new String[] {"", "a", "", "b"});
   }
 
   @Test

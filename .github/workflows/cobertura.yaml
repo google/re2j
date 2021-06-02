@@ -1,0 +1,26 @@
+name: Code coverage
+
+on: [pull_request, push]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - name: Generate Coverage Data
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: cobertura
+          wrapper-cache-enabled: true
+          dependencies-cache-enabled: true
+          configuration-cache-enabled: true
+      - uses: codecov/codecov-action@v1
+        with:
+          files: build/reports/cobertura/coverage.xml
+          fail_ci_if_error: false

@@ -10,7 +10,6 @@ plugins {
 
   // code coverage support
   id 'net.saliman.cobertura' version '2.5.4'
-  id 'com.github.kt3k.coveralls' version '2.8.2'
 
   // Add license plugin. By default, this plugin only applies to the root
   // project. Since we need license enforcement for benchmarks and the

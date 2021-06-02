@@ -1,7 +1,7 @@
 RE2/J: linear time regular expression matching in Java
 ======================================================
 
-[![Build Status](https://travis-ci.org/google/re2j.svg?branch=master)](https://travis-ci.org/google/re2j)
+[![Build Status](https://github.com/google/re2j/actions/workflows/gradle.yaml/badge.svg?branch=master)](https://github.com/google/re2j/actions/workflows/gradle.yaml?query=branch%3Amaster)
 [![Coverage Status](https://codecov.io/gh/google/re2j/branch/master/graph/badge.svg?token=HL6dzvQ9kK)](https://codecov.io/gh/google/re2j)
 
 RE2 is a regular expression engine that runs in time linear in the size of the

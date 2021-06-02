@@ -922,8 +922,10 @@ class Parser {
                     }
                     t.skipString(lit);
                     t.skipString("\\E");
-                    for (int j = 0; j < lit.length(); j++) {
-                      literal(lit.charAt(j));
+                    for (int j = 0; j < lit.length(); ) {
+                      int codepoint = lit.codePointAt(j);
+                      literal(codepoint);
+                      j += Character.charCount(codepoint);
                     }
                     break bigswitch;
                   }

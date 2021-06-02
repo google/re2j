@@ -83,6 +83,11 @@ public class PatternTest {
     ApiTestUtils.testMatches("ab+c", "abbbc", "cbbba");
     ApiTestUtils.testMatches("ab.*c", "abxyzc", "ab\nxyzc");
     ApiTestUtils.testMatches("^ab.*c$", "abc", "xyz\nabc\ndef");
+
+    // Test quoted codepoints that require a surrogate pair. See https://github.com/google/re2j/issues/123.
+    String source = new StringBuilder().appendCodePoint(110781).toString();
+    ApiTestUtils.testMatches(source, source, "blah");
+    ApiTestUtils.testMatches("\\Q" + source + "\\E", source, "blah");
   }
 
   @Test

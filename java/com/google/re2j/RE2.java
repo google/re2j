@@ -20,8 +20,9 @@
 
 package com.google.re2j;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.re2j.MatcherInput.Encoding;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -190,11 +191,7 @@ class RE2 {
     StringBuilder prefixBuilder = new StringBuilder();
     re2.prefixComplete = prog.prefix(prefixBuilder);
     re2.prefix = prefixBuilder.toString();
-    try {
-      re2.prefixUTF8 = re2.prefix.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("can't happen");
-    }
+    re2.prefixUTF8 = re2.prefix.getBytes(UTF_8);
     if (!re2.prefix.isEmpty()) {
       re2.prefixRune = re2.prefix.codePointAt(0);
     }

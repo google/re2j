@@ -239,4 +239,57 @@ public class PatternTest {
     assertThat(pattern1.hashCode()).isEqualTo(pattern2.hashCode());
     assertThat(pattern1).isNotEqualTo(pattern4);
   }
+
+  @Test
+  public void testUnicodeWordBoundary() {
+    final String pattern = "l\\p{L}*\\b";
+    final String text = "l\u00E0";
+    {
+      final java.util.regex.Matcher matcher =
+          java.util.regex.Pattern.compile(pattern).matcher(text);
+      assertEquals(true, matcher.find());
+      assertEquals("l\u00E0", text.substring(matcher.start(), matcher.end()));
+    }
+    {
+      final com.google.re2j.Matcher matcher =
+          com.google.re2j.Pattern.compile(pattern).matcher(text);
+      assertEquals(true, matcher.find());
+      assertEquals("l\u00E0", text.substring(matcher.start(), matcher.end()));
+    }
+  }
+
+  @Test
+  public void testUnicodeWordBoundary2() {
+    final String pattern = "d\u00E9\\p{L}*\\b";
+    {
+      final String text = "d\u00E9s";
+      {
+        final java.util.regex.Matcher matcher =
+            java.util.regex.Pattern.compile(pattern).matcher(text);
+        assertEquals(true, matcher.find());
+        assertEquals("d\u00E9s", text.substring(matcher.start(), matcher.end()));
+      }
+      {
+        final com.google.re2j.Matcher matcher =
+            com.google.re2j.Pattern.compile(pattern).matcher(text);
+        assertEquals(true, matcher.find());
+        assertEquals("d\u00E9s", text.substring(matcher.start(), matcher.end()));
+      }
+    }
+    {
+      final String text = "d\u00E9";
+      {
+        final java.util.regex.Matcher matcher =
+            java.util.regex.Pattern.compile(pattern).matcher(text);
+        assertEquals(true, matcher.find());
+        assertEquals("d\u00E9", text.substring(matcher.start(), matcher.end()));
+      }
+      {
+        final com.google.re2j.Matcher matcher =
+            com.google.re2j.Pattern.compile(pattern).matcher(text);
+        assertEquals(true, matcher.find());
+        assertEquals("d\u00E9", text.substring(matcher.start(), matcher.end()));
+      }
+    }
+  }
 }

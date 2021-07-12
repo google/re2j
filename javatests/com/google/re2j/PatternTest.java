@@ -158,6 +158,12 @@ public class PatternTest {
     ApiTestUtils.testSplit(regexp2, s, -2, new String[] {"b", "", ":and:f", "", ""});
     ApiTestUtils.testSplit(regexp2, s, 0, new String[] {"b", "", ":and:f"});
     ApiTestUtils.testSplit(regexp2, s, new String[] {"b", "", ":and:f"});
+
+    // From https://github.com/google/re2j/issues/131.
+    ApiTestUtils.testSplit("x*", "foo", new String[] {"f", "o", "o"});
+    ApiTestUtils.testSplit("x*", "foo", 1, new String[] {"foo"});
+    ApiTestUtils.testSplit("x*", "f", 2, new String[] {"f", ""});
+    ApiTestUtils.testSplit(":", ":a::b", new String[] {"", "a", "", "b"});
   }
 
   @Test

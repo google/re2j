@@ -160,15 +160,14 @@ public class CharClassTest {
 
   @Test
   public void testAppendFoldedClass() {
-    // NB, local variable names use Unicode.
     // 0x17F is an old English long s (looks like an f) and folds to s.
     // 0x212A is the Kelvin symbol and folds to k.
-    char ſ = 0x17F, K = 0x212A;
+    char s = 0x17F, k = 0x212A;
 
-    assertClass(cc().appendFoldedClass(i('a', 'z')), s("akAK" + K + K + "lsLS" + ſ + ſ + "tzTZ"));
+    assertClass(cc().appendFoldedClass(i('a', 'z')), s("akAK" + k + k + "lsLS" + s + s + "tzTZ"));
 
     assertClass(
-        cc('a', 'f').appendFoldedClass(i('c', 't')), s("akCK" + K + K + "lsLS" + ſ + ſ + "ttTT"));
+        cc('a', 'f').appendFoldedClass(i('c', 't')), s("akCK" + k + k + "lsLS" + s + s + "ttTT"));
 
     assertClass(cc('c', 't').appendFoldedClass(i('a', 'f')), 'c', 't', 'a', 'f', 'A', 'F');
   }

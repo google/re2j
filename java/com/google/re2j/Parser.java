@@ -782,7 +782,7 @@ class Parser {
   }
 
   /**
-   * Parse regular expression pattern {@var pattern} with mode flags {@var flags}.
+   * Parse regular expression pattern {@code pattern} with mode flags {@code flags}.
    */
   static Regexp parse(String pattern, int flags) throws PatternSyntaxException {
     return new Parser(pattern, flags).parseInternal();

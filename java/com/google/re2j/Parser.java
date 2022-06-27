@@ -550,7 +550,9 @@ class Parser {
         for (int j = start + 1; j < i; j++) {
           Regexp subMax = array[s + max], subJ = array[s + j];
           if (subMax.op.ordinal() < subJ.op.ordinal()
-              || (subMax.op == subJ.op && subMax.runes.length < subJ.runes.length)) {
+              || (subMax.op == subJ.op
+                  && (subMax.runes != null ? subMax.runes.length : 0)
+                      < (subJ.runes != null ? subJ.runes.length : 0))) {
             max = j;
           }
         }

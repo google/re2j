@@ -36,6 +36,7 @@ public class RE2CompileTest {
       {"[abc]", null},
       {"[^1234]", null},
       {"[^\n]", null},
+      {"..|.#|..", null},
       {"\\!\\\\", null},
       {"abc]", null}, // Matches the closing bracket literally.
       {"a??", null},

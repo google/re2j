@@ -547,10 +547,10 @@ public class ExecTest {
       //   Field 5: optional comment appended to the report.
 
       // Run test once for each specified capital letter mode that we support.
-      for (char c : flag.toCharArray()) {
+      for (int i = 0; i < flag.length(); i++) {
         String pattern = field.get(1);
         int flags = RE2.POSIX | RE2.CLASS_NL;
-        switch (c) {
+        switch (flag.charAt(i)) {
           default:
             continue;
           case 'E':
@@ -607,8 +607,8 @@ public class ExecTest {
         }
         // Convert int[] to List<Integer> and truncate to pos.length.
         List<Integer> have = new ArrayList<Integer>();
-        for (int i = 0; i < pos.size(); ++i) {
-          have.add(haveArray[i]);
+        for (int j = 0; j < pos.size(); ++j) {
+          have.add(haveArray[j]);
         }
         if (!have.equals(pos)) {
           System.err.format(
@@ -631,7 +631,6 @@ public class ExecTest {
 
   private static List<Integer> parseFowlerResult(String s, boolean[] shouldCompileMatch)
       throws RuntimeException {
-    String olds = s;
     //   Field 4: the test outcome. This is either one of the posix error
     //     codes (with REG_ omitted) or the match array, a list of (m,n)
     //     entries with m and n being first and last+1 positions in the

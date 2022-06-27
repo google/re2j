@@ -482,7 +482,9 @@ public class FindTest {
     for (int k = 0; k < GoTestUtils.len(result); k++) {
       if (submatches[k * 2] == -1) {
         if (result[k] != null) {
-          fail(String.format("%s %d: expected null got %s: %s", testName, n, result, test));
+          fail(
+              String.format(
+                  "%s %d: expected null got %s: %s", testName, n, Arrays.toString(result), test));
         }
         continue;
       }

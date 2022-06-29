@@ -67,12 +67,20 @@ public enum Implementations {
 
   public abstract static class Pattern {
 
+    // FLAG_CASE_INSENSITIVE is an implementation-agnostic bitmask flag
+    // indicating that a pattern should be case-insensitive.
+    public static final int FLAG_CASE_INSENSITIVE = 1;
+
     public static Pattern compile(Implementations impl, String pattern) {
+      return compile(impl, pattern, 0);
+    }
+
+    public static Pattern compile(Implementations impl, String pattern, int flags) {
       switch (impl) {
         case JDK:
-          return new JdkPattern(pattern);
+          return new JdkPattern(pattern, flags);
         case RE2J:
-          return new Re2Pattern(pattern);
+          return new Re2Pattern(pattern, flags);
         default:
           throw new AssertionError();
       }
@@ -88,8 +96,19 @@ public enum Implementations {
 
       private final java.util.regex.Pattern pattern;
 
-      public JdkPattern(String pattern) {
-        this.pattern = java.util.regex.Pattern.compile(pattern);
+      public JdkPattern(String pattern, int flags) {
+        int jdkPatternFlags = 0;
+
+        // For case-insensitive matching, explicitly enable both case-insensitive matching
+        // and Unicode-aware case folding for this j.u.r.Pattern.
+        // Merely enabling case-insensitive matching will cause the j.u.r.Pattern to assume
+        // ASCII input and skip Unicode-aware case folding.
+        if ((flags & FLAG_CASE_INSENSITIVE) > 0) {
+          jdkPatternFlags |= java.util.regex.Pattern.CASE_INSENSITIVE;
+          jdkPatternFlags |= java.util.regex.Pattern.UNICODE_CASE;
+        }
+
+        this.pattern = java.util.regex.Pattern.compile(pattern, jdkPatternFlags);
       }
 
       @Override
@@ -112,8 +131,12 @@ public enum Implementations {
 
       private final com.google.re2j.Pattern pattern;
 
-      public Re2Pattern(String pattern) {
-        this.pattern = com.google.re2j.Pattern.compile(pattern);
+      public Re2Pattern(String pattern, int flags) {
+        int re2PatternFlags = 0;
+        if ((flags & FLAG_CASE_INSENSITIVE) > 0) {
+          re2PatternFlags |= com.google.re2j.Pattern.CASE_INSENSITIVE;
+        }
+        this.pattern = com.google.re2j.Pattern.compile(pattern, re2PatternFlags);
       }
 
       @Override

@@ -50,17 +50,11 @@ final class Inst {
     // class.
     if (runes.length == 1) {
       int r0 = runes[0];
-      if (r == r0) {
-        return true;
-      }
+
       if ((arg & RE2.FOLD_CASE) != 0) {
-        for (int r1 = Unicode.simpleFold(r0); r1 != r0; r1 = Unicode.simpleFold(r1)) {
-          if (r == r1) {
-            return true;
-          }
-        }
+        return Unicode.equalsIgnoreCase(r, r0);
       }
-      return false;
+      return r == r0;
     }
 
     // Peek at the first few pairs.

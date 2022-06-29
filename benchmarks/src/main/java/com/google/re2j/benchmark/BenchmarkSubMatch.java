@@ -14,9 +14,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +27,7 @@ public class BenchmarkSubMatch {
   @Param({"true", "false"})
   private boolean binary;
 
-  byte[] bytes = readFile("google-maps-contact-info.html");
+  byte[] bytes = BenchmarkUtils.readResourceFile("google-maps-contact-info.html");
   private String html = new String(bytes, StandardCharsets.UTF_8);
 
   private Implementations.Pattern pattern;
@@ -50,19 +47,6 @@ public class BenchmarkSubMatch {
     }
     if (count != 1) {
       throw new AssertionError("Expected to match one phone number.");
-    }
-  }
-
-  private static byte[] readFile(String name) {
-    try (InputStream in = BenchmarkSubMatch.class.getClassLoader().getResourceAsStream(name);
-        ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      int read;
-      while ((read = in.read()) > -1) {
-        out.write(read);
-      }
-      return out.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
   }
 }

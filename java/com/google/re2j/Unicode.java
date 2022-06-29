@@ -122,5 +122,40 @@ class Unicode {
     return Characters.toUpperCase(r);
   }
 
+  // equalsIgnoreCase performs case-insensitive equality comparison
+  // on the given runes |r1| and |r2|, with special consideration
+  // for the likely scenario where both runes are ASCII characters.
+  // -1 is interpreted as the end-of-file mark.
+  static boolean equalsIgnoreCase(int r1, int r2) {
+    // Runes already match, or one of them is EOF
+    if (r1 < 0 || r2 < 0 || r1 == r2) {
+      return true;
+    }
+
+    // Fast path for the common case where both runes are ASCII characters.
+    // Coerces both runes to lowercase if applicable.
+    if (r1 <= MAX_ASCII && r2 <= MAX_ASCII) {
+      if ('A' <= r1 && r1 <= 'Z') {
+        r1 |= 0x20;
+      }
+
+      if ('A' <= r2 && r2 <= 'Z') {
+        r2 |= 0x20;
+      }
+
+      return r1 == r2;
+    }
+
+    // Fall back to full Unicode case folding otherwise.
+    // Invariant: r1 must be non-negative
+    for (int r = Unicode.simpleFold(r1); r != r1; r = Unicode.simpleFold(r)) {
+      if (r == r2) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private Unicode() {} // uninstantiable
 }

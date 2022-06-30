@@ -10,6 +10,7 @@
 package com.google.re2j;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -59,7 +60,7 @@ class Regexp {
   int min, max; // min, max for REPEAT
   int cap; // capturing index, for CAPTURE
   String name; // capturing name, for CAPTURE
-  Map<String, Integer> namedGroups; // map of group name -> capturing index
+  Map<String, Integer> namedGroups = Collections.emptyMap(); // map of group name -> capturing index
   // Do update copy ctor when adding new fields!
 
   Regexp(Op op) {
@@ -85,6 +86,7 @@ class Regexp {
     runes = null;
     cap = min = max = 0;
     name = null;
+    this.namedGroups = Collections.emptyMap();
   }
 
   @Override

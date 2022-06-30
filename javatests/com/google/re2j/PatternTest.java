@@ -176,6 +176,8 @@ public class PatternTest {
 
   @Test
   public void testNamedGroups() {
+    assertNamedGroupsEquals(ImmutableMap.of("foo", 1), "(?P<foo>\\d{2})");
+    assertNamedGroupsEquals(Collections.<String, Integer>emptyMap(), "\\d{2}");
     assertNamedGroupsEquals(Collections.<String, Integer>emptyMap(), "hello");
     assertNamedGroupsEquals(Collections.<String, Integer>emptyMap(), "(.*)");
     assertNamedGroupsEquals(ImmutableMap.of("any", 1), "(?P<any>.*)");

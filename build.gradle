@@ -2,11 +2,12 @@
 plugins {
   id 'java-library'
   id 'wrapper'
-  id 'com.jfrog.bintray' version '1.8.1'
   id 'maven-publish'
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
   id 'com.github.sherter.google-java-format' version '0.3.2'
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'idea'
+  id 'signing'
 
   // code coverage support
   id 'net.saliman.cobertura' version '2.5.4'
@@ -22,7 +23,8 @@ plugins {
 cobertura.coverageFormats = ['html', 'xml']
 
 // The name of the release we're working on. See RELEASING.md for details.
-def versionName = '1.6'
+group = "com.google.re2j"
+version = "1.7"
 
 wrapper {
   gradleVersion '5.2'
@@ -137,7 +139,7 @@ publishing {
 
       groupId 'com.google.re2j'
       artifactId 're2j'
-      version versionName
+      version project.version
 
       pom.withXml {
         appendMavenCentralMetadata(asNode())
@@ -146,26 +148,19 @@ publishing {
   }
 }
 
-bintray {
-  user = System.getenv('BINTRAY_USER')
-  key = System.getenv('BINTRAY_KEY')
+signing {
+  useGpgCmd()
 
-  pkg {
-    repo = 'maven'
-    name = 're2j'
-    userOrg = 're2j'
-    licenses = ['Go']
-    vcsUrl = 'https://github.com/google/re2j.git'
+  sign publishing.publications.mavenJava
+}
 
-    version {
-      name = versionName
-      desc = "RE2/J ${versionName}"
-      released = new Date()
-      vcsTag = "re2j-${versionName}"
+nexusPublishing {
+  repositories {
+    sonatype {
+      username = findProperty('sonatype.username')
+      password = findProperty('sonatype.password')
     }
   }
-
-  publications = ['mavenJava']
 }
 
 // If Java formatter checks fail, tell the user how to fix them.

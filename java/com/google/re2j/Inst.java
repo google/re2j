@@ -51,8 +51,12 @@ final class Inst {
     if (runes.length == 1) {
       int r0 = runes[0];
 
+      // If this pattern is case-insensitive, apply Unicode case folding to compare the two runes.
+      // Note that this may result in a case-folding loop when executed on a JVM newer than the version used
+      // to generate Unicode data for re2j, so attempt to reduce the chance of that occurring
+      // by performing case folding on |r0| from the pattern rather than |r| from the input.
       if ((arg & RE2.FOLD_CASE) != 0) {
-        return Unicode.equalsIgnoreCase(r, r0);
+        return Unicode.equalsIgnoreCase(r0, r);
       }
       return r == r0;
     }

@@ -125,6 +125,8 @@ class Unicode {
   // equalsIgnoreCase performs case-insensitive equality comparison
   // on the given runes |r1| and |r2|, with special consideration
   // for the likely scenario where both runes are ASCII characters.
+  // If non-ASCII, Unicode case folding will be performed on |r1|
+  // to compare it to |r2|.
   // -1 is interpreted as the end-of-file mark.
   static boolean equalsIgnoreCase(int r1, int r2) {
     // Runes already match, or one of them is EOF

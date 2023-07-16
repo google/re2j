@@ -28,7 +28,6 @@ class Parser {
   private static final String ERR_INTERNAL_ERROR = "regexp/syntax: internal error";
 
   // Parse errors
-  private static final String ERR_INVALID_CHAR_CLASS = "invalid character class";
   private static final String ERR_INVALID_CHAR_RANGE = "invalid character class range";
   private static final String ERR_INVALID_ESCAPE = "invalid escape sequence";
   private static final String ERR_INVALID_NAMED_CAPTURE = "invalid named capture";

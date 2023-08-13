@@ -232,6 +232,7 @@ public class ParserTest {
 
     // Test named captures
     {"(?P<name>a)", "cap{name:lit{a}}"},
+    {"(?<name>a)", "cap{name:lit{a}}"},
 
     // Case-folded literals
     {"[Aa]", "litfold{A}"},
@@ -530,12 +531,20 @@ public class ParserTest {
     "(?P<name",
     "(?P<x y>a)",
     "(?P<>a)",
+    "(?<name>a",
+    "(?<name>",
+    "(?<name",
+    "(?<x y>a)",
+    "(?<>a)",
     "[a-Z]",
     "(?i)[a-Z]",
     "a{100000}",
     "a{100000,}",
     // Group names may not be repeated
     "(?P<foo>bar)(?P<foo>baz)",
+    "(?P<foo>bar)(?<foo>baz)",
+    "(?<foo>bar)(?P<foo>baz)",
+    "(?<foo>bar)(?<foo>baz)",
     "\\x", // https://github.com/google/re2j/issues/103
     "\\xv", // https://github.com/google/re2j/issues/103
   };
@@ -550,6 +559,7 @@ public class ParserTest {
     "\\Q\\\\\\\\\\E",
     "(?:a)",
     "(?P<name>a)",
+    "(?<name>a)",
   };
 
   private static final String[] ONLY_POSIX = {

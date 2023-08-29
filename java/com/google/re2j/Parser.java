@@ -28,7 +28,6 @@ class Parser {
   private static final String ERR_INTERNAL_ERROR = "regexp/syntax: internal error";
 
   // Parse errors
-  private static final String ERR_INVALID_CHAR_CLASS = "invalid character class";
   private static final String ERR_INVALID_CHAR_RANGE = "invalid character class range";
   private static final String ERR_INVALID_ESCAPE = "invalid escape sequence";
   private static final String ERR_INVALID_NAMED_CAPTURE = "invalid named capture";
@@ -1054,21 +1053,22 @@ class Parser {
     // support all three as well.  EcmaScript 4 uses only the Python form.
     //
     // In both the open source world (via Code Search) and the
-    // Google source tree, (?P<expr>name) is the dominant form,
-    // so that's the one we implement.  One is enough.
+    // Google source tree, (?P<name>expr) and (?<name>expr) are the
+    // dominant forms of named captures and both are supported.
     String s = t.rest();
-    if (s.startsWith("(?P<")) {
+    if (s.startsWith("(?P<") || s.startsWith("(?<")) {
       // Pull out name.
-      int end = s.indexOf('>');
+      int begin = s.charAt(2) == 'P' ? 4 : 3;
+      int end = s.indexOf('>', begin);
       if (end < 0) {
         throw new PatternSyntaxException(ERR_INVALID_NAMED_CAPTURE, s);
       }
-      String name = s.substring(4, end); // "name"
+      String name = s.substring(begin, end); // "name"
       t.skipString(name);
-      t.skip(5); // "(?P<>"
+      t.skip(begin + 1); // "(?P<>" or "(?<>"
       if (!isValidCaptureName(name)) {
         throw new PatternSyntaxException(
-            ERR_INVALID_NAMED_CAPTURE, s.substring(0, end)); // "(?P<name>"
+            ERR_INVALID_NAMED_CAPTURE, s.substring(0, end + 1)); // "(?P<name>" or "(?<name>"
       }
       // Like ordinary capture, but named.
       Regexp re = op(Regexp.Op.LEFT_PAREN);

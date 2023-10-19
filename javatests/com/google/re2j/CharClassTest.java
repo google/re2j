@@ -7,13 +7,14 @@
 package com.google.re2j;
 
 import static com.google.re2j.Utils.stringToRunes;
-
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
-
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class CharClassTest {
 
   private static CharClass cc(int... x) {

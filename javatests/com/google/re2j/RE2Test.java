@@ -9,13 +9,16 @@
 
 package com.google.re2j;
 
-import java.util.Arrays;
-import org.junit.Test;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 /** Tests of RE2 API. */
+@RunWith(JUnit4.class)
 public class RE2Test {
   @Test
   public void testFullMatch() {

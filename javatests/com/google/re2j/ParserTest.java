@@ -21,16 +21,18 @@ import static com.google.re2j.RE2.WAS_DOLLAR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
-
-import com.google.common.truth.Truth;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @author adonovan@google.com (Alan Donovan)
  */
+@RunWith(JUnit4.class)
 public class ParserTest {
 
   private interface RunePredicate {
@@ -405,6 +407,8 @@ public class ParserTest {
     }
     b.append('{');
     switch (re.op) {
+      default:
+        break;
       case END_TEXT:
         if ((re.flags & WAS_DOLLAR) == 0) {
           b.append("\\z");
@@ -583,7 +587,7 @@ public class ParserTest {
       }
     }
     for (String regexp : ONLY_PERL) {
-      Parser.parse(regexp, PERL);
+      Regexp unused = Parser.parse(regexp, PERL);
       try {
         Regexp re = Parser.parse(regexp, POSIX);
         fail("parsing (POSIX) " + regexp + " should have failed, instead got " + dump(re));
@@ -598,7 +602,7 @@ public class ParserTest {
       } catch (PatternSyntaxException e) {
         /* ok */
       }
-      Parser.parse(regexp, POSIX);
+      Regexp unused = Parser.parse(regexp, POSIX);
     }
   }
 

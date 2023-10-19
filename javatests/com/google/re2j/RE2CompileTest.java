@@ -67,7 +67,7 @@ public class RE2CompileTest {
   @Test
   public void testCompile() {
     try {
-      RE2.compile(input);
+      RE2 unused = RE2.compile(input);
       if (expectedError != null) {
         fail("RE2.compile(" + input + ") was successful, expected " + expectedError);
       }

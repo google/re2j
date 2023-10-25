@@ -70,6 +70,8 @@ import org.junit.runners.JUnit4;
 // so we store re2.txt.gz in the repository and decompress it on the fly.
 @RunWith(JUnit4.class)
 public class ExecTest {
+  private static final String TESTDATA_PREFIX =
+      System.getProperty("com.google.re2j.testdata.prefix", "/");
 
   @Test
   public void testExamplesInDocumentation() throws PatternSyntaxException {
@@ -91,7 +93,7 @@ public class ExecTest {
   }
 
   public void testRE2(String file) throws IOException {
-    InputStream in = ExecTest.class.getResourceAsStream("/" + file);
+    InputStream in = ExecTest.class.getResourceAsStream(TESTDATA_PREFIX + file);
     // TODO(adonovan): call in.close() on all paths.
     if (file.endsWith(".gz")) {
       in = new GZIPInputStream(in);
@@ -353,7 +355,7 @@ public class ExecTest {
   private static final RE2 NOTAB = RE2.compilePOSIX("[^\t]+");
 
   private void testFowler(String file) throws IOException {
-    InputStream in = ExecTest.class.getResourceAsStream("/" + file);
+    InputStream in = ExecTest.class.getResourceAsStream(TESTDATA_PREFIX + file);
     // TODO(adonovan): call in.close() on all paths.
     UNIXBufferedReader r = new UNIXBufferedReader(new InputStreamReader(in, "UTF-8"));
     int lineno = 0;

@@ -7,6 +7,7 @@
 package com.google.re2j;
 
 import com.google.re2j.MatcherInput.Encoding;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 /**
@@ -363,7 +364,11 @@ public final class Matcher {
   String substring(int start, int end) {
     // UTF_8 is matched in binary mode. So slice the bytes.
     if (matcherInput.getEncoding() == Encoding.UTF_8) {
-      return new String(matcherInput.asBytes(), start, end - start);
+      try {
+        return new String(matcherInput.asBytes(), start, end - start, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException(e); // Not possible.
+      }
     }
 
     // This is fast for both StringBuilder and String.

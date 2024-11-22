@@ -428,6 +428,27 @@ public class MatcherTest {
   }
 
   @Test
+  public void testDocumentedExampleWithResolveGroups() {
+    Pattern p = Pattern.compile("b(an)*(.)", Pattern.RESOLVE_GROUPS_MATCH);
+    Matcher m = p.matcher("by, band, banana");
+    assertTrue(m.lookingAt());
+    m.reset();
+    assertTrue(m.find());
+    assertEquals("by", m.group(0));
+    assertNull(m.group(1));
+    assertEquals("y", m.group(2));
+    assertTrue(m.find());
+    assertEquals("band", m.group(0));
+    assertEquals("an", m.group(1));
+    assertEquals("d", m.group(2));
+    assertTrue(m.find());
+    assertEquals("banana", m.group(0));
+    assertEquals("an", m.group(1));
+    assertEquals("a", m.group(2));
+    assertFalse(m.find());
+  }
+
+  @Test
   public void testMutableCharSequence() {
     Pattern p = Pattern.compile("b(an)*(.)");
     StringBuilder b = new StringBuilder("by, band, banana");
@@ -443,6 +464,38 @@ public class MatcherTest {
     Pattern p =
         Pattern.compile(
             "(?P<baz>f(?P<foo>b*a(?P<another>r+)){0,10})" + "(?P<bag>bag)?(?P<nomatch>zzz)?");
+    Matcher m = p.matcher("fbbarrrrrbag");
+    assertTrue(m.matches());
+    assertEquals("fbbarrrrr", m.group("baz"));
+    assertEquals("bbarrrrr", m.group("foo"));
+    assertEquals("rrrrr", m.group("another"));
+    assertEquals(0, m.start("baz"));
+    assertEquals(1, m.start("foo"));
+    assertEquals(4, m.start("another"));
+    assertEquals(9, m.end("baz"));
+    assertEquals(9, m.end("foo"));
+    assertEquals("bag", m.group("bag"));
+    assertEquals(9, m.start("bag"));
+    assertEquals(12, m.end("bag"));
+    assertNull(m.group("nomatch"));
+    assertEquals(-1, m.start("nomatch"));
+    assertEquals(-1, m.end("nomatch"));
+    assertEquals("whatbbarrrrreverbag", appendReplacement(m, "what$2ever${bag}"));
+
+    try {
+      m.group("nonexistent");
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+      // Expected
+    }
+  }
+
+  @Test
+  public void testNamedGroupsWithResolveGroups() {
+    Pattern p =
+        Pattern.compile(
+            "(?P<baz>f(?P<foo>b*a(?P<another>r+)){0,10})" + "(?P<bag>bag)?(?P<nomatch>zzz)?",
+            Pattern.RESOLVE_GROUPS_MATCH);
     Matcher m = p.matcher("fbbarrrrrbag");
     assertTrue(m.matches());
     assertEquals("fbbarrrrr", m.group("baz"));

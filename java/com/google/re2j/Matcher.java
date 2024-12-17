@@ -213,7 +213,6 @@ public final class Matcher {
     return end(g);
   }
 
-
   /**
    * Returns the program size of this pattern.
    *

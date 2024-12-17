@@ -102,9 +102,11 @@ public class MatcherTest {
     int programSize = pattern.programSize();
     Truth.assertWithMessage("Pattern program size").that(programSize).isGreaterThan(1);
     Truth.assertWithMessage("Positive matcher program size")
-        .that(pattern.matcher("good").programSize()).isEqualTo(programSize);
+        .that(pattern.matcher("good").programSize())
+        .isEqualTo(programSize);
     Truth.assertWithMessage("Negative matcher program size")
-        .that(pattern.matcher("bad").programSize()).isEqualTo(programSize);
+        .that(pattern.matcher("bad").programSize())
+        .isEqualTo(programSize);
   }
 
   @Test

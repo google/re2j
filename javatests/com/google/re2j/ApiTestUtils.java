@@ -169,12 +169,15 @@ public class ApiTestUtils {
     Matcher m2 = p.matcher(inputBytes);
 
     Truth.assertWithMessage("Pattern(\"%s\") program size", p)
-        .that(p.programSize()).isEqualTo(expectedSize);
+        .that(p.programSize())
+        .isEqualTo(expectedSize);
     Truth.assertWithMessage("Matcher(\"%s\", \"%s\") program size", m1.pattern(), input)
-        .that(m1.programSize()).isEqualTo(expectedSize);
-    Truth.assertWithMessage("Matcher(\"%s\", %s) program size", m2.pattern(),
-            Arrays.toString(inputBytes))
-        .that(m2.programSize()).isEqualTo(expectedSize);
+        .that(m1.programSize())
+        .isEqualTo(expectedSize);
+    Truth.assertWithMessage(
+            "Matcher(\"%s\", %s) program size", m2.pattern(), Arrays.toString(inputBytes))
+        .that(m2.programSize())
+        .isEqualTo(expectedSize);
   }
 
   public static void testGroup(String text, String regexp, String[] output) {

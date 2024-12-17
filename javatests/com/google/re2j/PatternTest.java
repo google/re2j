@@ -165,8 +165,20 @@ public class PatternTest {
   }
 
   @Test
+  public void testProgramSize() {
+    ApiTestUtils.testProgramSize("", 3);
+    ApiTestUtils.testProgramSize("a", 3);
+    ApiTestUtils.testProgramSize("^", 3);
+    ApiTestUtils.testProgramSize("^$", 4);
+    ApiTestUtils.testProgramSize("a+b", 5);
+    ApiTestUtils.testProgramSize("a+b?", 6);
+    ApiTestUtils.testProgramSize("(a+b)", 7);
+    ApiTestUtils.testProgramSize("a+b.*", 7);
+    ApiTestUtils.testProgramSize("(a+b?)", 8);
+  }
+
+  @Test
   public void testGroupCount() {
-    // It is a simple delegation, but still test it.
     ApiTestUtils.testGroupCount("(.*)ab(.*)a", 2);
     ApiTestUtils.testGroupCount("(.*)(ab)(.*)a", 3);
     ApiTestUtils.testGroupCount("(.*)((a)b)(.*)a", 4);

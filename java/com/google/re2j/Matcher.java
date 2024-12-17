@@ -50,6 +50,9 @@ public final class Matcher {
   // The number of submatches (groups) in the pattern.
   private final int groupCount;
 
+  // The number of instructions in the pattern.
+  private final int numberOfInstructions;
+
   private MatcherInput matcherInput;
 
   // The input length in UTF16 codes.
@@ -77,6 +80,7 @@ public final class Matcher {
     groupCount = re2.numberOfCapturingGroups();
     groups = new int[2 + 2 * groupCount];
     namedGroups = re2.namedGroups;
+    numberOfInstructions = re2.numberOfInstructions();
   }
 
   /** Creates a new {@code Matcher} with the given pattern and input. */
@@ -207,6 +211,21 @@ public final class Matcher {
       throw new IllegalArgumentException("group '" + group + "' not found");
     }
     return end(g);
+  }
+
+
+  /**
+   * Returns the program size of this pattern.
+   *
+   * <p>
+   * Similar to the C++ implementation, the program size is a very approximate measure of a regexp's
+   * "cost". Larger numbers are more expensive than smaller numbers.
+   * </p>
+   *
+   * @return the program size of this pattern
+   */
+  public int programSize() {
+    return numberOfInstructions;
   }
 
   /**

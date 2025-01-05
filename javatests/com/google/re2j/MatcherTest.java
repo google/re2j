@@ -95,7 +95,24 @@ public class MatcherTest {
   }
 
   @Test
+  public void testProgramSize() {
+    // It is a simple delegation, but still test it.
+    // More test cases are covered in PatternTest#testProgramSize.
+    Pattern pattern = Pattern.compile("go+d");
+    int programSize = pattern.programSize();
+    Truth.assertWithMessage("Pattern program size").that(programSize).isGreaterThan(1);
+    Truth.assertWithMessage("Positive matcher program size")
+        .that(pattern.matcher("good").programSize())
+        .isEqualTo(programSize);
+    Truth.assertWithMessage("Negative matcher program size")
+        .that(pattern.matcher("bad").programSize())
+        .isEqualTo(programSize);
+  }
+
+  @Test
   public void testGroupCount() {
+    // It is a simple delegation, but still test it.
+    // More test cases are covered in PatternTest#testGroupCount.
     ApiTestUtils.testGroupCount("(a)(b(c))d?(e)", 4);
   }
 

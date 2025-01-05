@@ -159,6 +159,27 @@ public class ApiTestUtils {
     assertEquals(count, mj.groupCount());
   }
 
+  // Tests that both RE2 Patterns and Matchers give the same groupCount.
+  public static void testProgramSize(String pattern, int expectedSize) {
+    Pattern p = Pattern.compile(pattern);
+
+    String input = "foo";
+    byte[] inputBytes = getUtf8Bytes(input);
+    Matcher m1 = p.matcher(input);
+    Matcher m2 = p.matcher(inputBytes);
+
+    Truth.assertWithMessage("Pattern(\"%s\") program size", p)
+        .that(p.programSize())
+        .isEqualTo(expectedSize);
+    Truth.assertWithMessage("Matcher(\"%s\", \"%s\") program size", m1.pattern(), input)
+        .that(m1.programSize())
+        .isEqualTo(expectedSize);
+    Truth.assertWithMessage(
+            "Matcher(\"%s\", %s) program size", m2.pattern(), Arrays.toString(inputBytes))
+        .that(m2.programSize())
+        .isEqualTo(expectedSize);
+  }
+
   public static void testGroup(String text, String regexp, String[] output) {
     // RE2
     Pattern p = Pattern.compile(regexp);

@@ -212,6 +212,13 @@ class RE2 {
     return numSubexp;
   }
 
+  /**
+   * Returns the number of instructions in this compiled regular expression program.
+   */
+  int numberOfInstructions() {
+    return prog.numInst();
+  }
+
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
   Machine get() {

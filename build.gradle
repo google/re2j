@@ -2,7 +2,7 @@
 plugins {
   id 'java-library'
   id 'wrapper'
-  id 'maven-publish'
+  id 'maven'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
   id 'com.github.sherter.google-java-format' version '0.3.2'
   id 'net.ltgt.errorprone' version '2.0.2'
@@ -24,7 +24,8 @@ cobertura.coverageFormats = ['html', 'xml']
 
 // The name of the release we're working on. See RELEASING.md for details.
 group = "com.google.re2j"
-version = "1.7"
+archivesBaseName = "re2j"
+version = "1.8"
 
 wrapper {
   gradleVersion '5.2'
@@ -93,56 +94,60 @@ dependencies {
   testRuntime "org.slf4j:slf4j-api:1.7.10"
 }
 
-task sourceJar(type: Jar) {
-    baseName 'sources'
-
-    from sourceSets.main.allJava
-    from sourceSets.gwt.allSource
+task javadocJar(type: Jar) {
+  classifier = 'javadoc'
+  from javadoc
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    baseName 'javadoc'
-
-    from javadoc.destinationDir
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
 }
 
-def appendMavenCentralMetadata(Node node) {
-    node.appendNode('name', 'RE2/J')
-    node.appendNode('description', 'Linear time regular expressions for Java')
-    node.appendNode('url', 'http://github.com/google/re2j')
-
-    def license = node.appendNode('licenses').appendNode('license')
-    license.appendNode('name', 'Go License')
-    license.appendNode('url', 'https://golang.org/LICENSE')
-    license.appendNode('distribution', 'repo')
-
-    node.appendNode('scm').appendNode('url', 'https://github.com/google/re2j.git')
-
-    def developerInfo = node.appendNode('developers').appendNode('developer')
-    developerInfo.appendNode('id', 'dev')
-    developerInfo.appendNode('name', 'The RE2/J Contributors')
-    developerInfo.appendNode('email', 're2j-discuss@googlegroups.com')
+artifacts {
+  archives javadocJar, sourcesJar
 }
 
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      from components.java
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-      artifact sourceJar {
-        classifier 'sources'
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: findProperty('ossrhUsername') ?: '',
+          password: findProperty('ossrhPassword') ?: '')
       }
 
-      artifact javadocJar {
-        classifier 'javadoc'
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: findProperty('ossrhUsername') ?: '',
+          password: findProperty('ossrhPassword') ?: '')
       }
 
-      groupId 'com.google.re2j'
-      artifactId 're2j'
-      version project.version
+      pom.project {
+        name 'RE2/J'
+        packaging 'jar'
+        description 'Linear time regular expressions for Java'
+        url 'http://github.com/google/re2j'
 
-      pom.withXml {
-        appendMavenCentralMetadata(asNode())
+        scm {
+          url 'https://github.com/google/re2j.git'
+        }
+
+        licenses {
+          license {
+            name 'Go License'
+            url 'https://golang.org/LICENSE'
+            distribution 'repo'
+          }
+        }
+
+        developers {
+          developer {
+            id 'dev'
+            name 'The RE2/J Contributors'
+            email 're2j-discuss@googlegroups.com'
+          }
+        }
       }
     }
   }
@@ -151,16 +156,7 @@ publishing {
 signing {
   useGpgCmd()
 
-  sign publishing.publications.mavenJava
-}
-
-nexusPublishing {
-  repositories {
-    sonatype {
-      username = findProperty('sonatype.username')
-      password = findProperty('sonatype.password')
-    }
-  }
+  sign configurations.archives
 }
 
 // If Java formatter checks fail, tell the user how to fix them.

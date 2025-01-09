@@ -42,24 +42,37 @@ $ gpg --keyserver keys.openpgp.org --send-keys 90ABCDEF
 gpg: sending key 1234567890ABCDEF to hkp://keys.openpgp.org
 ```
 
+## Gradle properties
+
+Add the following properties to `$HOME/gradle.properties`:
+
+```
+signing.gnupg.executable=gpg
+signing.gnupg.useLegacyGpg=true
+signing.gnupg.keyName=ABCDEF01
+
+# Not to be confused with your Sonatype login username and password
+ossrhUsername=yourSonatypeToken
+ossrhPassword=yourSonatypeTokenPassword
+```
+
 # Making the release
 
 In a shell, change into the RE2/J source code root directory (the one
 containing `build.gradle`). Then:
 
 * edit `build.gradle` and set `version` to the name of the next release
-  (e.g. "1.8").
+  (e.g. "1.9").
 * change the download instructions in `README.md` to reflect the new version
   number
 * `git commit` the version name change
-* `git tag re2j-<versionName>`, e.g. `git tag re2j-1.8`
+* `git tag re2j-<versionName>`, e.g. `git tag re2j-1.9`
 * `git push --tags`
 
 Now you're ready to build and push the release.
 
 ```
-./gradlew -Psonatype.username='sonatypeUsername' -Psonatype.password='sonatypeApiKey' \
-        clean bintrayUpload
+./gradlew clean uploadArchives
 ```
 
 Once successful, the new version needs to be published:

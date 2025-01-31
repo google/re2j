@@ -551,6 +551,9 @@ public class ParserTest {
     "(?<foo>bar)(?<foo>baz)",
     "\\x", // https://github.com/google/re2j/issues/103
     "\\xv", // https://github.com/google/re2j/issues/103
+    "^[a-z0-9\\–\\-'‘’]+$",
+    "[\\”\\“]\"",
+    "[\\<\\>\\{\\}\\[\\]\\|\\\”\\%\\~\\#]",
   };
 
   private static final String[] ONLY_PERL = {

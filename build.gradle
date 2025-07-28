@@ -94,6 +94,14 @@ dependencies {
   testRuntime "org.slf4j:slf4j-api:1.7.10"
 }
 
+jar {
+    manifest {
+        attributes(
+            'Automatic-Module-Name': 'com.google.re2j'
+        )
+    }
+}
+
 task javadocJar(type: Jar) {
   classifier = 'javadoc'
   from javadoc

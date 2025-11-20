@@ -504,7 +504,7 @@ public final class Matcher {
           }
           for (i += 2; i < m; i++) {
             c = replacement.charAt(i);
-            if (c < '0' || c > '9' || n * 10 + c - '0' > groupCount) {
+            if (c < '0' || c > '9') {
               break;
             }
             n = n * 10 + c - '0';

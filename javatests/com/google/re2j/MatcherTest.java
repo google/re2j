@@ -54,7 +54,7 @@ public class MatcherTest {
     ApiTestUtils.testReplaceAll(
         "abcdefghijklmnopqrstuvwxyz123",
         "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
-        "$10$20",
+        "$10$2\\0",
         "jb0wo0123");
     ApiTestUtils.testReplaceAll(
         "\u00e1\u0062\u00e7\u2655", "(.)", "<$1>", "<\u00e1><\u0062><\u00e7><\u2655>");
@@ -83,7 +83,7 @@ public class MatcherTest {
     ApiTestUtils.testReplaceFirst(
         "abcdefghijklmnopqrstuvwxyz123",
         "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
-        "$10$20",
+        "$10$2\\0",
         "jb0nopqrstuvwxyz123");
     ApiTestUtils.testReplaceFirst(
         "\u00e1\u0062\u00e7\u2655", "(.)", "<$1>", "<\u00e1>\u0062\u00e7\u2655");
@@ -168,7 +168,13 @@ public class MatcherTest {
 
   @Test
   public void testInvalidReplacementDoubleDigit() {
-    ApiTestUtils.testReplaceFirst("abc", "(abc)", "$10", "abc0");
+    try {
+      ApiTestUtils.testReplaceFirst("abc", "(abc)", "$10", "xxx");
+      fail();
+    } catch (IndexOutOfBoundsException e) {
+      /* ok */
+      assertTrue(true);
+    }
   }
 
   @Test

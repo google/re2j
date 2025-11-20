@@ -167,6 +167,16 @@ public class MatcherTest {
   }
 
   @Test
+  public void testInvalidReplacementDoubleDigit() {
+    ApiTestUtils.testReplaceFirst("abc", "(abc)", "$10", "abc0");
+  }
+
+  @Test
+  public void testValidReplacementSingleDigitSeparated() {
+    ApiTestUtils.testReplaceFirst("abc", "(abc)", "$1\\0", "abc0");
+  }
+
+  @Test
   public void testInvalidGroupNoMatch() {
     try {
       ApiTestUtils.testInvalidGroup("abc", "xxx", 0);

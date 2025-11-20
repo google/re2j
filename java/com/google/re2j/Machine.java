@@ -156,11 +156,8 @@ class Machine {
     this.matchcap = new int[ncap];
   }
 
-  int[] submatches() {
-    if (ncap == 0) {
-      return Utils.EMPTY_INTS;
-    }
-    return Arrays.copyOf(matchcap, ncap);
+  void submatches(int[] cap) {
+    System.arraycopy(matchcap, 0, cap, 0, Math.min(cap.length, ncap));
   }
 
   // alloc() allocates a new thread with the given instruction.

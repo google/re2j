@@ -130,7 +130,7 @@ public class ApiTestUtils {
     Pattern p = Pattern.compile(regex);
     String replaced;
     for (MatcherInput input : Arrays.asList(MatcherInput.utf16(orig), MatcherInput.utf8(orig))) {
-      Matcher m = p.matcher(orig);
+      Matcher m = p.matcher(input);
       replaced = m.replaceFirst(repl);
       assertEquals(actual, replaced);
     }

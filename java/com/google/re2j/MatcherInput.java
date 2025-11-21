@@ -47,6 +47,8 @@ abstract class MatcherInput {
 
   abstract int length();
 
+  abstract MachineInput region(int beg, int end);
+
   static class Utf8MatcherInput extends MatcherInput {
     byte[] bytes;
 
@@ -72,6 +74,11 @@ abstract class MatcherInput {
     @Override
     public int length() {
       return bytes.length;
+    }
+
+    @Override
+    public MachineInput region(int beg, int end) {
+      return MachineInput.fromUTF8(bytes, beg, end);
     }
   }
 
@@ -100,6 +107,11 @@ abstract class MatcherInput {
     @Override
     public int length() {
       return charSequence.length();
+    }
+
+    @Override
+    public MachineInput region(int beg, int end) {
+      return MachineInput.fromUTF16(charSequence, beg, end);
     }
   }
 }

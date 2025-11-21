@@ -20,7 +20,6 @@
 
 package com.google.re2j;
 
-import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -344,9 +343,6 @@ class RE2 {
    * @return true if a match was found
    */
   boolean match(MatcherInput input, int start, int end, int anchor, int[] group, int ngroup) {
-    if (start > end) {
-      return false;
-    }
     // TODO(afrozm): We suspect that the correct code should look something
     // like the following:
     // doExecute(MachineInput.fromUTF16(input), start, anchor, 2*ngroup);
@@ -354,11 +350,25 @@ class RE2 {
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    MachineInput machineInput =
-        input.getEncoding() == Encoding.UTF_16
-            ? MachineInput.fromUTF16(input.asCharSequence(), 0, end)
-            : MachineInput.fromUTF8(input.asBytes(), 0, end);
-    return doExecute(machineInput, start, anchor, 2 * ngroup, group);
+    return match(input.region(0, end), start, anchor, group, ngroup);
+  }
+
+  /**
+   * Matches the regular expression against input starting at position start and ending at position
+   * end, with the given anchoring. Records the submatch boundaries in group, which is [start, end)
+   * pairs of byte offsets. The number of boundaries needed is inferred from the size of the group
+   * array. It is most efficient not to ask for submatch boundaries.
+   *
+   * @param region the input slice
+   * @param pos the position in the input to start the search
+   * @param anchor the anchoring flag (UNANCHORED, ANCHOR_START, ANCHOR_BOTH)
+   * @param group the array to fill with submatch positions
+   * @param ngroup the number of array pairs to fill in
+   * @return true if a match was found
+   */
+  boolean match(MachineInput region, int pos, int anchor, int[] group, int ngroup) {
+    return pos >= region.begPos() && pos <= region.endPos() &&
+      doExecute(region, pos, anchor, 2 * ngroup, group);
   }
 
   /**

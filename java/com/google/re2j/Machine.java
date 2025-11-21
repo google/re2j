@@ -214,7 +214,7 @@ class Machine {
     if (startCond == Utils.EMPTY_ALL) { // impossible
       return false;
     }
-    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) && pos != 0) {
+    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) && pos != in.begPos()) {
       return false;
     }
     matched = false;
@@ -231,7 +231,7 @@ class Machine {
       width1 = r & 7;
     }
     int flag; // bitmask of EMPTY_* flags
-    if (pos == 0) {
+    if (pos == in.begPos()) {
       flag = Utils.emptyOpContext(-1, rune);
     } else {
       flag = in.context(pos);
@@ -239,7 +239,7 @@ class Machine {
     for (; ; ) {
 
       if (runq.isEmpty()) {
-        if ((startCond & Utils.EMPTY_BEGIN_TEXT) != 0 && pos != 0) {
+        if ((startCond & Utils.EMPTY_BEGIN_TEXT) != 0 && pos != in.begPos()) {
           // Anchored match, past beginning of text.
           break;
         }
@@ -262,7 +262,7 @@ class Machine {
           width1 = r & 7;
         }
       }
-      if (!matched && (pos == 0 || anchor == RE2.UNANCHORED)) {
+      if (!matched && (pos == in.begPos() || anchor == RE2.UNANCHORED)) {
         // If we are anchoring at begin then only add threads that begin
         // at |pos| = 0.
         if (ncap > 0) {

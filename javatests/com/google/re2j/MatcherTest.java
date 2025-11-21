@@ -46,6 +46,11 @@ public class MatcherTest {
         "Frog",
         "Lizard",
         "What the Lizard's Eye Tells the Lizard's Brain");
+    ApiTestUtils.testReplaceAll( // Russian "the quick brown fox"...
+        "В чащах юга жил бы цитрус — да, но фальшивый экземпляр",
+        "цитрус",
+        "лимон Мейера",
+        "В чащах юга жил бы лимон Мейера — да, но фальшивый экземпляр");
     ApiTestUtils.testReplaceAll(
         "What the Frog's Eye Tells the Frog's Brain",
         "F(rog)",
@@ -56,6 +61,11 @@ public class MatcherTest {
         "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
         "$10$20",
         "jb0wo0123");
+    ApiTestUtils.testReplaceAll(
+        "абвгдеёжзийклмнопрстуфхцчьыъэюя123",
+        "(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)",
+        "$10$2\\0",
+        "иб0хн0ыъэюя123");
     ApiTestUtils.testReplaceAll(
         "\u00e1\u0062\u00e7\u2655", "(.)", "<$1>", "<\u00e1><\u0062><\u00e7><\u2655>");
     ApiTestUtils.testReplaceAll(

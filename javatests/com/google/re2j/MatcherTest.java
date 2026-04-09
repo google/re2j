@@ -524,4 +524,12 @@ public class MatcherTest {
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
     }
   }
+
+  @Test
+  public void testMatchCategoryCaseInsensitive() {
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("a"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("a"));
+  }
 }

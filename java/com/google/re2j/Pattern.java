@@ -272,7 +272,7 @@ public final class Pattern implements Serializable {
       result.add(m.substring(last, m.inputLength()));
     }
 
-    if (limit != 0 || result.isEmpty()) {
+    if (limit != 0 || (result.isEmpty() && !(last == m.inputLength() && last > 0))) {
       result.add(m.substring(last, m.inputLength()));
     }
 

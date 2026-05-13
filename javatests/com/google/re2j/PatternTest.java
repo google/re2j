@@ -162,6 +162,12 @@ public class PatternTest {
     ApiTestUtils.testSplit("x*", "foo", 1, new String[] {"foo"});
     ApiTestUtils.testSplit("x*", "f", 2, new String[] {"f", ""});
     ApiTestUtils.testSplit(":", ":a::b", new String[] {"", "a", "", "b"});
+
+    // From https://github.com/google/re2j/issues/197.
+    // Test split when input is fully matched and limit is 0.
+    ApiTestUtils.testSplit("\\s+", "   ", new String[] {});
+    ApiTestUtils.testSplit("\\s+", "   foo", new String[] {"", "foo"});
+    ApiTestUtils.testSplit("\\s+", "foo   ", new String[] {"foo"});
   }
 
   @Test

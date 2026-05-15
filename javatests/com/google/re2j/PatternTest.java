@@ -168,6 +168,7 @@ public class PatternTest {
     ApiTestUtils.testSplit("\\s+", "   ", new String[] {});
     ApiTestUtils.testSplit("\\s+", "   foo", new String[] {"", "foo"});
     ApiTestUtils.testSplit("\\s+", "foo   ", new String[] {"foo"});
+    ApiTestUtils.testSplit("\\s+", "", new String[] {""});
   }
 
   @Test

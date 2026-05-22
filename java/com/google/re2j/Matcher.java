@@ -369,6 +369,7 @@ public final class Matcher {
     // From the JDK docs, looks like no.
     boolean ok = pattern.re2().match(matcherInput, startByte, inputLength, anchor, groups, 1);
     if (!ok) {
+      hasMatch = false;
       return false;
     }
     hasMatch = true;

@@ -6,6 +6,7 @@
  */
 package com.google.re2j;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -522,6 +523,79 @@ public class MatcherTest {
       final Matcher matcher = Pattern.compile(pattern, Pattern.LONGEST_MATCH).matcher(text);
       assertTrue(matcher.find());
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
+    }
+  }
+
+  @Test
+  public void testAppendReplacementValidation() {
+    Matcher m = Pattern.compile("ab").matcher("ab");
+    assertTrue(m.find());
+
+    {
+      StringBuilder sb = new StringBuilder();
+
+      // Test invalid group references
+      try {
+        m.appendReplacement(sb, "$foo");
+        fail("Should have thrown IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageThat().contains("Illegal group reference");
+      }
+      try {
+        m.appendReplacement(sb, "foo$");
+        fail("Should have thrown IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageThat().contains("Illegal group reference");
+      }
+      try {
+        m.appendReplacement(sb, "foo$$bar");
+        fail("Should have thrown IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageThat().contains("Illegal group reference");
+      }
+
+      // Test invalid escapes
+      try {
+        m.appendReplacement(sb, "foo\\");
+        fail("Should have thrown IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageThat().contains("character to be escaped is missing");
+      }
+
+      // Test invalid named group syntax
+      try {
+        m.appendReplacement(sb, "foo${bar");
+        fail("Should have thrown IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
+      }
+    }
+
+    {
+      // Test valid cases to ensure we didn't break them
+      StringBuilder sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\$bar");
+      assertEquals("foo$bar", sb.toString());
+
+      m.reset();
+      assertTrue(m.find());
+      sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\\\bar");
+      assertEquals("foo\\bar", sb.toString());
+
+      // Test valid group references
+      Matcher m2 = Pattern.compile("(?<groupName>ab)").matcher("ab");
+      assertTrue(m2.find());
+
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo$1bar");
+      assertEquals("fooabbar", sb.toString());
+
+      m2.reset();
+      assertTrue(m2.find());
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo${groupName}bar");
+      assertEquals("fooabbar", sb.toString());
     }
   }
 }

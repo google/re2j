@@ -486,28 +486,37 @@ public final class Matcher {
     int last = 0;
     int i = 0;
     int m = replacement.length();
-    for (; i < m - 1; i++) {
-      if (replacement.charAt(i) == '\\') {
+    while (i < m) {
+      char c = replacement.charAt(i);
+      if (c == '\\') {
         if (last < i) {
           sb.append(replacement.substring(last, i));
         }
         i++;
+        if (i == m) {
+          throw new IllegalArgumentException("character to be escaped is missing");
+        }
         last = i;
+        i++;
         continue;
       }
-      if (replacement.charAt(i) == '$') {
-        int c = replacement.charAt(i + 1);
-        if ('0' <= c && c <= '9') {
-          int n = c - '0';
-          if (last < i) {
-            sb.append(replacement.substring(last, i));
-          }
-          for (i += 2; i < m; i++) {
-            c = replacement.charAt(i);
-            if (c < '0' || c > '9' || n * 10 + c - '0' > groupCount) {
+      if (c == '$') {
+        if (last < i) {
+          sb.append(replacement, last, i);
+        }
+        if (i + 1 >= m) {
+          throw new IllegalArgumentException("Illegal group reference: group index is missing");
+        }
+        char next = replacement.charAt(i + 1);
+        if ('0' <= next && next <= '9') {
+          int n = next - '0';
+          int j = i + 2;
+          for (; j < m; j++) {
+            char digit = replacement.charAt(j);
+            if (digit < '0' || digit > '9' || n * 10 + digit - '0' > groupCount) {
               break;
             }
-            n = n * 10 + c - '0';
+            n = n * 10 + digit - '0';
           }
           if (n > groupCount) {
             throw new IndexOutOfBoundsException("n > number of groups: " + n);
@@ -516,28 +525,26 @@ public final class Matcher {
           if (group != null) {
             sb.append(group);
           }
+          i = j;
           last = i;
-          i--;
-          continue;
-        } else if (c == '{') {
-          if (last < i) {
-            sb.append(replacement.substring(last, i));
-          }
-          i++; // skip {
-          int j = i + 1;
-          while (j < replacement.length()
-              && replacement.charAt(j) != '}'
-              && replacement.charAt(j) != ' ') {
+        } else if (next == '{') {
+          int j = i + 2;
+          while (j < m && replacement.charAt(j) != '}') {
             j++;
           }
-          if (j == replacement.length() || replacement.charAt(j) != '}') {
+          if (j >= m) {
             throw new IllegalArgumentException("named capture group is missing trailing '}'");
           }
-          String groupName = replacement.substring(i + 1, j);
+          String groupName = replacement.substring(i + 2, j);
           sb.append(group(groupName));
-          last = j + 1;
+          i = j + 1;
+          last = i;
+        } else {
+          throw new IllegalArgumentException("Illegal group reference");
         }
+        continue;
       }
+      i++;
     }
     if (last < m) {
       sb.append(replacement, last, m);

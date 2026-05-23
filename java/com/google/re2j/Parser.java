@@ -1344,7 +1344,7 @@ class Parser {
     bigswitch:
     switch (c) {
       default:
-        if (!Utils.isalnum(c)) {
+        if (c <= Unicode.MAX_ASCII && !Utils.isalnum(c)) {
           // Escaped non-word characters are always themselves.
           // PCRE is not quite so rigorous: it accepts things like
           // \q, but we don't.  We once rejected \_, but too many

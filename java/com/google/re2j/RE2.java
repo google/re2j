@@ -109,6 +109,7 @@ class RE2 {
   // required at start of match
   final int numSubexp;
   boolean longest;
+  boolean resolveAllGroups;
 
   String prefix; // required UTF-16 prefix in unanchored matches
   byte[] prefixUTF8; // required UTF-8 prefix in unanchored matches
@@ -135,12 +136,13 @@ class RE2 {
     this.prefixRune = re2.prefixRune;
   }
 
-  private RE2(String expr, Prog prog, int numSubexp, boolean longest) {
+  private RE2(String expr, Prog prog, int numSubexp, boolean longest, boolean resolveAllGroups) {
     this.expr = expr;
     this.prog = prog;
     this.numSubexp = numSubexp;
     this.cond = prog.startCond();
     this.longest = longest;
+    this.resolveAllGroups = resolveAllGroups;
   }
 
   /**
@@ -155,7 +157,7 @@ class RE2 {
    * backtracking. For POSIX leftmost-longest matching, see {@link #compilePOSIX}.
    */
   static RE2 compile(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, PERL, /*longest=*/ false);
+    return compileImpl(expr, PERL, /*longest=*/ false, false);
   }
 
   /**
@@ -177,16 +179,17 @@ class RE2 {
    * even well-defined. See http://swtch.com/~rsc/regexp/regexp2.html#posix
    */
   static RE2 compilePOSIX(String expr) throws PatternSyntaxException {
-    return compileImpl(expr, POSIX, /*longest=*/ true);
+    return compileImpl(expr, POSIX, /*longest=*/ true, false);
   }
 
   // Exposed to ExecTests.
-  static RE2 compileImpl(String expr, int mode, boolean longest) throws PatternSyntaxException {
+  static RE2 compileImpl(String expr, int mode, boolean longest, boolean resolveAllGroups)
+      throws PatternSyntaxException {
     Regexp re = Parser.parse(expr, mode);
     int maxCap = re.maxCap(); // (may shrink during simplify)
     re = Simplify.simplify(re);
     Prog prog = Compiler.compileRegexp(re);
-    RE2 re2 = new RE2(expr, prog, maxCap, longest);
+    RE2 re2 = new RE2(expr, prog, maxCap, longest, resolveAllGroups);
     StringBuilder prefixBuilder = new StringBuilder();
     re2.prefixComplete = prog.prefix(prefixBuilder);
     re2.prefix = prefixBuilder.toString();

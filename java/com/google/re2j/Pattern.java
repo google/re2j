@@ -50,6 +50,11 @@ public final class Pattern implements Serializable {
    */
   public static final int LONGEST_MATCH = 16;
 
+  /**
+   * Flag: match and find operations resolves all groups.
+   */
+  public static final int RESOLVE_GROUPS_MATCH = 32;
+
   // The pattern string at construction time.
   private final String pattern;
 
@@ -130,11 +135,17 @@ public final class Pattern implements Serializable {
     if ((flags & MULTILINE) != 0) {
       flregex = "(?m)" + flregex;
     }
-    if ((flags & ~(MULTILINE | DOTALL | CASE_INSENSITIVE | DISABLE_UNICODE_GROUPS | LONGEST_MATCH))
+    if ((flags
+            & ~(MULTILINE
+                | DOTALL
+                | CASE_INSENSITIVE
+                | DISABLE_UNICODE_GROUPS
+                | LONGEST_MATCH
+                | RESOLVE_GROUPS_MATCH))
         != 0) {
       throw new IllegalArgumentException(
           "Flags should only be a combination "
-              + "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS, LONGEST_MATCH");
+              + "of MULTILINE, DOTALL, CASE_INSENSITIVE, DISABLE_UNICODE_GROUPS, LONGEST_MATCH, RESOLVE_GROUPS_MATCH");
     }
     return compile(flregex, regex, flags);
   }
@@ -148,7 +159,13 @@ public final class Pattern implements Serializable {
       re2Flags &= ~RE2.UNICODE_GROUPS;
     }
     return new Pattern(
-        regex, flags, RE2.compileImpl(flregex, re2Flags, (flags & LONGEST_MATCH) != 0));
+        regex,
+        flags,
+        RE2.compileImpl(
+            flregex,
+            re2Flags,
+            ((flags & LONGEST_MATCH) != 0),
+            (flags & RESOLVE_GROUPS_MATCH) != 0));
   }
 
   /**

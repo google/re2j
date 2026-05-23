@@ -367,12 +367,21 @@ public final class Matcher {
   private boolean genMatch(int startByte, int anchor) {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
-    boolean ok = pattern.re2().match(matcherInput, startByte, inputLength, anchor, groups, 1);
+    boolean ok =
+        pattern
+            .re2()
+            .match(
+                matcherInput,
+                startByte,
+                inputLength,
+                anchor,
+                groups,
+                pattern.re2().resolveAllGroups ? 1 + groupCount : 1);
     if (!ok) {
       return false;
     }
     hasMatch = true;
-    hasGroups = false;
+    hasGroups = pattern.re2().resolveAllGroups;
     anchorFlag = anchor;
 
     return true;

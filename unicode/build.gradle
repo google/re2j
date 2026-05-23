@@ -12,6 +12,6 @@ repositories {
 dependencies {
   compile 'com.google.googlejavaformat:google-java-format:1.0'
   compile 'com.squareup:javapoet:1.12.1'
-  compile 'com.ibm.icu:icu4j:4.8.2'
+  compile 'com.ibm.icu:icu4j:60.1'
   compile 'com.google.guava:guava:29.0-jre'
 }

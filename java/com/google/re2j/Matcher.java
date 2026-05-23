@@ -523,19 +523,19 @@ public final class Matcher {
           if (last < i) {
             sb.append(replacement.substring(last, i));
           }
-          i++; // skip {
-          int j = i + 1;
-          while (j < replacement.length()
-              && replacement.charAt(j) != '}'
-              && replacement.charAt(j) != ' ') {
-            j++;
+          i += 2; // after {
+          int off = i;
+          while (i < replacement.length()
+              && replacement.charAt(i) != '}'
+              && replacement.charAt(i) != ' ') {
+            i++;
           }
-          if (j == replacement.length() || replacement.charAt(j) != '}') {
+          if (i == replacement.length() || replacement.charAt(i) != '}') {
             throw new IllegalArgumentException("named capture group is missing trailing '}'");
           }
-          String groupName = replacement.substring(i + 1, j);
+          String groupName = replacement.substring(off, i);
           sb.append(group(groupName));
-          last = j + 1;
+          last = i + 1;
         }
       }
     }

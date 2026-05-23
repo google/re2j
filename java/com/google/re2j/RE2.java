@@ -20,7 +20,6 @@
 
 package com.google.re2j;
 
-import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -292,6 +291,11 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
+    int[] cap = ncap == 0 ? Utils.EMPTY_INTS : new int[ncap];
+    return doExecute(in, pos, anchor, ncap, cap) ? cap : null;
+  }
+
+  private boolean doExecute(MachineInput in, int pos, int anchor, int ncap, int[] cap) {
     Machine m = get();
     // The Treiber stack cannot reuse nodes, unless the node to be reused has only ever been at
     // the bottom of the stack (i.e., next == null).
@@ -305,9 +309,12 @@ class RE2 {
     }
 
     m.init(ncap);
-    int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
+    boolean ok = m.match(in, pos, anchor);
+    if (ok && cap != null) {
+      m.submatches(cap);
+    }
     put(m, isNew);
-    return cap;
+    return ok;
   }
 
   /**
@@ -336,9 +343,6 @@ class RE2 {
    * @return true if a match was found
    */
   boolean match(MatcherInput input, int start, int end, int anchor, int[] group, int ngroup) {
-    if (start > end) {
-      return false;
-    }
     // TODO(afrozm): We suspect that the correct code should look something
     // like the following:
     // doExecute(MachineInput.fromUTF16(input), start, anchor, 2*ngroup);
@@ -346,20 +350,25 @@ class RE2 {
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    MachineInput machineInput =
-        input.getEncoding() == Encoding.UTF_16
-            ? MachineInput.fromUTF16(input.asCharSequence(), 0, end)
-            : MachineInput.fromUTF8(input.asBytes(), 0, end);
-    int[] groupMatch = doExecute(machineInput, start, anchor, 2 * ngroup);
+    return match(input.region(0, end), start, anchor, group, ngroup);
+  }
 
-    if (groupMatch == null) {
-      return false;
-    }
-
-    if (group != null) {
-      System.arraycopy(groupMatch, 0, group, 0, groupMatch.length);
-    }
-    return true;
+  /**
+   * Matches the regular expression against input starting at position start and ending at position
+   * end, with the given anchoring. Records the submatch boundaries in group, which is [start, end)
+   * pairs of byte offsets. The number of boundaries needed is inferred from the size of the group
+   * array. It is most efficient not to ask for submatch boundaries.
+   *
+   * @param region the input slice
+   * @param pos the position in the input to start the search
+   * @param anchor the anchoring flag (UNANCHORED, ANCHOR_START, ANCHOR_BOTH)
+   * @param group the array to fill with submatch positions
+   * @param ngroup the number of array pairs to fill in
+   * @return true if a match was found
+   */
+  boolean match(MachineInput region, int pos, int anchor, int[] group, int ngroup) {
+    return pos >= region.begPos() && pos <= region.endPos() &&
+      doExecute(region, pos, anchor, 2 * ngroup, group);
   }
 
   /**

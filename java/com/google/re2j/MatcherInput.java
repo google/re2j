@@ -6,6 +6,7 @@
  */
 package com.google.re2j;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
@@ -41,6 +42,8 @@ abstract class MatcherInput {
 
   abstract Encoding getEncoding();
 
+  abstract void appendTo(Appendable sb, int beg, int end);
+
   abstract CharSequence asCharSequence();
 
   abstract byte[] asBytes();
@@ -57,6 +60,15 @@ abstract class MatcherInput {
     @Override
     public Encoding getEncoding() {
       return Encoding.UTF_8;
+    }
+
+    @Override
+    public void appendTo(Appendable sb, int beg, int end) {
+      try {
+        sb.append(new String(bytes, beg, end - beg, "UTF-8"));
+      } catch (IOException e) {
+        throw new RuntimeException(e); // Not possible.
+      }
     }
 
     @Override
@@ -85,6 +97,15 @@ abstract class MatcherInput {
     @Override
     public Encoding getEncoding() {
       return Encoding.UTF_16;
+    }
+
+    @Override
+    public void appendTo(Appendable sb, int beg, int end) {
+      try {
+        sb.append(charSequence, beg, end);
+      } catch (IOException e) {
+        throw new RuntimeException(e); // Not possible.
+      }
     }
 
     @Override

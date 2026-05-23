@@ -393,6 +393,10 @@ public final class Matcher {
     return matcherInput.asCharSequence().subSequence(start, end).toString();
   }
 
+  void appendTo(Appendable sb, int end) {
+    matcherInput.appendTo(sb, appendPos, end);
+  }
+
   /** Helper for Pattern: return input length. */
   int inputLength() {
     return inputLength;
@@ -475,7 +479,7 @@ public final class Matcher {
     int s = start();
     int e = end();
     if (appendPos < s) {
-      sb.append(substring(appendPos, s));
+      appendTo(sb, s);
     }
     appendPos = e;
     appendReplacementInternal(sb, replacement);
@@ -489,7 +493,7 @@ public final class Matcher {
     for (; i < m - 1; i++) {
       if (replacement.charAt(i) == '\\') {
         if (last < i) {
-          sb.append(replacement.substring(last, i));
+          sb.append(replacement, last, i);
         }
         i++;
         last = i;
@@ -500,7 +504,7 @@ public final class Matcher {
         if ('0' <= c && c <= '9') {
           int n = c - '0';
           if (last < i) {
-            sb.append(replacement.substring(last, i));
+            sb.append(replacement, last, i);
           }
           for (i += 2; i < m; i++) {
             c = replacement.charAt(i);
@@ -521,7 +525,7 @@ public final class Matcher {
           continue;
         } else if (c == '{') {
           if (last < i) {
-            sb.append(replacement.substring(last, i));
+            sb.append(replacement, last, i);
           }
           i++; // skip {
           int j = i + 1;
@@ -552,7 +556,7 @@ public final class Matcher {
    * @return the argument {@code sb}, for method chaining
    */
   public StringBuffer appendTail(StringBuffer sb) {
-    sb.append(substring(appendPos, inputLength));
+    appendTo(sb, inputLength);
     return sb;
   }
 
@@ -564,7 +568,7 @@ public final class Matcher {
    * @return the argument {@code sb}, for method chaining
    */
   public StringBuilder appendTail(StringBuilder sb) {
-    sb.append(substring(appendPos, inputLength));
+    appendTo(sb, inputLength);
     return sb;
   }
 

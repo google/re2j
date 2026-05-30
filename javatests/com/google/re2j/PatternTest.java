@@ -43,6 +43,27 @@ public class PatternTest {
   }
 
   @Test
+  public void testCompileCaseInsensitiveUnicodeOrbit() {
+    String cyrillicSmallLetterRoundedVe = "\u1C80";
+    String cyrillicCapitalLetterVe = "\u0412";
+    String deseretCapitalLetterLongI = "\uD801\uDC00";
+    String deseretSmallLetterLongI = "\uD801\uDC28";
+
+    assertTrue(
+        Pattern.compile("(?i)" + cyrillicSmallLetterRoundedVe)
+            .matcher(cyrillicCapitalLetterVe)
+            .matches());
+    assertTrue(
+        Pattern.compile("(?i)[" + cyrillicSmallLetterRoundedVe + "]")
+            .matcher(cyrillicCapitalLetterVe)
+            .matches());
+    assertTrue(
+        Pattern.compile("(?i)" + deseretCapitalLetterLongI)
+            .matcher(deseretSmallLetterLongI)
+            .matches());
+  }
+
+  @Test
   public void testCompileExceptionWithDuplicateGroups() {
     try {
       Pattern.compile("(?P<any>.*)(?P<any>.*");

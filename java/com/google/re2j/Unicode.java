@@ -107,19 +107,14 @@ class Unicode {
   // Derived from Go's unicode.SimpleFold.
   //
   static int simpleFold(int r) {
-    // Consult caseOrbit table for special cases.
-    if (r < UnicodeTables.CASE_ORBIT.length && UnicodeTables.CASE_ORBIT[r] != 0) {
-      return UnicodeTables.CASE_ORBIT[r];
+    // Consult caseOrbit table.
+    if (r < UnicodeTables.CASE_ORBIT.length << 8) {
+      int[] page = UnicodeTables.CASE_ORBIT[r >> 8];
+      if (page != null && page[r & 0xff] != 0) {
+        return page[r & 0xff];
+      }
     }
-
-    // No folding specified.  This is a one- or two-element
-    // equivalence class containing rune and toLower(rune)
-    // and toUpper(rune) if they are different from rune.
-    int l = Characters.toLowerCase(r);
-    if (l != r) {
-      return l;
-    }
-    return Characters.toUpperCase(r);
+    return r;
   }
 
   // equalsIgnoreCase performs case-insensitive equality comparison

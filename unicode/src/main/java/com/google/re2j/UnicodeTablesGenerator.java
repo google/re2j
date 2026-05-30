@@ -106,18 +106,25 @@ public class UnicodeTablesGenerator {
       scriptRange.add(i);
     }
 
-    // Emit code fold orbits. In order to avoid a binary search at runtime, this code emits a sparse
-    // array of codepoint to the next codepoint in a case folding orbit, e.g.
+    // Emit code fold orbits. In order to avoid a binary search at runtime, this code emits sparse
+    // pages from codepoint to the next codepoint in a case folding orbit, e.g.
     // k -> K -> K (Kelvin) -> k.
     {
       FieldSpec.Builder caseOrbitField =
-          FieldSpec.builder(char[].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
+          FieldSpec.builder(int[][].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
       CodeBlock.Builder staticInitBlock = CodeBlock.builder();
-      staticInitBlock.addStatement("CASE_ORBIT = new char[$L]", sortedOrbits.lastKey() + 1);
+      staticInitBlock.addStatement("CASE_ORBIT = new int[$L][]", (sortedOrbits.lastKey() >> 8) + 1);
+      int lastPage = -1;
       for (Map.Entry<Integer, Integer> entry : sortedOrbits.entrySet()) {
+        int page = entry.getKey() >> 8;
+        if (page != lastPage) {
+          staticInitBlock.addStatement("CASE_ORBIT[0x$L] = new int[256]", Integer.toHexString(page));
+          lastPage = page;
+        }
         staticInitBlock.addStatement(
-            "CASE_ORBIT[0x$L] = 0x$L",
-            Integer.toHexString(entry.getKey()),
+            "CASE_ORBIT[0x$L][0x$L] = 0x$L",
+            Integer.toHexString(page),
+            Integer.toHexString(entry.getKey() & 0xff),
             Integer.toHexString(entry.getValue()));
       }
       unicodeTables.addField(caseOrbitField.build());
@@ -322,20 +329,8 @@ public class UnicodeTablesGenerator {
 
     for (int i = 0; i < UCharacter.MAX_CODE_POINT; i++) {
       SortedSet<Integer> orb = orbits.get(i);
-      int u = UCharacter.toUpperCase(i);
-      int l = UCharacter.toLowerCase(i);
-
-      if (orb.size() == 1 && u == i && l == i) {
+      if (orb.size() == 1) {
         orbits.removeAll(i);
-      } else if (orb.size() == 2) {
-        int first = orb.first();
-        int second = orb.last();
-        if (UCharacter.toLowerCase(first) == second && UCharacter.toUpperCase(second) == first) {
-          orbits.removeAll(i);
-        }
-        if (UCharacter.toUpperCase(first) == second && UCharacter.toLowerCase(second) == first) {
-          orbits.removeAll(i);
-        }
       }
     }
 

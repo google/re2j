@@ -35,6 +35,17 @@ public class UnicodeTest {
   }
 
   @Test
+  public void testSimpleFoldOrbitsClose() {
+    for (int r = 0; r <= Unicode.MAX_RUNE; r++) {
+      int folded = Unicode.simpleFold(r);
+      for (int steps = 0; folded != r; steps++) {
+        assertTrue(String.format("simpleFold orbit for #%04X did not close", r), steps < 16);
+        folded = Unicode.simpleFold(folded);
+      }
+    }
+  }
+
+  @Test
   public void testEqualsIgnoreCase() {
     List<EqualsIgnoreCaseTest> testCases = new ArrayList<EqualsIgnoreCaseTest>();
 
@@ -51,6 +62,8 @@ public class UnicodeTest {
     testCases.add(new EqualsIgnoreCaseTest('Ú', 'ú', true));
     testCases.add(new EqualsIgnoreCaseTest('\u212A', 'K', true));
     testCases.add(new EqualsIgnoreCaseTest('\u212A', 'k', true));
+    testCases.add(new EqualsIgnoreCaseTest('\u1C80', '\u0412', true));
+    testCases.add(new EqualsIgnoreCaseTest(0x10400, 0x10428, true));
 
     testCases.add(new EqualsIgnoreCaseTest('\u212A', 'a', false));
     testCases.add(new EqualsIgnoreCaseTest('ü', 'ű', false));

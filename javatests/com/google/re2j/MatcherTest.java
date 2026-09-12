@@ -524,4 +524,23 @@ public class MatcherTest {
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
     }
   }
+
+  @Test
+  public void testSurrogatePairInteriorNoMatch() {
+    // A pattern whose literal prefix is a lone low surrogate should not match
+    // inside a valid surrogate pair (issue #207).
+    assertFalse(Pattern.compile("\uDC21").matcher("a\uD801\uDC21b").find());
+    assertFalse(Pattern.compile("\uDC21|\uDC22").matcher("a\uD801\uDC21b").find());
+    assertFalse(Pattern.compile("[\uD800-\uDFFF]").matcher("a\uD801\uDC21b").find());
+
+    // Search must skip the interior hit and resume to find an isolated low surrogate:
+    Matcher m = Pattern.compile("\uDC21").matcher("\uD801\uDC21\uDC21");
+    assertTrue(m.find());
+    assertEquals(2, m.start());
+    assertEquals(3, m.end());
+
+    // StringBuilder CharSequence input should also behave identically:
+    Matcher mSb = Pattern.compile("\uDC21").matcher(new StringBuilder("a\uD801\uDC21b"));
+    assertFalse(mSb.find());
+  }
 }

@@ -200,9 +200,18 @@ abstract class MachineInput {
 
     @Override
     int index(RE2 re2, int pos) {
-      pos += start;
-      int i = indexOf(str, re2.prefix, pos);
-      return i < 0 ? i : i - pos;
+      int p = pos + start;
+      while (true) {
+        int i = indexOf(str, re2.prefix, p);
+        if (i < 0) {
+          return -1;
+        }
+        if (i > 0 && Character.isLowSurrogate(str.charAt(i)) && Character.isHighSurrogate(str.charAt(i - 1))) {
+          p = i + 1;
+          continue;
+        }
+        return i - (pos + start);
+      }
     }
 
     @Override

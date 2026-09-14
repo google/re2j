@@ -85,6 +85,8 @@ dependencies {
   errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
   errorprone 'com.google.errorprone:error_prone_core:2.10.0'
 
+  implementation 'org.jspecify:jspecify:1.0.1'
+
   testCompile 'junit:junit:4.12'
   testCompile 'com.google.gwt:gwt-dev:2.9.0'
   testCompile 'com.google.gwt:gwt-user:2.9.0'

@@ -6,11 +6,14 @@
  */
 package com.google.re2j;
 
+import org.jspecify.annotations.NullMarked;
+
 /**
  * An exception thrown by the parser if the pattern was invalid.
  *
  * Following {@code java.util.regex.PatternSyntaxException}, this is an unchecked exception.
  */
+@NullMarked
 public class PatternSyntaxException extends RuntimeException {
 
   private final String error; // the nature of the error

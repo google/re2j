@@ -294,7 +294,8 @@ class Regexp {
         break;
       case LITERAL:
       case CHAR_CLASS:
-        hashcode += 31 * Arrays.hashCode(runes);
+        // FoldCase in the hash too — equals() now compares it (see there).
+        hashcode += 31 * Arrays.hashCode(runes) + (flags & RE2.FOLD_CASE);
         break;
       case ALTERNATE:
       case CONCAT:
@@ -335,7 +336,15 @@ class Regexp {
         break;
       case LITERAL:
       case CHAR_CLASS:
-        if (!Arrays.equals(x.runes, y.runes)) {
+        // FoldCase must participate in equality: alternation factoring
+        // (Parser.factor round 1) merges arms by equals(), and a folded
+        // literal must never factor with its case-sensitive twin — the
+        // factored prefix would carry the fold into arms that never asked
+        // for it. (?i:Z)x|Z matched lowercase "z" via the case-sensitive
+        // arm. Go's regexp/syntax compares Flags&FoldCase here; the port
+        // dropped it.
+        if ((x.flags & RE2.FOLD_CASE) != (y.flags & RE2.FOLD_CASE)
+            || !Arrays.equals(x.runes, y.runes)) {
           return false;
         }
         break;

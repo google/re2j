@@ -115,11 +115,24 @@ class Unicode {
     // No folding specified.  This is a one- or two-element
     // equivalence class containing rune and toLower(rune)
     // and toUpper(rune) if they are different from rune.
+    // A mapping is only followed when the partner maps back: every walk
+    // that consults simpleFold (class-range folding, literal
+    // canonicalization, case-insensitive comparison) assumes its
+    // next-pointer graph cycles back to the walk's start, which holds
+    // only for symmetric pairs.  Runes whose asymmetric case mappings
+    // postdate the table's Unicode version (e.g. U+1C80..U+1C88, Cyrillic
+    // historic letters, Unicode 9.0 vs tables at 6.0) would otherwise
+    // step into the partner's own orbit and never cycle back, hanging
+    // Pattern.compile; those runes are fold-inert instead.
     int l = Characters.toLowerCase(r);
-    if (l != r) {
+    if (l != r && Characters.toUpperCase(l) == r) {
       return l;
     }
-    return Characters.toUpperCase(r);
+    int u = Characters.toUpperCase(r);
+    if (u != r && Characters.toLowerCase(u) == r) {
+      return u;
+    }
+    return r;
   }
 
   // equalsIgnoreCase performs case-insensitive equality comparison

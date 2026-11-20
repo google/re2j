@@ -9,6 +9,8 @@ package com.google.re2j;
 import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a specific input. Its interface
@@ -38,6 +40,7 @@ import java.util.Map;
  *
  * @author rsc@google.com (Russ Cox)
  */
+@NullMarked
 public final class Matcher {
   // The pattern being matched.
   private final Pattern pattern;
@@ -53,6 +56,7 @@ public final class Matcher {
   // The number of instructions in the pattern.
   private final int numberOfInstructions;
 
+  @SuppressWarnings("nullness:initialization.field.uninitialized")
   private MatcherInput matcherInput;
 
   // The input length in UTF16 codes.
@@ -242,7 +246,7 @@ public final class Matcher {
    * @throws IllegalStateException if there is no match
    * @throws IndexOutOfBoundsException if {@code group < 0} or {@code group > groupCount()}
    */
-  public String group(int group) {
+  public @Nullable String group(int group) {
     int start = start(group);
     int end = end(group);
     if (start < 0 && end < 0) {
@@ -258,7 +262,7 @@ public final class Matcher {
    * @param group the group name
    * @throws IllegalArgumentException if no group with that name exists
    */
-  public String group(String group) {
+  public @Nullable String group(String group) {
     Integer g = namedGroups.get(group);
     if (g == null) {
       throw new IllegalArgumentException("group '" + group + "' not found");

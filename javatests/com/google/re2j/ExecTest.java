@@ -567,7 +567,7 @@ public class ExecTest {
 
         RE2 re = null;
         try {
-          re = RE2.compileImpl(pattern, flags, true);
+          re = RE2.compileImpl(pattern, flags, true, false);
         } catch (PatternSyntaxException e) {
           if (shouldCompileMatch[0]) {
             System.err.format("%s:%d: %s did not compile\n", file, lineno, pattern);

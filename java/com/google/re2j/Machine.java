@@ -156,11 +156,8 @@ class Machine {
     this.matchcap = new int[ncap];
   }
 
-  int[] submatches() {
-    if (ncap == 0) {
-      return Utils.EMPTY_INTS;
-    }
-    return Arrays.copyOf(matchcap, ncap);
+  void submatches(int[] cap) {
+    System.arraycopy(matchcap, 0, cap, 0, Math.min(cap.length, ncap));
   }
 
   // alloc() allocates a new thread with the given instruction.
@@ -217,7 +214,7 @@ class Machine {
     if (startCond == Utils.EMPTY_ALL) { // impossible
       return false;
     }
-    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) && pos != 0) {
+    if ((anchor == RE2.ANCHOR_START || anchor == RE2.ANCHOR_BOTH) && pos != in.begPos()) {
       return false;
     }
     matched = false;
@@ -234,7 +231,7 @@ class Machine {
       width1 = r & 7;
     }
     int flag; // bitmask of EMPTY_* flags
-    if (pos == 0) {
+    if (pos == in.begPos()) {
       flag = Utils.emptyOpContext(-1, rune);
     } else {
       flag = in.context(pos);
@@ -242,7 +239,7 @@ class Machine {
     for (; ; ) {
 
       if (runq.isEmpty()) {
-        if ((startCond & Utils.EMPTY_BEGIN_TEXT) != 0 && pos != 0) {
+        if ((startCond & Utils.EMPTY_BEGIN_TEXT) != 0 && pos != in.begPos()) {
           // Anchored match, past beginning of text.
           break;
         }
@@ -265,7 +262,7 @@ class Machine {
           width1 = r & 7;
         }
       }
-      if (!matched && (pos == 0 || anchor == RE2.UNANCHORED)) {
+      if (!matched && (pos == in.begPos() || anchor == RE2.UNANCHORED)) {
         // If we are anchoring at begin then only add threads that begin
         // at |pos| = 0.
         if (ncap > 0) {

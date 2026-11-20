@@ -158,9 +158,9 @@ abstract class Utils {
 
   // isWordRune reports whether r is consider a ``word character''
   // during the evaluation of the \b and \B zero-width assertions.
-  // These assertions are ASCII-only: the word characters are [A-Za-z0-9_].
+  // These assertions are unicode compliant: the word characters are [\p{L}0-9_].
   static boolean isWordRune(int r) {
-    return (('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z') || ('0' <= r && r <= '9') || r == '_');
+    return (Unicode.isLetter(r) || ('0' <= r && r <= '9') || r == '_');
   }
 
   //// EMPTY_* flags

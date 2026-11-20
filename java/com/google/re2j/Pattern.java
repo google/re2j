@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A compiled representation of an RE2 regular expression, mimicking the
@@ -27,6 +29,7 @@ import java.util.Map;
  *
  * @author rsc@google.com (Russ Cox)
  */
+@NullMarked
 public final class Pattern implements Serializable {
   /** Flag: case insensitive matching. */
   public static final int CASE_INSENSITIVE = 1;
@@ -339,7 +342,7 @@ public final class Pattern implements Serializable {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }

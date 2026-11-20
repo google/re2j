@@ -599,6 +599,7 @@ public class MatcherTest {
     }
   }
 
+  @Test
   public void testStateResetOnFailure() {
     {
       Matcher m = Pattern.compile("abc").matcher("abc");

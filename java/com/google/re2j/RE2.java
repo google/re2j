@@ -292,6 +292,11 @@ class RE2 {
   // the position of its subexpressions.
   // Derived from exec.go.
   private int[] doExecute(MachineInput in, int pos, int anchor, int ncap) {
+    int[] cap = ncap == 0 ? Utils.EMPTY_INTS : new int[ncap];
+    return doExecute(in, pos, anchor, ncap, cap) ? cap : null;
+  }
+
+  private boolean doExecute(MachineInput in, int pos, int anchor, int ncap, int[] cap) {
     Machine m = get();
     // The Treiber stack cannot reuse nodes, unless the node to be reused has only ever been at
     // the bottom of the stack (i.e., next == null).
@@ -305,9 +310,12 @@ class RE2 {
     }
 
     m.init(ncap);
-    int[] cap = m.match(in, pos, anchor) ? m.submatches() : null;
+    boolean ok = m.match(in, pos, anchor);
+    if (ok && cap != null) {
+      m.submatches(cap);
+    }
     put(m, isNew);
-    return cap;
+    return ok;
   }
 
   /**
@@ -350,16 +358,7 @@ class RE2 {
         input.getEncoding() == Encoding.UTF_16
             ? MachineInput.fromUTF16(input.asCharSequence(), 0, end)
             : MachineInput.fromUTF8(input.asBytes(), 0, end);
-    int[] groupMatch = doExecute(machineInput, start, anchor, 2 * ngroup);
-
-    if (groupMatch == null) {
-      return false;
-    }
-
-    if (group != null) {
-      System.arraycopy(groupMatch, 0, group, 0, groupMatch.length);
-    }
-    return true;
+    return doExecute(machineInput, start, anchor, 2 * ngroup, group);
   }
 
   /**

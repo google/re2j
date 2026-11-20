@@ -144,7 +144,7 @@ abstract class MachineInput {
       int r1 = -1;
       if (pos > this.start && pos <= this.end) {
         int start = pos - 1;
-        r1 = b[start--];
+        r1 = b[start--] & 0xFF; // convert to unsigned byte
         if (r1 >= 0x80) { // decode UTF-8
           // Find start, up to 4 bytes earlier.
           int lim = pos - 4;

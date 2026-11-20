@@ -10,6 +10,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -535,40 +536,21 @@ public class MatcherTest {
       StringBuilder sb = new StringBuilder();
 
       // Test invalid group references
-      try {
-        m.appendReplacement(sb, "$foo");
-        fail("Should have thrown IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-        assertThat(e).hasMessageThat().contains("Illegal group reference");
-      }
-      try {
-        m.appendReplacement(sb, "foo$");
-        fail("Should have thrown IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-        assertThat(e).hasMessageThat().contains("Illegal group reference");
-      }
-      try {
-        m.appendReplacement(sb, "foo$$bar");
-        fail("Should have thrown IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-        assertThat(e).hasMessageThat().contains("Illegal group reference");
-      }
+      IllegalArgumentException e =
+          assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "$foo"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$$bar"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
 
       // Test invalid escapes
-      try {
-        m.appendReplacement(sb, "foo\\");
-        fail("Should have thrown IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-        assertThat(e).hasMessageThat().contains("character to be escaped is missing");
-      }
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo\\"));
+      assertThat(e).hasMessageThat().contains("character to be escaped is missing");
 
       // Test invalid named group syntax
-      try {
-        m.appendReplacement(sb, "foo${bar");
-        fail("Should have thrown IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-        assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
-      }
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo${bar"));
+      assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
     }
 
     {
@@ -601,45 +583,23 @@ public class MatcherTest {
 
   @Test
   public void testStateResetOnFailure() {
-    {
-      Matcher m = Pattern.compile("abc").matcher("abc");
-      assertTrue(m.find());
-      assertEquals("abc", m.group());
+    Matcher m = Pattern.compile("abc").matcher("abc");
+    assertTrue(m.find());
+    assertEquals("abc", m.group());
 
-      // Subsequent find() fails
-      assertFalse(m.find());
-      try {
-        m.group();
-        fail("Should have thrown IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // Expected
-      }
-      try {
-        m.start();
-        fail("Should have thrown IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // Expected
-      }
-      try {
-        m.end();
-        fail("Should have thrown IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // Expected
-      }
-    }
+    // Subsequent find() fails
+    assertFalse(m.find());
+    assertThrows(IllegalStateException.class, () -> m.group());
+    assertThrows(IllegalStateException.class, () -> m.start());
+    assertThrows(IllegalStateException.class, () -> m.end());
+  }
 
-    {
-      // Test matches() then find()
-      Matcher m = Pattern.compile("([1-5][0-9]{2})-([1-5][0-9]{2})").matcher("201-299");
-      assertTrue(m.matches());
-      assertEquals("201-299", m.group());
-      assertFalse(m.find()); // should fail
-      try {
-        m.group(1);
-        fail("Should have thrown IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // Expected
-      }
-    }
+  @Test
+  public void testMatchesThenFind() {
+    Matcher m = Pattern.compile("([1-5][0-9]{2})-([1-5][0-9]{2})").matcher("201-299");
+    assertTrue(m.matches());
+    assertEquals("201-299", m.group());
+    assertFalse(m.find()); // should fail
+    assertThrows(IllegalStateException.class, () -> m.group(1));
   }
 }

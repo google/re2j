@@ -524,4 +524,48 @@ public class MatcherTest {
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
     }
   }
+
+  @Test
+  public void testStateResetOnFailure() {
+    {
+      Matcher m = Pattern.compile("abc").matcher("abc");
+      assertTrue(m.find());
+      assertEquals("abc", m.group());
+
+      // Subsequent find() fails
+      assertFalse(m.find());
+      try {
+        m.group();
+        fail("Should have thrown IllegalStateException");
+      } catch (IllegalStateException expected) {
+        // Expected
+      }
+      try {
+        m.start();
+        fail("Should have thrown IllegalStateException");
+      } catch (IllegalStateException expected) {
+        // Expected
+      }
+      try {
+        m.end();
+        fail("Should have thrown IllegalStateException");
+      } catch (IllegalStateException expected) {
+        // Expected
+      }
+    }
+
+    {
+      // Test matches() then find()
+      Matcher m = Pattern.compile("([1-5][0-9]{2})-([1-5][0-9]{2})").matcher("201-299");
+      assertTrue(m.matches());
+      assertEquals("201-299", m.group());
+      assertFalse(m.find()); // should fail
+      try {
+        m.group(1);
+        fail("Should have thrown IllegalStateException");
+      } catch (IllegalStateException expected) {
+        // Expected
+      }
+    }
+  }
 }

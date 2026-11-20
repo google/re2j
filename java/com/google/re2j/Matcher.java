@@ -9,6 +9,8 @@ package com.google.re2j;
 import com.google.re2j.MatcherInput.Encoding;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A stateful iterator that interprets a regex {@code Pattern} on a specific input. Its interface
@@ -38,6 +40,7 @@ import java.util.Map;
  *
  * @author rsc@google.com (Russ Cox)
  */
+@NullMarked
 public final class Matcher {
   // The pattern being matched.
   private final Pattern pattern;
@@ -53,6 +56,7 @@ public final class Matcher {
   // The number of instructions in the pattern.
   private final int numberOfInstructions;
 
+  @SuppressWarnings("nullness:initialization.field.uninitialized")
   private MatcherInput matcherInput;
 
   // The input length in UTF16 codes.
@@ -242,7 +246,7 @@ public final class Matcher {
    * @throws IllegalStateException if there is no match
    * @throws IndexOutOfBoundsException if {@code group < 0} or {@code group > groupCount()}
    */
-  public String group(int group) {
+  public @Nullable String group(int group) {
     int start = start(group);
     int end = end(group);
     if (start < 0 && end < 0) {
@@ -258,7 +262,7 @@ public final class Matcher {
    * @param group the group name
    * @throws IllegalArgumentException if no group with that name exists
    */
-  public String group(String group) {
+  public @Nullable String group(String group) {
     Integer g = namedGroups.get(group);
     if (g == null) {
       throw new IllegalArgumentException("group '" + group + "' not found");
@@ -369,6 +373,7 @@ public final class Matcher {
     // From the JDK docs, looks like no.
     boolean ok = pattern.re2().match(matcherInput, startByte, inputLength, anchor, groups, 1);
     if (!ok) {
+      hasMatch = false;
       return false;
     }
     hasMatch = true;
@@ -486,28 +491,37 @@ public final class Matcher {
     int last = 0;
     int i = 0;
     int m = replacement.length();
-    for (; i < m - 1; i++) {
-      if (replacement.charAt(i) == '\\') {
+    while (i < m) {
+      char c = replacement.charAt(i);
+      if (c == '\\') {
         if (last < i) {
           sb.append(replacement.substring(last, i));
         }
         i++;
+        if (i == m) {
+          throw new IllegalArgumentException("character to be escaped is missing");
+        }
         last = i;
+        i++;
         continue;
       }
-      if (replacement.charAt(i) == '$') {
-        int c = replacement.charAt(i + 1);
-        if ('0' <= c && c <= '9') {
-          int n = c - '0';
-          if (last < i) {
-            sb.append(replacement.substring(last, i));
-          }
-          for (i += 2; i < m; i++) {
-            c = replacement.charAt(i);
-            if (c < '0' || c > '9' || n * 10 + c - '0' > groupCount) {
+      if (c == '$') {
+        if (last < i) {
+          sb.append(replacement, last, i);
+        }
+        if (i + 1 >= m) {
+          throw new IllegalArgumentException("Illegal group reference: group index is missing");
+        }
+        char next = replacement.charAt(i + 1);
+        if ('0' <= next && next <= '9') {
+          int n = next - '0';
+          int j = i + 2;
+          for (; j < m; j++) {
+            char digit = replacement.charAt(j);
+            if (digit < '0' || digit > '9' || n * 10 + digit - '0' > groupCount) {
               break;
             }
-            n = n * 10 + c - '0';
+            n = n * 10 + digit - '0';
           }
           if (n > groupCount) {
             throw new IndexOutOfBoundsException("n > number of groups: " + n);
@@ -516,28 +530,26 @@ public final class Matcher {
           if (group != null) {
             sb.append(group);
           }
+          i = j;
           last = i;
-          i--;
-          continue;
-        } else if (c == '{') {
-          if (last < i) {
-            sb.append(replacement.substring(last, i));
-          }
-          i++; // skip {
-          int j = i + 1;
-          while (j < replacement.length()
-              && replacement.charAt(j) != '}'
-              && replacement.charAt(j) != ' ') {
+        } else if (next == '{') {
+          int j = i + 2;
+          while (j < m && replacement.charAt(j) != '}') {
             j++;
           }
-          if (j == replacement.length() || replacement.charAt(j) != '}') {
+          if (j >= m) {
             throw new IllegalArgumentException("named capture group is missing trailing '}'");
           }
-          String groupName = replacement.substring(i + 1, j);
+          String groupName = replacement.substring(i + 2, j);
           sb.append(group(groupName));
-          last = j + 1;
+          i = j + 1;
+          last = i;
+        } else {
+          throw new IllegalArgumentException("Illegal group reference");
         }
+        continue;
       }
+      i++;
     }
     if (last < m) {
       sb.append(replacement, last, m);

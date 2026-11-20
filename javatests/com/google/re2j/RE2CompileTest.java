@@ -52,7 +52,10 @@ public class RE2CompileTest {
       {"a*+", "invalid nested repetition operator: `*+`"},
       {"\\x", "invalid escape sequence: `\\x`"},
       {"\\p", "invalid character class range: `\\p`"},
-      {"\\p{", "invalid character class range: `\\p{`"}
+      {"\\p{", "invalid character class range: `\\p{`"},
+      {"(?:(?:(?:a){1000}){1000}){1000}", "expression too large"},
+      {"(?:(?:a{1000}){1000})", "expression too large"},
+      {"(?:a{1000}){100}", null}
     };
   }
 

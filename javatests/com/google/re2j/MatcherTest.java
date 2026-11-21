@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.truth.Truth;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -601,5 +602,47 @@ public class MatcherTest {
     assertEquals("201-299", m.group());
     assertFalse(m.find()); // should fail
     assertThrows(IllegalStateException.class, () -> m.group(1));
+  }
+
+  @Test
+  public void testUtf8ContextAfterMultibyteRunes() {
+    // 2-byte (U+00E9), 3-byte (U+20AC), and 4-byte (U+10348) UTF-8 sequences: trailing bytes >=
+    // 0x80 are negative as signed Java bytes and must not be treated as r1 < 0 (start of text/line)
+    // in MachineInput.UTF8Input.context.
+    for (String prefix : new String[] {"\u00e9", "\u20ac", "\ud800\udf48"}) {
+      byte[] prefixBytes = prefix.getBytes(StandardCharsets.UTF_8);
+      byte[] utf8 = (prefix + "foo").getBytes(StandardCharsets.UTF_8);
+
+      assertFalse(Pattern.compile("(?m)^foo").matcher(utf8).find());
+      assertFalse(Pattern.compile(prefix + "\\Afoo").matcher(utf8).find());
+      assertFalse(Pattern.compile("^foo|zzz").matcher(utf8).find(prefixBytes.length));
+      assertFalse(Pattern.compile("\\Bfoo").matcher(utf8).find());
+
+      Matcher wordBoundary = Pattern.compile("\\bfoo").matcher(utf8);
+      assertTrue(wordBoundary.find());
+      assertEquals(prefixBytes.length, wordBoundary.start());
+
+      byte[] utf8WithNewline = (prefix + "\nfoo").getBytes(StandardCharsets.UTF_8);
+      Matcher afterNewline = Pattern.compile("(?m)^foo").matcher(utf8WithNewline);
+      assertTrue(afterNewline.find());
+      assertEquals(prefixBytes.length + 1, afterNewline.start());
+    }
+
+    String sample = "a\u00e9\u20ac\ud800\udf48\nz";
+    MachineInput utf16In = MachineInput.fromUTF16(sample);
+    MachineInput utf8In = MachineInput.fromUTF8(sample.getBytes(StandardCharsets.UTF_8));
+    int bytePos = 0;
+    for (int charPos = 0; charPos <= sample.length(); ) {
+      assertEquals(
+          "context mismatch at charPos=" + charPos + ", bytePos=" + bytePos,
+          utf16In.context(charPos),
+          utf8In.context(bytePos));
+      if (charPos == sample.length()) {
+        break;
+      }
+      int cp = Character.codePointAt(sample, charPos);
+      charPos += Character.charCount(cp);
+      bytePos += new String(Character.toChars(cp)).getBytes(StandardCharsets.UTF_8).length;
+    }
   }
 }

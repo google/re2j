@@ -74,6 +74,35 @@ public class CaseFoldTerminationTest {
   }
 
   @Test
+  public void runesAboveMaxFoldStayConsistentAcrossLiteralsAndClasses() {
+    // Adlam capital/small Alif (U+1E900 / U+1E922, added in Unicode 9.0) form a symmetric
+    // pair above MAX_FOLD (0x1044F). CharClass.appendFoldedRange skips folding above MAX_FOLD,
+    // so simpleFold must also leave them fold-inert to keep literals and character classes
+    // consistent.
+    String adlamCapitalAlif = new String(Character.toChars(0x1E900));
+    String adlamSmallAlif = new String(Character.toChars(0x1E922));
+    assertTrue(matcher("(?i)" + adlamCapitalAlif, adlamCapitalAlif).matches());
+    assertTrue(matcher("(?i)[" + adlamCapitalAlif + "]", adlamCapitalAlif).matches());
+    assertFalse(matcher("(?i)" + adlamCapitalAlif, adlamSmallAlif).matches());
+    assertFalse(matcher("(?i)[" + adlamCapitalAlif + "]", adlamSmallAlif).matches());
+    assertFalse(matcher("(?i)" + adlamSmallAlif, adlamCapitalAlif).matches());
+    assertFalse(matcher("(?i)[" + adlamSmallAlif + "]", adlamCapitalAlif).matches());
+  }
+
+  @Test
+  public void allSimpleFoldOrbitsClose() {
+    for (int r = 0; r <= Unicode.MAX_RUNE; r++) {
+      int f = Unicode.simpleFold(r);
+      int steps = 0;
+      while (f != r && steps < 16) {
+        f = Unicode.simpleFold(f);
+        steps++;
+      }
+      assertTrue("Unclosed simpleFold orbit starting at U+" + Integer.toHexString(r), f == r);
+    }
+  }
+
+  @Test
   public void matchTimeFoldComparisonTerminates() {
     // equalsIgnoreCase walks the same orbit graph at match time.
     assertTrue(matcher("(?i)\u0442", "\u0442").find());

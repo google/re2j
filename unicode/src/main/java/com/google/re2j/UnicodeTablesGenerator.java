@@ -363,7 +363,7 @@ public class UnicodeTablesGenerator {
     for (int codepoint : codepointClass) {
       if (!sortedOrbits.containsKey(codepoint)) {
         // Just uppercase and lowercase.
-        int u = UCharacter.toLowerCase(codepoint);
+        int u = UCharacter.toUpperCase(codepoint);
         if (u != codepoint) {
           exceptionCodepoints.add(u);
         }

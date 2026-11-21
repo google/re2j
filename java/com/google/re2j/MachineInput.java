@@ -201,8 +201,27 @@ abstract class MachineInput {
     @Override
     int index(RE2 re2, int pos) {
       pos += start;
+      // A raw indexOf hit can land on the low half of a well-formed surrogate
+      // pair (only when the needle starts with a low-surrogate unit).  Such a
+      // position is not a codepoint boundary: step() would decode the lone
+      // low unit as a rune and a lone-low pattern could match into the pair
+      // interior, inconsistently with range classes (which have no literal
+      // prefix and therefore never reach interior positions).  Skip interior
+      // hits and keep searching -- but honor the explicitly given search
+      // start as-is: Matcher.find(int) handed a pair-interior position
+      // matches AT it (java.util.regex parity), so only hits strictly beyond
+      // the start are scan hits subject to the boundary rule.
       int i = indexOf(str, re2.prefix, pos);
+      while (i >= 0 && i > pos && isPairInterior(i)) {
+        i = indexOf(str, re2.prefix, i + 1);
+      }
       return i < 0 ? i : i - pos;
+    }
+
+    private boolean isPairInterior(int i) {
+      return i > start
+          && Character.isLowSurrogate(str.charAt(i))
+          && Character.isHighSurrogate(str.charAt(i - 1));
     }
 
     @Override

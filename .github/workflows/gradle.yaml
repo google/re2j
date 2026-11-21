@@ -2,12 +2,13 @@ name: Java CI
 
 on: [pull_request, push]
 
-permissions:
-  contents: read #  to fetch code (actions/checkout)
+permissions: {}
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # to fetch code (actions/checkout)
     strategy:
       fail-fast: false
       matrix:
@@ -37,3 +38,12 @@ jobs:
         env:
           TEST_JAVA_HOME: ${{ steps.test-jdk.outputs.path }}
         run: ./gradlew check -PtestJavaHome="${TEST_JAVA_HOME}"
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check matrix results
+        if: needs.test.result != 'success'
+        run: exit 1

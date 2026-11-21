@@ -6,9 +6,11 @@
  */
 package com.google.re2j;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -523,5 +525,81 @@ public class MatcherTest {
       assertTrue(matcher.find());
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
     }
+  }
+
+  @Test
+  public void testAppendReplacementValidation() {
+    Matcher m = Pattern.compile("ab").matcher("ab");
+    assertTrue(m.find());
+
+    {
+      StringBuilder sb = new StringBuilder();
+
+      // Test invalid group references
+      IllegalArgumentException e =
+          assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "$foo"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$$bar"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+
+      // Test invalid escapes
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo\\"));
+      assertThat(e).hasMessageThat().contains("character to be escaped is missing");
+
+      // Test invalid named group syntax
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo${bar"));
+      assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
+    }
+
+    {
+      // Test valid cases to ensure we didn't break them
+      StringBuilder sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\$bar");
+      assertEquals("foo$bar", sb.toString());
+
+      m.reset();
+      assertTrue(m.find());
+      sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\\\bar");
+      assertEquals("foo\\bar", sb.toString());
+
+      // Test valid group references
+      Matcher m2 = Pattern.compile("(?<groupName>ab)").matcher("ab");
+      assertTrue(m2.find());
+
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo$1bar");
+      assertEquals("fooabbar", sb.toString());
+
+      m2.reset();
+      assertTrue(m2.find());
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo${groupName}bar");
+      assertEquals("fooabbar", sb.toString());
+    }
+  }
+
+  @Test
+  public void testStateResetOnFailure() {
+    Matcher m = Pattern.compile("abc").matcher("abc");
+    assertTrue(m.find());
+    assertEquals("abc", m.group());
+
+    // Subsequent find() fails
+    assertFalse(m.find());
+    assertThrows(IllegalStateException.class, () -> m.group());
+    assertThrows(IllegalStateException.class, () -> m.start());
+    assertThrows(IllegalStateException.class, () -> m.end());
+  }
+
+  @Test
+  public void testMatchesThenFind() {
+    Matcher m = Pattern.compile("([1-5][0-9]{2})-([1-5][0-9]{2})").matcher("201-299");
+    assertTrue(m.matches());
+    assertEquals("201-299", m.group());
+    assertFalse(m.find()); // should fail
+    assertThrows(IllegalStateException.class, () -> m.group(1));
   }
 }

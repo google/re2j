@@ -10,6 +10,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -19,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import java.util.Collections;
 import java.util.Map;
 import org.junit.Test;
@@ -162,6 +162,13 @@ public class PatternTest {
     ApiTestUtils.testSplit("x*", "foo", 1, new String[] {"foo"});
     ApiTestUtils.testSplit("x*", "f", 2, new String[] {"f", ""});
     ApiTestUtils.testSplit(":", ":a::b", new String[] {"", "a", "", "b"});
+
+    // From https://github.com/google/re2j/issues/197.
+    // Test split when input is fully matched and limit is 0.
+    ApiTestUtils.testSplit("\\s+", "   ", new String[] {});
+    ApiTestUtils.testSplit("\\s+", "   foo", new String[] {"", "foo"});
+    ApiTestUtils.testSplit("\\s+", "foo   ", new String[] {"foo"});
+    ApiTestUtils.testSplit("\\s+", "", new String[] {""});
   }
 
   @Test
@@ -256,5 +263,14 @@ public class PatternTest {
     assertThat(pattern1).isNotEqualTo(pattern3);
     assertThat(pattern1.hashCode()).isEqualTo(pattern2.hashCode());
     assertThat(pattern1).isNotEqualTo(pattern4);
+  }
+
+  @Test
+  public void testExpressionTooLarge() {
+    PatternSyntaxException e =
+        assertThrows(
+            PatternSyntaxException.class, () -> Pattern.compile("(?:(?:(?:a){1000}){1000}){1000}"));
+    assertThat(e.getDescription()).isEqualTo("expression too large");
+    assertThat(e).hasMessageThat().isEqualTo("error parsing regexp: expression too large");
   }
 }

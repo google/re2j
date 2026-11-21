@@ -45,6 +45,12 @@ class Compiler {
     }
   }
 
+  // Maximum number of instructions in a compiled program.
+  // Nested counted repetitions such as (?:(?:a){1000}){1000} expand
+  // multiplicatively at compile time; without a cap, a short pattern can
+  // exhaust the heap. This mirrors Go's fix for CVE-2022-41715.
+  private static final int MAX_PROG_SIZE = 500000;
+
   private final Prog prog = new Prog(); // Program being built
 
   private Compiler() {
@@ -60,7 +66,9 @@ class Compiler {
   }
 
   private Frag newInst(int op) {
-    // TODO(rsc): impose length limit.
+    if (prog.numInst() >= MAX_PROG_SIZE) {
+      throw new PatternSyntaxException("expression too large");
+    }
     prog.addInst(op);
     return new Frag(prog.numInst() - 1, 0, true);
   }

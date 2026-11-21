@@ -53,8 +53,16 @@ abstract class MachineInput {
   // Returns a bitmask of EMPTY_* flags.
   abstract int context(int pos);
 
+  // Returns the start position in the same units as step().
+  abstract int begPos();
+
   // Returns the end position in the same units as step().
   abstract int endPos();
+
+  /* Returns a slice of current input, using absolute positions
+   * (that is, not relative to current bounds).
+   * The resulting slice is a subset of the current input. */
+  abstract MachineInput region(int beg, int end);
 
   //// Implementations
 
@@ -84,7 +92,6 @@ abstract class MachineInput {
 
     @Override
     int step(int i) {
-      i += start;
       if (i >= end) {
         return EOF;
       }
@@ -133,14 +140,12 @@ abstract class MachineInput {
 
     @Override
     int index(RE2 re2, int pos) {
-      pos += start;
       int i = Utils.indexOf(b, re2.prefixUTF8, pos);
       return i < 0 ? i : i - pos;
     }
 
     @Override
     int context(int pos) {
-      pos += this.start;
       int r1 = -1;
       if (pos > this.start && pos <= this.end) {
         int start = pos - 1;
@@ -165,8 +170,21 @@ abstract class MachineInput {
     }
 
     @Override
+    int begPos() {
+      return start;
+    }
+
+    @Override
     int endPos() {
       return end;
+    }
+
+    @Override
+    MachineInput region(int beg, int end) {
+      int newbeg = Math.max(beg, this.start);
+      int newend = Math.min(end, this.end);
+      return newbeg == this.start && newend == this.end
+          ? this : new UTF8Input(b, newbeg, newend);
     }
   }
 
@@ -184,7 +202,6 @@ abstract class MachineInput {
 
     @Override
     int step(int pos) {
-      pos += start;
       if (pos < end) {
         int rune = Character.codePointAt(str, pos);
         return rune << 3 | Character.charCount(rune);
@@ -200,22 +217,33 @@ abstract class MachineInput {
 
     @Override
     int index(RE2 re2, int pos) {
-      pos += start;
       int i = indexOf(str, re2.prefix, pos);
       return i < 0 ? i : i - pos;
     }
 
     @Override
     int context(int pos) {
-      pos += start;
       int r1 = pos > 0 && pos <= str.length() ? Character.codePointBefore(str, pos) : -1;
       int r2 = pos < str.length() ? Character.codePointAt(str, pos) : -1;
       return Utils.emptyOpContext(r1, r2);
     }
 
     @Override
+    int begPos() {
+      return start;
+    }
+
+    @Override
     int endPos() {
       return end;
+    }
+
+    @Override
+    MachineInput region(int beg, int end) {
+      int newbeg = Math.max(beg, this.start);
+      int newend = Math.min(end, this.end);
+      return newbeg == this.start && newend == this.end
+          ? this : new UTF16Input(str, newbeg, newend);
     }
 
     private int indexOf(CharSequence hayStack, String needle, int pos) {

@@ -30,6 +30,9 @@ public class RegexpHashcodeEqualsTest {
           {"a{2,3}", "a{1,3}", false, RE2.POSIX},
           {"^((?P<foo>what)a)$", "^((?P<foo>what)a)$", true, RE2.PERL},
           {"^((?P<foo>what)a)$", "^((?P<bar>what)a)$", false, RE2.PERL},
+          {"(?i:Z)", "Z", false, RE2.PERL},
+          {"(?i:Z)", "(?i:Z)", true, RE2.PERL},
+          {"(?i:[Z])", "[Z]", false, RE2.PERL},
         });
   }
 

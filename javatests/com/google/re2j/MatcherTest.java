@@ -529,6 +529,14 @@ public class MatcherTest {
   }
 
   @Test
+  public void testMatchCategoryCaseInsensitive() {
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("a"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("a"));
+  }
+
+  @Test
   public void testAppendReplacementValidation() {
     Matcher m = Pattern.compile("ab").matcher("ab");
     assertTrue(m.find());

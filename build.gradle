@@ -84,6 +84,17 @@ idea {
 test {
   // Allow parallel test execution.
   maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+  if (project.hasProperty('testJavaHome')) {
+    def javaBin = file("${testJavaHome}/bin/java")
+    if (!javaBin.isFile()) {
+      throw new GradleException("Java executable not found: ${javaBin}")
+    }
+    executable = javaBin
+    inputs.property('testExecutable', javaBin.absolutePath)
+    doFirst {
+      logger.lifecycle("Running tests with ${executable}")
+    }
+  }
 }
 
 dependencies {

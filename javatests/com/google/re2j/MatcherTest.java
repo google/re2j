@@ -541,53 +541,102 @@ public class MatcherTest {
     Matcher m = Pattern.compile("ab").matcher("ab");
     assertTrue(m.find());
 
-    {
-      StringBuilder sb = new StringBuilder();
+    // Unescaped '$' works literally whenever it is not followed by a digit or '{'.
+    StringBuilder sb = new StringBuilder();
+    m.appendReplacement(sb, "$");
+    assertEquals("$", sb.toString());
 
-      // Test invalid group references
-      IllegalArgumentException e =
-          assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "$foo"));
-      assertThat(e).hasMessageThat().contains("Illegal group reference");
-      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$"));
-      assertThat(e).hasMessageThat().contains("Illegal group reference");
-      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$$bar"));
-      assertThat(e).hasMessageThat().contains("Illegal group reference");
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "$foo");
+    assertEquals("$foo", sb.toString());
 
-      // Test invalid escapes
-      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo\\"));
-      assertThat(e).hasMessageThat().contains("character to be escaped is missing");
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo$");
+    assertEquals("foo$", sb.toString());
 
-      // Test invalid named group syntax
-      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo${bar"));
-      assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
-    }
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo$$bar");
+    assertEquals("foo$$bar", sb.toString());
 
-    {
-      // Test valid cases to ensure we didn't break them
-      StringBuilder sb = new StringBuilder();
-      m.appendReplacement(sb, "foo\\$bar");
-      assertEquals("foo$bar", sb.toString());
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo$ bar");
+    assertEquals("foo$ bar", sb.toString());
 
-      m.reset();
-      assertTrue(m.find());
-      sb = new StringBuilder();
-      m.appendReplacement(sb, "foo\\\\bar");
-      assertEquals("foo\\bar", sb.toString());
+    // Trailing backslash is treated literally.
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo\\");
+    assertEquals("foo\\", sb.toString());
 
-      // Test valid group references
-      Matcher m2 = Pattern.compile("(?<groupName>ab)").matcher("ab");
-      assertTrue(m2.find());
+    // Escaped '$' and '\' work as expected.
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo\\$bar");
+    assertEquals("foo$bar", sb.toString());
 
-      sb = new StringBuilder();
-      m2.appendReplacement(sb, "foo$1bar");
-      assertEquals("fooabbar", sb.toString());
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo\\$1bar");
+    assertEquals("foo$1bar", sb.toString());
 
-      m2.reset();
-      assertTrue(m2.find());
-      sb = new StringBuilder();
-      m2.appendReplacement(sb, "foo${groupName}bar");
-      assertEquals("fooabbar", sb.toString());
-    }
+    m.reset();
+    assertTrue(m.find());
+    sb = new StringBuilder();
+    m.appendReplacement(sb, "foo\\\\bar");
+    assertEquals("foo\\bar", sb.toString());
+
+    // Out-of-bounds group references still throw IndexOutOfBoundsException.
+    m.reset();
+    assertTrue(m.find());
+    StringBuilder invalidGroupSb = new StringBuilder();
+    assertThrows(IndexOutOfBoundsException.class, () -> m.appendReplacement(invalidGroupSb, "$1"));
+
+    Matcher mWithThreeGroups = Pattern.compile("(a)(b)(c)").matcher("abc");
+    assertTrue(mWithThreeGroups.find());
+    StringBuilder invalidGroup4Sb = new StringBuilder();
+    assertThrows(
+        IndexOutOfBoundsException.class,
+        () -> mWithThreeGroups.appendReplacement(invalidGroup4Sb, "$4"));
+
+    // Invalid named group syntax still throws IllegalArgumentException.
+    m.reset();
+    assertTrue(m.find());
+    StringBuilder invalidNamedSb = new StringBuilder();
+    IllegalArgumentException e =
+        assertThrows(
+            IllegalArgumentException.class, () -> m.appendReplacement(invalidNamedSb, "foo${bar"));
+    assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
+
+    // Valid group references (including unescaped '$' immediately before '$1').
+    Matcher m2 = Pattern.compile("(?<groupName>ab)").matcher("ab");
+    assertTrue(m2.find());
+
+    sb = new StringBuilder();
+    m2.appendReplacement(sb, "foo$1bar");
+    assertEquals("fooabbar", sb.toString());
+
+    m2.reset();
+    assertTrue(m2.find());
+    sb = new StringBuilder();
+    m2.appendReplacement(sb, "foo$$1bar");
+    assertEquals("foo$abbar", sb.toString());
+
+    m2.reset();
+    assertTrue(m2.find());
+    sb = new StringBuilder();
+    m2.appendReplacement(sb, "foo${groupName}bar");
+    assertEquals("fooabbar", sb.toString());
   }
 
   @Test

@@ -433,8 +433,8 @@ public final class Matcher {
    *
    * <p>
    * To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string escapes). The escape
-   * is only necessary when {@code $} is followed by a digit, but it is always allowed. Only
-   * {@code $} and {@code \} need escaping, but any character can be escaped.
+   * is only necessary when {@code $} is followed by a digit or <code>{</code>, but it is always
+   * allowed. Only {@code $} and {@code \} need escaping, but any character can be escaped.
    *
    * <p>
    * The group number {@code n} in {@code $n} is always at least one digit and expands to use more
@@ -462,8 +462,8 @@ public final class Matcher {
    *
    * <p>
    * To embed a literal {@code $}, use \$ (actually {@code "\\$"} with string escapes). The escape
-   * is only necessary when {@code $} is followed by a digit, but it is always allowed. Only
-   * {@code $} and {@code \} need escaping, but any character can be escaped.
+   * is only necessary when {@code $} is followed by a digit or <code>{</code>, but it is always
+   * allowed. Only {@code $} and {@code \} need escaping, but any character can be escaped.
    *
    * <p>
    * The group number {@code n} in {@code $n} is always at least one digit and expands to use more
@@ -493,27 +493,21 @@ public final class Matcher {
     int m = replacement.length();
     while (i < m) {
       char c = replacement.charAt(i);
-      if (c == '\\') {
+      if (c == '\\' && i + 1 < m) {
         if (last < i) {
-          sb.append(replacement.substring(last, i));
+          sb.append(replacement, last, i);
         }
         i++;
-        if (i == m) {
-          throw new IllegalArgumentException("character to be escaped is missing");
-        }
         last = i;
         i++;
         continue;
       }
-      if (c == '$') {
-        if (last < i) {
-          sb.append(replacement, last, i);
-        }
-        if (i + 1 >= m) {
-          throw new IllegalArgumentException("Illegal group reference: group index is missing");
-        }
+      if (c == '$' && i + 1 < m) {
         char next = replacement.charAt(i + 1);
         if ('0' <= next && next <= '9') {
+          if (last < i) {
+            sb.append(replacement, last, i);
+          }
           int n = next - '0';
           int j = i + 2;
           for (; j < m; j++) {
@@ -532,7 +526,11 @@ public final class Matcher {
           }
           i = j;
           last = i;
+          continue;
         } else if (next == '{') {
+          if (last < i) {
+            sb.append(replacement, last, i);
+          }
           int j = i + 2;
           while (j < m && replacement.charAt(j) != '}') {
             j++;
@@ -544,10 +542,8 @@ public final class Matcher {
           sb.append(group(groupName));
           i = j + 1;
           last = i;
-        } else {
-          throw new IllegalArgumentException("Illegal group reference");
+          continue;
         }
-        continue;
       }
       i++;
     }

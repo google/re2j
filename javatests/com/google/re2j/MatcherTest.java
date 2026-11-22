@@ -6,13 +6,16 @@
  */
 package com.google.re2j;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.truth.Truth;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -522,6 +525,132 @@ public class MatcherTest {
       final Matcher matcher = Pattern.compile(pattern, Pattern.LONGEST_MATCH).matcher(text);
       assertTrue(matcher.find());
       assertEquals("aaa bbb", text.substring(matcher.start(), matcher.end()));
+    }
+  }
+
+  @Test
+  public void testMatchCategoryCaseInsensitive() {
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Ll}").matches("a"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("A"));
+    assertTrue(Pattern.compile("(?i)\\p{Lu}").matches("a"));
+  }
+
+  @Test
+  public void testAppendReplacementValidation() {
+    Matcher m = Pattern.compile("ab").matcher("ab");
+    assertTrue(m.find());
+
+    {
+      StringBuilder sb = new StringBuilder();
+
+      // Test invalid group references
+      IllegalArgumentException e =
+          assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "$foo"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo$$bar"));
+      assertThat(e).hasMessageThat().contains("Illegal group reference");
+
+      // Test invalid escapes
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo\\"));
+      assertThat(e).hasMessageThat().contains("character to be escaped is missing");
+
+      // Test invalid named group syntax
+      e = assertThrows(IllegalArgumentException.class, () -> m.appendReplacement(sb, "foo${bar"));
+      assertThat(e).hasMessageThat().contains("named capture group is missing trailing '}'");
+    }
+
+    {
+      // Test valid cases to ensure we didn't break them
+      StringBuilder sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\$bar");
+      assertEquals("foo$bar", sb.toString());
+
+      m.reset();
+      assertTrue(m.find());
+      sb = new StringBuilder();
+      m.appendReplacement(sb, "foo\\\\bar");
+      assertEquals("foo\\bar", sb.toString());
+
+      // Test valid group references
+      Matcher m2 = Pattern.compile("(?<groupName>ab)").matcher("ab");
+      assertTrue(m2.find());
+
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo$1bar");
+      assertEquals("fooabbar", sb.toString());
+
+      m2.reset();
+      assertTrue(m2.find());
+      sb = new StringBuilder();
+      m2.appendReplacement(sb, "foo${groupName}bar");
+      assertEquals("fooabbar", sb.toString());
+    }
+  }
+
+  @Test
+  public void testStateResetOnFailure() {
+    Matcher m = Pattern.compile("abc").matcher("abc");
+    assertTrue(m.find());
+    assertEquals("abc", m.group());
+
+    // Subsequent find() fails
+    assertFalse(m.find());
+    assertThrows(IllegalStateException.class, () -> m.group());
+    assertThrows(IllegalStateException.class, () -> m.start());
+    assertThrows(IllegalStateException.class, () -> m.end());
+  }
+
+  @Test
+  public void testMatchesThenFind() {
+    Matcher m = Pattern.compile("([1-5][0-9]{2})-([1-5][0-9]{2})").matcher("201-299");
+    assertTrue(m.matches());
+    assertEquals("201-299", m.group());
+    assertFalse(m.find()); // should fail
+    assertThrows(IllegalStateException.class, () -> m.group(1));
+  }
+
+  @Test
+  public void testUtf8ContextAfterMultibyteRunes() {
+    // 2-byte (U+00E9), 3-byte (U+20AC), and 4-byte (U+10348) UTF-8 sequences: trailing bytes >=
+    // 0x80 are negative as signed Java bytes and must not be treated as r1 < 0 (start of text/line)
+    // in MachineInput.UTF8Input.context.
+    for (String prefix : new String[] {"\u00e9", "\u20ac", "\ud800\udf48"}) {
+      byte[] prefixBytes = prefix.getBytes(StandardCharsets.UTF_8);
+      byte[] utf8 = (prefix + "foo").getBytes(StandardCharsets.UTF_8);
+
+      assertFalse(Pattern.compile("(?m)^foo").matcher(utf8).find());
+      assertFalse(Pattern.compile(prefix + "\\Afoo").matcher(utf8).find());
+      assertFalse(Pattern.compile("^foo|zzz").matcher(utf8).find(prefixBytes.length));
+      assertFalse(Pattern.compile("\\Bfoo").matcher(utf8).find());
+
+      Matcher wordBoundary = Pattern.compile("\\bfoo").matcher(utf8);
+      assertTrue(wordBoundary.find());
+      assertEquals(prefixBytes.length, wordBoundary.start());
+
+      byte[] utf8WithNewline = (prefix + "\nfoo").getBytes(StandardCharsets.UTF_8);
+      Matcher afterNewline = Pattern.compile("(?m)^foo").matcher(utf8WithNewline);
+      assertTrue(afterNewline.find());
+      assertEquals(prefixBytes.length + 1, afterNewline.start());
+    }
+
+    String sample = "a\u00e9\u20ac\ud800\udf48\nz";
+    MachineInput utf16In = MachineInput.fromUTF16(sample);
+    MachineInput utf8In = MachineInput.fromUTF8(sample.getBytes(StandardCharsets.UTF_8));
+    int bytePos = 0;
+    for (int charPos = 0; charPos <= sample.length(); ) {
+      assertEquals(
+          "context mismatch at charPos=" + charPos + ", bytePos=" + bytePos,
+          utf16In.context(charPos),
+          utf8In.context(bytePos));
+      if (charPos == sample.length()) {
+        break;
+      }
+      int cp = Character.codePointAt(sample, charPos);
+      charPos += Character.charCount(cp);
+      bytePos += new String(Character.toChars(cp)).getBytes(StandardCharsets.UTF_8).length;
     }
   }
 }

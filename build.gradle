@@ -34,6 +34,11 @@ wrapper {
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+compileTestJava {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
+
 repositories {
   mavenCentral()
 }
@@ -79,15 +84,26 @@ idea {
 test {
   // Allow parallel test execution.
   maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+  if (project.hasProperty('testJavaHome')) {
+    def javaBin = file("${testJavaHome}/bin/java")
+    if (!javaBin.isFile()) {
+      throw new GradleException("Java executable not found: ${javaBin}")
+    }
+    executable = javaBin
+    inputs.property('testExecutable', javaBin.absolutePath)
+    doFirst {
+      logger.lifecycle("Running tests with ${executable}")
+    }
+  }
 }
 
 dependencies {
   errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
   errorprone 'com.google.errorprone:error_prone_core:2.10.0'
 
-  testCompile 'junit:junit:4.12'
-  testCompile 'com.google.gwt:gwt-dev:2.9.0'
-  testCompile 'com.google.gwt:gwt-user:2.9.0'
+  implementation 'org.jspecify:jspecify:1.0.1'
+
+  testCompile 'junit:junit:4.13.2'
   testCompile 'com.google.truth:truth:0.36'
 
   // Cobertura requires slf4j at runtime

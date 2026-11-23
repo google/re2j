@@ -544,11 +544,6 @@ public class ParserTest {
     "(?i)[a-Z]",
     "a{100000}",
     "a{100000,}",
-    // Group names may not be repeated
-    "(?P<foo>bar)(?P<foo>baz)",
-    "(?P<foo>bar)(?<foo>baz)",
-    "(?<foo>bar)(?P<foo>baz)",
-    "(?<foo>bar)(?<foo>baz)",
     "\\x", // https://github.com/google/re2j/issues/103
     "\\xv", // https://github.com/google/re2j/issues/103
   };

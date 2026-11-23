@@ -43,13 +43,13 @@ public class PatternTest {
   }
 
   @Test
-  public void testCompileExceptionWithDuplicateGroups() {
-    try {
-      Pattern.compile("(?P<any>.*)(?P<any>.*");
-      fail();
-    } catch (PatternSyntaxException e) {
-      assertEquals("error parsing regexp: duplicate capture group name: `any`", e.getMessage());
-    }
+  public void testDuplicateGroupNames() {
+    // As in Go, a name may be used more than once, and refers to the first group with that name.
+    Pattern p = Pattern.compile("(?P<any>a)(?P<any>b)");
+    assertEquals(2, p.groupCount());
+    Matcher m = p.matcher("ab");
+    assertTrue(m.matches());
+    assertEquals("a", m.group("any"));
   }
 
   @Test
@@ -267,9 +267,15 @@ public class PatternTest {
 
   @Test
   public void testExpressionTooLarge() {
+    // Nested repetitions past 1000 copies are an invalid repeat count, so the program is made large
+    // by concatenation instead: 501 copies of a{1000} are more instructions than a program may have.
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; i < 501; i++) {
+      b.append("a{1000}");
+    }
+    final String regexp = b.toString();
     PatternSyntaxException e =
-        assertThrows(
-            PatternSyntaxException.class, () -> Pattern.compile("(?:(?:(?:a){1000}){1000}){1000}"));
+        assertThrows(PatternSyntaxException.class, () -> Pattern.compile(regexp));
     assertThat(e.getDescription()).isEqualTo("expression too large");
     assertThat(e).hasMessageThat().isEqualTo("error parsing regexp: expression too large");
   }

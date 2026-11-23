@@ -44,18 +44,32 @@ public class RE2CompileTest {
       {"+", "missing argument to repetition operator: `+`"},
       {"?", "missing argument to repetition operator: `?`"},
       {"(abc", "missing closing ): `(abc`"},
-      {"abc)", "regexp/syntax: internal error: `stack underflow`"},
+      {"abc)", "unexpected ): `abc)`"},
+      {")", "unexpected ): `)`"},
+      {"())", "unexpected ): `())`"},
       {"x[a-z", "missing closing ]: `[a-z`"},
       {"[z-a]", "invalid character class range: `z-a`"},
-      {"abc\\", "trailing backslash at end of expression"},
+      {"abc\\", "trailing backslash at end of expression: ``"},
       {"a**", "invalid nested repetition operator: `**`"},
       {"a*+", "invalid nested repetition operator: `*+`"},
       {"\\x", "invalid escape sequence: `\\x`"},
       {"\\p", "invalid character class range: `\\p`"},
       {"\\p{", "invalid character class range: `\\p{`"},
-      {"(?:(?:(?:a){1000}){1000}){1000}", "expression too large"},
-      {"(?:(?:a{1000}){1000})", "expression too large"},
-      {"(?:a{1000}){100}", null}
+      // As in Go, nested repetitions may make at most 1000 copies of their innermost expression.
+      {"(?:(?:(?:a){1000}){1000}){1000}", "invalid repeat count: `{1000}`"},
+      {"(?:(?:a{1000}){1000})", "invalid repeat count: `{1000}`"},
+      {"(?:a{1000}){100}", "invalid repeat count: `{100}`"},
+      {"(a{2}){500}", null},
+      {"(a{2}){501}", "invalid repeat count: `{501}`"},
+      {"(a{500}){2}", null},
+      // A { that starts no repeat count is a literal, which a repetition may follow.
+      {"x{*", null},
+      {"x{", null},
+      // Only an ASCII punctuation character escapes to itself.
+      {"\\\u00e9", "invalid escape sequence: `\\\u00e9`"},
+      // (?< and (?P< are a named capture only with something after them.
+      {"(?<", "invalid or unsupported Perl syntax: `(?<`"},
+      {"(?P<", "invalid or unsupported Perl syntax: `(?P`"}
     };
   }
 

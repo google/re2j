@@ -25,7 +25,6 @@ import java.util.Map;
 class Parser {
 
   // Unexpected error
-  private static final String ERR_INTERNAL_ERROR = "regexp/syntax: internal error";
 
   // Parse errors
   private static final String ERR_INVALID_CHAR_RANGE = "invalid character class range";
@@ -39,7 +38,7 @@ class Parser {
   private static final String ERR_MISSING_REPEAT_ARGUMENT =
       "missing argument to repetition operator";
   private static final String ERR_TRAILING_BACKSLASH = "trailing backslash at end of expression";
-  private static final String ERR_DUPLICATE_NAMED_CAPTURE = "duplicate capture group name";
+  private static final String ERR_UNEXPECTED_PAREN = "unexpected )";
 
   // Hack to expose ArrayList.removeRange().
   private static class Stack extends ArrayList<Regexp> {
@@ -253,6 +252,45 @@ class Parser {
     re.flags = flags;
     re.subs = new Regexp[] {sub};
     stack.set(n - 1, re);
+
+    if (op == Regexp.Op.REPEAT && (min >= 2 || max >= 2) && !repeatIsValid(re, 1000)) {
+      throw new PatternSyntaxException(ERR_INVALID_REPEAT_SIZE, t.from(beforePos));
+    }
+  }
+
+  // repeatIsValid reports whether the repetition re is valid.
+  // Valid means that the combination of the top-level repetition
+  // and any inner repetitions does not exceed n copies of the
+  // innermost thing.
+  // This function rewalks the regexp tree and is called for every repetition,
+  // so we have to worry about inducing quadratic behavior in the parser.
+  // We avoid this by only calling repeatIsValid when min or max >= 2.
+  // In that case the depth of any >= 2 nesting can only get to 9 without
+  // triggering a parse error, so each subtree can only be rewalked 9 times.
+  private static boolean repeatIsValid(Regexp re, int n) {
+    if (re.op == Regexp.Op.REPEAT) {
+      int m = re.max;
+      if (m == 0) {
+        return true;
+      }
+      if (m < 0) {
+        m = re.min;
+      }
+      if (m > n) {
+        return false;
+      }
+      if (m > 0) {
+        n /= m;
+      }
+    }
+    if (re.subs != null) {
+      for (Regexp sub : re.subs) {
+        if (!repeatIsValid(sub, n)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   // concat replaces the top of the stack (above the topmost '|' or '(') with
@@ -886,6 +924,8 @@ class Parser {
               // If the repeat cannot be parsed, { is a literal.
               t.rewindTo(repeatPos);
               literal(t.pop()); // '{'
+              // A literal is not a repetition, so a repetition may follow it, as in x{*.
+              repeatPos = -1;
               break;
             }
             min = minMax >> 16;
@@ -1056,7 +1096,8 @@ class Parser {
     // Google source tree, (?P<name>expr) and (?<name>expr) are the
     // dominant forms of named captures and both are supported.
     String s = t.rest();
-    if (s.startsWith("(?P<") || s.startsWith("(?<")) {
+    // As in Go, there must be something after the "<" for the group to be a named capture.
+    if ((s.length() > 4 && s.startsWith("(?P<")) || (s.length() > 3 && s.startsWith("(?<"))) {
       // Pull out name.
       int begin = s.charAt(2) == 'P' ? 4 : 3;
       int end = s.indexOf('>', begin);
@@ -1073,8 +1114,9 @@ class Parser {
       // Like ordinary capture, but named.
       Regexp re = op(Regexp.Op.LEFT_PAREN);
       re.cap = ++numCap;
-      if (namedGroups.put(name, numCap) != null) {
-        throw new PatternSyntaxException(ERR_DUPLICATE_NAMED_CAPTURE, name);
+      // As in Go, a name may be used more than once; it refers to the first group with that name.
+      if (!namedGroups.containsKey(name)) {
+        namedGroups.put(name, numCap);
       }
       re.name = name;
       return;
@@ -1311,12 +1353,12 @@ class Parser {
 
     int n = stack.size();
     if (n < 2) {
-      throw new PatternSyntaxException(ERR_INTERNAL_ERROR, "stack underflow");
+      throw new PatternSyntaxException(ERR_UNEXPECTED_PAREN, wholeRegexp);
     }
     Regexp re1 = pop();
     Regexp re2 = pop();
     if (re2.op != Regexp.Op.LEFT_PAREN) {
-      throw new PatternSyntaxException(ERR_MISSING_PAREN, wholeRegexp);
+      throw new PatternSyntaxException(ERR_UNEXPECTED_PAREN, wholeRegexp);
     }
     // Restore flags at time of paren.
     this.flags = re2.flags;
@@ -1338,13 +1380,14 @@ class Parser {
     int startPos = t.pos();
     t.skip(1); // '\\'
     if (!t.more()) {
-      throw new PatternSyntaxException(ERR_TRAILING_BACKSLASH);
+      throw new PatternSyntaxException(ERR_TRAILING_BACKSLASH, "");
     }
     int c = t.pop();
     bigswitch:
     switch (c) {
       default:
-        if (!Utils.isalnum(c)) {
+        // Only an ASCII character escapes to itself, as in Go.
+        if (c < 0x80 && !Utils.isalnum(c)) {
           // Escaped non-word characters are always themselves.
           // PCRE is not quite so rigorous: it accepts things like
           // \q, but we don't.  We once rejected \_, but too many

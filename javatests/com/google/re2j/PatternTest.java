@@ -53,6 +53,41 @@ public class PatternTest {
   }
 
   @Test
+  public void testUnicodeClassNames() {
+    // As in Go, \p looks names up ignoring case, underscores, spaces and hyphens, among the
+    // categories, the scripts and the category aliases, with Any, Assigned and ASCII besides.
+    assertUnicodeClass("\\p{Letter}", "a", "1");
+    assertUnicodeClass("\\p{letter}", "a", "1");
+    assertUnicodeClass("\\p{greek}", "\u03b1", "a");
+    assertUnicodeClass("\\p{GREEK}", "\u03b1", "a");
+    assertUnicodeClass("\\p{Cased_Letter}", "\u01c5", "\u00aa");
+    assertUnicodeClass("\\p{cased letter}", "a", "1");
+    assertUnicodeClass("\\p{LC}", "A", "\u00aa");
+    assertUnicodeClass("\\p{lc}", "A", "\u00aa");
+    assertUnicodeClass("\\p{Assigned}", "a", "\u0378");
+    assertUnicodeClass("\\P{Assigned}", "\u0378", "a");
+    assertUnicodeClass("\\p{Cn}", "\u0378", "a");
+    assertUnicodeClass("\\p{ASCII}", "a", "\u00e9");
+    assertUnicodeClass("(?i)\\p{ascii}", "\u212a", "\u00e9");
+    assertUnicodeClass("\\p{Decimal_Number}", "7", "x");
+    assertUnicodeClass("\\p{^Letter}", "1", "a");
+  }
+
+  private static void assertUnicodeClass(String regexp, String match, String noMatch) {
+    assertTrue(regexp + " should match " + match, Pattern.matches(regexp, match));
+    assertFalse(regexp + " should not match " + noMatch, Pattern.matches(regexp, noMatch));
+  }
+
+  @Test
+  public void testUnicodeVersion() {
+    // The tables are of Unicode 15.0, Go 1.26's: U+AB70 (Unicode 8.0) is a letter, U+1F976
+    // (Unicode 11.0) a symbol, and U+180E no longer a space separator (Unicode 6.3).
+    assertTrue(Pattern.matches("\\pL", "\uab70"));
+    assertTrue(Pattern.matches("\\p{So}", new String(Character.toChars(0x1F976))));
+    assertFalse(Pattern.matches("\\pZ", "\u180e"));
+  }
+
+  @Test
   public void testToString() {
     Pattern p = Pattern.compile("abc");
     assertEquals("abc", p.toString());

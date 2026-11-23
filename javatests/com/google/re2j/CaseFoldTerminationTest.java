@@ -43,28 +43,26 @@ public class CaseFoldTerminationTest {
   }
 
   @Test
-  public void historicCyrillicLettersAreFoldInert() {
-    // The fallback declines the asymmetric mappings, so the letters fold
-    // nowhere — same answer from every pattern shape, in both directions.
+  public void historicCyrillicLettersFoldAsInGo() {
+    // U+1C80..U+1C88 (Unicode 9.0) join the orbits of existing Cyrillic letters, as in Go:
+    // U+1C80 (rounded ve) folds with В/в, in both directions and in classes too.
     for (char c = '\u1C80'; c <= '\u1C88'; c++) {
       assertTrue(matcher("(?i)" + c, String.valueOf(c)).find());
       assertTrue(matcher("(?i)[" + c + "]", String.valueOf(c)).find());
       assertFalse(matcher("(?i)" + c, "x").find());
     }
-    // U+1C80 (Ꚁ) case-maps onto В/в; none of the three folds onto the others.
-    assertFalse(matcher("(?i)\u1C80", "\u0412").find());
-    assertFalse(matcher("(?i)\u1C80", "\u0432").find());
-    assertFalse(matcher("(?i)\u0432", "\u1C80").find());
-    assertFalse(matcher("(?i)[\u1C80]", "\u0432").find());
-    assertFalse(matcher("(?i)[\u0432]", "\u1C80").find());
-    // The partner pair itself keeps folding (symmetric, table-era data).
+    assertTrue(matcher("(?i)\u1C80", "\u0412").find());
+    assertTrue(matcher("(?i)\u1C80", "\u0432").find());
+    assertTrue(matcher("(?i)\u0432", "\u1C80").find());
+    assertTrue(matcher("(?i)[\u1C80]", "\u0432").find());
+    assertTrue(matcher("(?i)[\u0432]", "\u1C80").find());
     assertTrue(matcher("(?i)\u0432", "\u0412").find());
     assertTrue(matcher("(?i)\u0412", "\u0432").find());
   }
 
   @Test
   public void symmetricPairsStillFold() {
-    // Plain two-element orbits via the fallback ...
+    // Plain two-element orbits ...
     assertTrue(matcher("(?i)z", "Z").find());
     assertTrue(matcher("(?i)\u0442", "\u0422").find());
     // ... and a three-element orbit from the table (K, k, Kelvin sign).
@@ -74,19 +72,17 @@ public class CaseFoldTerminationTest {
   }
 
   @Test
-  public void runesAboveMaxFoldStayConsistentAcrossLiteralsAndClasses() {
-    // Adlam capital/small Alif (U+1E900 / U+1E922, added in Unicode 9.0) form a symmetric
-    // pair above MAX_FOLD (0x1044F). CharClass.appendFoldedRange skips folding above MAX_FOLD,
-    // so simpleFold must also leave them fold-inert to keep literals and character classes
-    // consistent.
+  public void adlamFoldsInLiteralsAndClasses() {
+    // Adlam capital/small Alif (U+1E900 / U+1E922, added in Unicode 9.0) are a case pair, which
+    // literals and character classes fold alike, as in Go.
     String adlamCapitalAlif = new String(Character.toChars(0x1E900));
     String adlamSmallAlif = new String(Character.toChars(0x1E922));
     assertTrue(matcher("(?i)" + adlamCapitalAlif, adlamCapitalAlif).matches());
     assertTrue(matcher("(?i)[" + adlamCapitalAlif + "]", adlamCapitalAlif).matches());
-    assertFalse(matcher("(?i)" + adlamCapitalAlif, adlamSmallAlif).matches());
-    assertFalse(matcher("(?i)[" + adlamCapitalAlif + "]", adlamSmallAlif).matches());
-    assertFalse(matcher("(?i)" + adlamSmallAlif, adlamCapitalAlif).matches());
-    assertFalse(matcher("(?i)[" + adlamSmallAlif + "]", adlamCapitalAlif).matches());
+    assertTrue(matcher("(?i)" + adlamCapitalAlif, adlamSmallAlif).matches());
+    assertTrue(matcher("(?i)[" + adlamCapitalAlif + "]", adlamSmallAlif).matches());
+    assertTrue(matcher("(?i)" + adlamSmallAlif, adlamCapitalAlif).matches());
+    assertTrue(matcher("(?i)[" + adlamSmallAlif + "]", adlamCapitalAlif).matches());
   }
 
   @Test

@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -75,15 +76,18 @@ public class UnicodeTablesGenerator {
     // A map of UCharacter.getType() -> sorted(symbol).
     SortedSetMultimap<Integer, Integer> categoryMap = TreeMultimap.create();
 
-    for (int i = 0; i < UCharacter.MAX_CODE_POINT; i++) {
+    // The case-insensitive containers, which Go folds as its categories.
+    SortedSetMultimap<String, Integer> containerMap = TreeMultimap.create();
+
+    // MAX_CODE_POINT included.
+    for (int i = 0; i <= UCharacter.MAX_CODE_POINT; i++) {
       if (!UCharacter.isValidCodePoint(i)) {
         continue;
       }
 
       int type = UCharacter.getType(i);
-      if (type == UCharacterCategory.UNASSIGNED) {
-        continue;
-      }
+      // Unassigned code points are Cn, which Go has since 1.25, and so in C; they have no script.
+      boolean unassigned = type == UCharacterCategory.UNASSIGNED;
 
       String shortName = getShortName(type);
       if (shortName == null) {
@@ -92,18 +96,53 @@ public class UnicodeTablesGenerator {
       }
       String containerName = shortName.substring(0, 1);
 
-      int script = UScript.getScript(i);
-      scriptMap.put(script, i);
       CodepointRange range = ranges.computeIfAbsent(type, (key) -> new CodepointRange(shortName));
       CodepointRange containerRange =
           containers.computeIfAbsent(containerName, CodepointRange::new);
-      CodepointRange scriptRange =
-          scriptRanges.computeIfAbsent(script, (key) -> new CodepointRange(UScript.getName(key)));
 
       categoryMap.put(type, i);
+      containerMap.put(containerName, i);
       containerRange.add(i);
       range.add(i);
+      // LC, the cased letters Lu, Ll and Lt, which Go has since 1.25.
+      if (shortName.equals("Lu") || shortName.equals("Ll") || shortName.equals("Lt")) {
+        containerMap.put("LC", i);
+        containers.computeIfAbsent("LC", CodepointRange::new).add(i);
+      }
+      if (unassigned) {
+        continue;
+      }
+
+      int script = UScript.getScript(i);
+      // Go has no Unknown script, which ICU gives private use code points and surrogates.
+      if (script == UScript.UNKNOWN) {
+        continue;
+      }
+      scriptMap.put(script, i);
+      CodepointRange scriptRange =
+          scriptRanges.computeIfAbsent(script, (key) -> new CodepointRange(UScript.getName(key)));
       scriptRange.add(i);
+    }
+
+    // The range of code points case folding involves, which Unicode has as constants.
+    {
+      int minFold = Integer.MAX_VALUE;
+      int maxFold = 0;
+      for (int i = 0; i <= UCharacter.MAX_CODE_POINT; i++) {
+        int f = UCharacter.foldCase(i, true);
+        if (f != i) {
+          minFold = Math.min(minFold, Math.min(i, f));
+          maxFold = Math.max(maxFold, Math.max(i, f));
+        }
+      }
+      unicodeTables.addField(
+          FieldSpec.builder(int.class, "MIN_FOLD", Modifier.STATIC, Modifier.FINAL)
+              .initializer("0x$L", Integer.toHexString(minFold))
+              .build());
+      unicodeTables.addField(
+          FieldSpec.builder(int.class, "MAX_FOLD", Modifier.STATIC, Modifier.FINAL)
+              .initializer("0x$L", Integer.toHexString(maxFold))
+              .build());
     }
 
     // Emit code fold orbits. In order to avoid a binary search at runtime, this code emits a sparse
@@ -111,9 +150,10 @@ public class UnicodeTablesGenerator {
     // k -> K -> K (Kelvin) -> k.
     {
       FieldSpec.Builder caseOrbitField =
-          FieldSpec.builder(char[].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
+          // int, as every orbit is here, those past the BMP too.
+          FieldSpec.builder(int[].class, "CASE_ORBIT", Modifier.STATIC, Modifier.FINAL);
       CodeBlock.Builder staticInitBlock = CodeBlock.builder();
-      staticInitBlock.addStatement("CASE_ORBIT = new char[$L]", sortedOrbits.lastKey() + 1);
+      staticInitBlock.addStatement("CASE_ORBIT = new int[$L]", sortedOrbits.lastKey() + 1);
       for (Map.Entry<Integer, Integer> entry : sortedOrbits.entrySet()) {
         staticInitBlock.addStatement(
             "CASE_ORBIT[0x$L] = 0x$L",
@@ -251,6 +291,12 @@ public class UnicodeTablesGenerator {
           foldScriptSpec.addCode("map.put($S, $L);", name, "fold" + name);
         }
       }
+      // And of the containers, as Go has them, which is all but LC.
+      for (String name : containerMap.keySet()) {
+        if (!name.equals("LC") && addFoldExceptions("fold" + name, containerMap.get(name))) {
+          foldScriptSpec.addCode("map.put($S, $L);", name, "fold" + name);
+        }
+      }
 
       foldScriptSpec.addCode("return map;");
       unicodeTables.addMethod(foldScriptSpec.build());
@@ -259,6 +305,49 @@ public class UnicodeTablesGenerator {
           FieldSpec.builder(RANGE_MAP_TYPE, "FOLD_CATEGORIES")
               .addModifiers(Modifier.STATIC, Modifier.FINAL)
               .initializer("FoldCategory()")
+              .build());
+    }
+
+    // The other names of the categories, Go 1.26's CategoryAliases, as Unicode's
+    // PropertyValueAliases has them.
+    {
+      TypeName aliasMapType = ParameterizedTypeName.get(Map.class, String.class, String.class);
+      MethodSpec.Builder aliasesSpec =
+          MethodSpec.methodBuilder("CategoryAliases")
+              .returns(aliasMapType)
+              .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
+              .addStatement(
+                  "$T map = new $T()",
+                  aliasMapType,
+                  ParameterizedTypeName.get(HashMap.class, String.class, String.class));
+      SortedMap<String, String> categoryAliases = new TreeMap<>();
+      SortedSet<String> categories = new TreeSet<>(containers.keySet());
+      for (int category : ranges.keySet()) {
+        categories.add(getShortName(category));
+      }
+      for (String category : categories) {
+        int value = UCharacter.getPropertyValueEnum(UProperty.GENERAL_CATEGORY_MASK, category);
+        for (int choice = UProperty.NameChoice.LONG; ; choice++) {
+          String alias;
+          try {
+            alias = UCharacter.getPropertyValueName(UProperty.GENERAL_CATEGORY_MASK, value, choice);
+          } catch (IllegalArgumentException e) {
+            break;
+          }
+          if (alias == null) {
+            break;
+          }
+          categoryAliases.put(alias, category);
+        }
+      }
+      for (Map.Entry<String, String> alias : categoryAliases.entrySet()) {
+        aliasesSpec.addStatement("map.put($S, $S)", alias.getKey(), alias.getValue());
+      }
+      aliasesSpec.addStatement("return $T.unmodifiableMap(map)", Collections.class);
+      unicodeTables.addMethod(aliasesSpec.build());
+      unicodeTables.addField(
+          FieldSpec.builder(aliasMapType, "CATEGORY_ALIASES", Modifier.STATIC, Modifier.FINAL)
+              .initializer("CategoryAliases()")
               .build());
     }
 
@@ -309,7 +398,8 @@ public class UnicodeTablesGenerator {
   private SortedMap<Integer, Integer> generateCaseFoldOrbits() {
     SortedSetMultimap<Integer, Integer> orbits = TreeMultimap.create();
 
-    for (int i = 0; i < UCharacter.MAX_CODE_POINT; i++) {
+    // MAX_CODE_POINT included.
+    for (int i = 0; i <= UCharacter.MAX_CODE_POINT; i++) {
       int f = UCharacter.foldCase(i, true);
       if (f == 0) {
         continue;
@@ -320,22 +410,16 @@ public class UnicodeTablesGenerator {
       orbit.add(i);
     }
 
-    for (int i = 0; i < UCharacter.MAX_CODE_POINT; i++) {
+    // MAX_CODE_POINT included.
+    for (int i = 0; i <= UCharacter.MAX_CODE_POINT; i++) {
       SortedSet<Integer> orb = orbits.get(i);
       int u = UCharacter.toUpperCase(i);
       int l = UCharacter.toLowerCase(i);
 
-      if (orb.size() == 1 && u == i && l == i) {
+      // Every orbit of two or more stays, so that folding reads this Unicode version alone and
+      // not the JDK's case mappings, which may be of a newer one.
+      if (orb.size() == 1) {
         orbits.removeAll(i);
-      } else if (orb.size() == 2) {
-        int first = orb.first();
-        int second = orb.last();
-        if (UCharacter.toLowerCase(first) == second && UCharacter.toUpperCase(second) == first) {
-          orbits.removeAll(i);
-        }
-        if (UCharacter.toUpperCase(first) == second && UCharacter.toLowerCase(second) == first) {
-          orbits.removeAll(i);
-        }
       }
     }
 
@@ -421,7 +505,9 @@ public class UnicodeTablesGenerator {
           builder.append(",\n");
         }
         // gotta start a new set
-        builder.append(String.format("{0x%04X, 0x%04X, %d}", setStart, lastInSet, setStride));
+        // In the root locale, whose digits are ASCII whatever the machine's locale.
+        builder.append(
+            String.format(Locale.ROOT, "{0x%04X, 0x%04X, %d}", setStart, lastInSet, setStride));
         setStart = codepoint;
         setStride = -1;
         first = false;
@@ -442,7 +528,11 @@ public class UnicodeTablesGenerator {
         }
         builder.append(
             String.format(
-                "{0x%04X, 0x%04X, %d}", setStart, lastInSet, setStride == -1 ? 1 : setStride));
+                Locale.ROOT,
+                "{0x%04X, 0x%04X, %d}",
+                setStart,
+                lastInSet,
+                setStride == -1 ? 1 : setStride));
       }
       builder.append("}");
     }

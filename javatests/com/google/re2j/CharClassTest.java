@@ -130,7 +130,7 @@ public class CharClassTest {
     // These cases are derived directly from the program logic:
 
     // Range is full: folding can't add more.
-    assertClass(cc().appendFoldedRange(10, 0x10ff0), 10, 0x10ff0);
+    assertClass(cc().appendFoldedRange(10, 0x1ffff), 10, 0x1ffff);
 
     // Range is outside folding possibilities.
     assertClass(cc().appendFoldedRange(' ', '&'), ' ', '&');
@@ -140,13 +140,13 @@ public class CharClassTest {
 
     // [MAX_FOLD...] needs no folding
     assertClass(
-        cc().appendFoldedRange(0x10400, 0x104f0),
-        0x10450,
-        0x104f0,
-        0x10400,
-        0x10426, // lowercase Deseret
-        0x10426,
-        0x1044f); // uppercase Deseret, abutting.
+        cc().appendFoldedRange(0x1e900, 0x1e9f0),
+        0x1e944,
+        0x1e9f0,
+        0x1e900,
+        0x1e920, // lowercase Adlam
+        0x1e920,
+        0x1e943); // uppercase Adlam, abutting.
   }
 
   @Test

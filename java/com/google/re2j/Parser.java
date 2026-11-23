@@ -1561,21 +1561,98 @@ class Parser {
     {0, Unicode.MAX_RUNE, 1},
   };
 
-  // unicodeTable() returns the Unicode RangeTable identified by name
-  // and the table of additional fold-equivalent code points.
+  private static final int[][] ASCII_TABLE = {
+    {0, 0x7F, 1},
+  };
+
+  private static final int[][] ASCII_FOLD_TABLE = {
+    {0, 0x7F, 1},
+    {0x017F, 0x017F, 1}, // Old English long s, folds to S/s.
+    {0x212A, 0x212A, 1}, // Kelvin K, folds to K/k.
+  };
+
+  // A Unicode class: its RangeTable, the table of additional fold-equivalent
+  // code points, and whether the class is the complement of the table.
+  private static final class UnicodeClass {
+    final int[][] table;
+    final int[][] fold;
+    final boolean negated;
+
+    UnicodeClass(int[][] table, int[][] fold, boolean negated) {
+      this.table = table;
+      this.fold = fold;
+      this.negated = negated;
+    }
+  }
+
+  // The category aliases, such as Letter for L, with canonical names as keys.
+  private static final Map<String, String> CATEGORY_ALIASES = canonicalCategoryAliases();
+
+  private static Map<String, String> canonicalCategoryAliases() {
+    Map<String, String> aliases = new HashMap<String, String>();
+    for (Map.Entry<String, String> alias : UnicodeTables.CATEGORY_ALIASES.entrySet()) {
+      aliases.put(canonicalName(alias.getKey()), alias.getValue());
+    }
+    return aliases;
+  }
+
+  // canonicalName returns the canonical lookup string for name, as Go does:
+  // a leading uppercase letter and then lowercase letters, omitting all
+  // underscores, spaces and hyphens.
+  private static String canonicalName(String name) {
+    StringBuilder b = new StringBuilder(name.length());
+    boolean first = true;
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (c == '_' || c == '-' || c == ' ') {
+        continue;
+      }
+      if (first) {
+        if ('a' <= c && c <= 'z') {
+          c -= 'a' - 'A';
+        }
+        first = false;
+      } else if ('A' <= c && c <= 'Z') {
+        c += 'a' - 'A';
+      }
+      b.append(c);
+    }
+    return b.toString();
+  }
+
+  // unicodeTable() returns the Unicode class identified by name, which is
+  // looked up as Go does: ignoring case, underscores, spaces and hyphens,
+  // among the categories, the scripts and the category aliases.
   // Returns null if |name| does not identify a Unicode character range.
-  private static Pair<int[][], int[][]> unicodeTable(String name) {
-    // Special case: "Any" means any.
+  private static UnicodeClass unicodeTable(String name) {
+    name = canonicalName(name);
+    // Special cases: Any, Assigned, and ASCII.
+    // Also LC is the only non-canonical CATEGORIES key, so handle it here.
     if (name.equals("Any")) {
-      return Pair.of(ANY_TABLE, ANY_TABLE);
+      return new UnicodeClass(ANY_TABLE, ANY_TABLE, false);
+    }
+    if (name.equals("Assigned")) {
+      int[][] unassigned = UnicodeTables.CATEGORIES.get("Cn");
+      return new UnicodeClass(unassigned, unassigned, true);
+    }
+    if (name.equals("Ascii")) {
+      return new UnicodeClass(ASCII_TABLE, ASCII_FOLD_TABLE, false);
+    }
+    if (name.equals("Lc")) {
+      name = "LC";
     }
     int[][] table = UnicodeTables.CATEGORIES.get(name);
     if (table != null) {
-      return Pair.of(table, UnicodeTables.FOLD_CATEGORIES.get(name));
+      return new UnicodeClass(table, UnicodeTables.FOLD_CATEGORIES.get(name), false);
     }
     table = UnicodeTables.SCRIPTS.get(name);
     if (table != null) {
-      return Pair.of(table, UnicodeTables.FOLD_SCRIPT.get(name));
+      return new UnicodeClass(table, UnicodeTables.FOLD_SCRIPT.get(name), false);
+    }
+    String actual = CATEGORY_ALIASES.get(name);
+    if (actual != null) {
+      return new UnicodeClass(
+          UnicodeTables.CATEGORIES.get(actual), UnicodeTables.FOLD_CATEGORIES.get(actual), false);
     }
     return null;
   }
@@ -1630,12 +1707,15 @@ class Parser {
       name = name.substring(1);
     }
 
-    Pair<int[][], int[][]> pair = unicodeTable(name);
-    if (pair == null) {
+    UnicodeClass unicodeClass = unicodeTable(name);
+    if (unicodeClass == null) {
       throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.from(startPos));
     }
-    int[][] tab = pair.first;
-    int[][] fold = pair.second; // fold-equivalent table
+    if (unicodeClass.negated) {
+      sign = -sign;
+    }
+    int[][] tab = unicodeClass.table;
+    int[][] fold = unicodeClass.fold; // fold-equivalent table
 
     // Variation of CharClass.appendGroup() for tables.
     if ((flags & RE2.FOLD_CASE) == 0 || fold == null) {
@@ -1748,20 +1828,6 @@ class Parser {
       r[i - start] = array[i];
     }
     return r;
-  }
-
-  private static class Pair<F, S> {
-    final F first;
-    final S second;
-
-    Pair(F first, S second) {
-      this.first = first;
-      this.second = second;
-    }
-
-    static <F, S> Pair<F, S> of(F first, S second) {
-      return new Pair<F, S>(first, second);
-    }
   }
 
   private static int[] concatRunes(int[] x, int[] y) {

@@ -945,10 +945,19 @@ class Parser {
             // Look for Unicode character group like \p{Han}
             if (t.lookingAt("\\p") || t.lookingAt("\\P")) {
               CharClass cc = new CharClass();
-              if (parseUnicodeClass(t, cc)) {
-                re.runes = cc.toArray();
-                push(re);
-                break bigswitch;
+              UnicodeClass uclass = parseUnicodeClass(t);
+              if (uclass != null) {
+                Character.UnicodeScript script = uclass.script();
+                if (script != null) {
+                  re.op = uclass.sign > 0 ? Regexp.Op.SCRIPT : Regexp.Op.NOT_SCRIPT;
+                  re.script = script;
+                  push(re);
+                  break bigswitch;
+                } else if (evalUnicodeClass(uclass, t, cc)) {
+                  re.runes = cc.toArray();
+                  push(re);
+                  break bigswitch;
+                }
               }
             }
 
@@ -1530,10 +1539,6 @@ class Parser {
     if (table != null) {
       return Pair.of(table, UnicodeTables.FOLD_CATEGORIES.get(name));
     }
-    table = UnicodeTables.SCRIPTS.get(name);
-    if (table != null) {
-      return Pair.of(table, UnicodeTables.FOLD_SCRIPT.get(name));
-    }
     return null;
   }
 
@@ -1544,10 +1549,10 @@ class Parser {
   // Returns false if such a pattern is not present or UNICODE_GROUPS
   // flag is not enabled; |t.pos()| is not advanced in this case.
   // Indicates error by throwing PatternSyntaxException.
-  private boolean parseUnicodeClass(StringIterator t, CharClass cc) throws PatternSyntaxException {
+  private UnicodeClass parseUnicodeClass(StringIterator t) throws PatternSyntaxException {
     int startPos = t.pos();
     if ((flags & RE2.UNICODE_GROUPS) == 0 || (!t.lookingAt("\\p") && !t.lookingAt("\\P"))) {
-      return false;
+      return null;
     }
     t.skip(1); // '\\'
     // Committed to parse or throw exception.
@@ -1587,22 +1592,30 @@ class Parser {
       name = name.substring(1);
     }
 
-    Pair<int[][], int[][]> pair = unicodeTable(name);
+    UnicodeClass res = new UnicodeClass();
+    res.sign = sign;
+    res.name = name;
+    res.startPos = startPos;
+    return res;
+  }
+
+  boolean evalUnicodeClass(UnicodeClass uclass, StringIterator t, CharClass cc) {
+    Pair<int[][], int[][]> pair = unicodeTable(uclass.name);
     if (pair == null) {
-      throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.from(startPos));
+      throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, t.from(uclass.startPos));
     }
     int[][] tab = pair.first;
     int[][] fold = pair.second; // fold-equivalent table
 
     // Variation of CharClass.appendGroup() for tables.
     if ((flags & RE2.FOLD_CASE) == 0 || fold == null) {
-      cc.appendTableWithSign(tab, sign);
+      cc.appendTableWithSign(tab, uclass.sign);
     } else {
       // Merge and clean tab and fold in a temporary buffer.
       // This is necessary for the negative case and just tidy
       // for the positive case.
       int[] tmp = new CharClass().appendTable(tab).appendTable(fold).cleanClass().toArray();
-      cc.appendClassWithSign(tmp, sign);
+      cc.appendClassWithSign(tmp, uclass.sign);
     }
     return true;
   }
@@ -1655,7 +1668,15 @@ class Parser {
       }
 
       // Look for Unicode character group like \p{Han}.
-      if (parseUnicodeClass(t, cc)) {
+      UnicodeClass uclass = parseUnicodeClass(t);
+      if (uclass != null) {
+        Character.UnicodeScript script = uclass.script();
+        if (script != null) {
+          re.op = uclass.sign < 0 ? Regexp.Op.NOT_SCRIPT : Regexp.Op.SCRIPT;
+          re.script = script;
+        } else {
+          evalUnicodeClass(uclass, t, cc);
+        }
         continue;
       }
 
@@ -1726,5 +1747,19 @@ class Parser {
     System.arraycopy(x, 0, z, 0, x.length);
     System.arraycopy(y, 0, z, x.length, y.length);
     return z;
+  }
+
+  class UnicodeClass {
+    String name;
+    int sign;
+    int startPos;
+
+    Character.UnicodeScript script() {
+      try {
+        return Character.UnicodeScript.forName(name);
+      } catch (Exception e) {
+        return null;
+      }
+    }
   }
 }

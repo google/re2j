@@ -342,6 +342,14 @@ class Machine {
           matched = true;
           break;
 
+        case Inst.SCRIPT:
+          add = Character.isValidCodePoint(c) && Character.UnicodeScript.of(c).ordinal() == i.arg;
+          break;
+
+        case Inst.NOT_SCRIPT:
+          add = !Character.isValidCodePoint(c) || Character.UnicodeScript.of(c).ordinal() != i.arg;
+          break;
+
         case Inst.RUNE:
           add = i.matchRune(c);
           break;
@@ -421,6 +429,8 @@ class Machine {
         break;
 
       case Inst.MATCH:
+      case Inst.SCRIPT:
+      case Inst.NOT_SCRIPT:
       case Inst.RUNE:
       case Inst.RUNE1:
       case Inst.RUNE_ANY:

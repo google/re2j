@@ -25,7 +25,7 @@ cobertura.coverageFormats = ['html', 'xml']
 // The name of the release we're working on. See RELEASING.md for details.
 group = "com.google.re2j"
 archivesBaseName = "re2j"
-version = "1.8"
+version = "1.9"
 
 wrapper {
   gradleVersion '5.2'

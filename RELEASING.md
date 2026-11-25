@@ -9,12 +9,8 @@ Maven Central and to the RE2/J GitHub site.
 The following are one-time setup steps. You must have:
 
 * git
-* an account on OSSRH, see the [initial setup
-  section](http://central.sonatype.org/pages/ossrh-guide.html#initial-setup) of
-  the OSSRH guide
-* access to the `com.google.re2` OSSRH repository. For this, you should
-  request access by [filing a JIRA ticket](https://issues.sonatype.org/secure/CreateIssue!default.jspa)
-  with the OSSRH folks
+* an account on the [Maven Central Portal](https://central.sonatype.com/) with
+  publishing rights for the `com.google.re2j` namespace
 * a GPG key (see below)
 
 ## GPG key
@@ -44,16 +40,11 @@ gpg: sending key 1234567890ABCDEF to hkp://keys.openpgp.org
 
 ## Gradle properties
 
-Add the following properties to `$HOME/gradle.properties`:
+Add the following properties to `$HOME/.gradle/gradle.properties`:
 
 ```
 signing.gnupg.executable=gpg
-signing.gnupg.useLegacyGpg=true
 signing.gnupg.keyName=ABCDEF01
-
-# Not to be confused with your Sonatype login username and password
-ossrhUsername=yourSonatypeToken
-ossrhPassword=yourSonatypeTokenPassword
 ```
 
 # Making the release
@@ -69,20 +60,21 @@ containing `build.gradle`). Then:
 * `git tag re2j-<versionName>`, e.g. `git tag re2j-1.9`
 * `git push --tags`
 
-Now you're ready to build and push the release.
+Now you're ready to build the signed release bundle:
 
 ```
-./gradlew clean uploadArchives
+./gradlew clean createCentralPortalBundle
 ```
 
-Once successful, the new version needs to be published:
+This creates `build/distributions/re2j-<versionName>-bundle.zip` containing the
+signed JARs, POM, and checksums. Once created, publish it via the
+[Maven Central Portal](https://central.sonatype.com/publishing/deployments):
 
-1. Log into the [Sonatype Nexus frontend](https://oss.sonatype.org/)
-2. Click on "Staging Repositories" on the left
-3. Select the latest staging repository, click "Close"
-4. If all of the repository checks pass, the repository will be closed. You can
-   now click "Release". This will send the artifact out to Maven Central, ready
-   for people to use.
+1. Log into the [Maven Central Portal](https://central.sonatype.com/)
+2. Go to **Publish** -> **Publish Component**
+3. Upload `build/distributions/re2j-<versionName>-bundle.zip`
+4. Wait for validation to succeed, then click **Publish** to release the
+   artifact to Maven Central.
 
 As a convenience to our users, you should also publish the sources, javadoc and
 artifact JARs as GitHub releases.

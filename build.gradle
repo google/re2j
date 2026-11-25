@@ -129,24 +129,18 @@ uploadArchives {
     mavenDeployer {
       beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: findProperty('ossrhUsername') ?: '',
-          password: findProperty('ossrhPassword') ?: '')
-      }
-
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: findProperty('ossrhUsername') ?: '',
-          password: findProperty('ossrhPassword') ?: '')
-      }
+      repository(url: uri("${buildDir}/staging-deploy").toString())
 
       pom.project {
         name 'RE2/J'
         packaging 'jar'
         description 'Linear time regular expressions for Java'
-        url 'http://github.com/google/re2j'
+        url 'https://github.com/google/re2j'
 
         scm {
-          url 'https://github.com/google/re2j.git'
+          connection 'scm:git:https://github.com/google/re2j.git'
+          developerConnection 'scm:git:ssh://git@github.com/google/re2j.git'
+          url 'https://github.com/google/re2j'
         }
 
         licenses {
@@ -167,6 +161,13 @@ uploadArchives {
       }
     }
   }
+}
+
+task createCentralPortalBundle(type: Zip, dependsOn: uploadArchives) {
+  from "${buildDir}/staging-deploy"
+  include "com/google/re2j/re2j/${version}/**"
+  archiveName = "${archivesBaseName}-${version}-bundle.zip"
+  destinationDir = file("${buildDir}/distributions")
 }
 
 signing {

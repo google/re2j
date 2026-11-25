@@ -34,7 +34,7 @@ public class PatternSyntaxException extends RuntimeException {
   /**
    * Retrieves the error index.
    *
-   * @return The approximate index in the pattern of the error, or <tt>-1</tt> if the index is not
+   * @return The approximate index in the pattern of the error, or {@code -1} if the index is not
    * known
    */
   public int getIndex() {

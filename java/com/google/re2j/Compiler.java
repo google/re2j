@@ -212,6 +212,15 @@ class Compiler {
     return f;
   }
 
+  private Frag script(Character.UnicodeScript script, boolean negated) {
+    Frag f = newInst(negated ? Inst.NOT_SCRIPT : Inst.SCRIPT);
+    f.nullable = false;
+    Inst i = prog.getInst(f.i);
+    i.arg = script.ordinal();
+    f.out = f.i << 1;
+    return f;
+  }
+
   private static final int[] ANY_RUNE_NOT_NL = {0, '\n' - 1, '\n' + 1, Unicode.MAX_RUNE};
   private static final int[] ANY_RUNE = {0, Unicode.MAX_RUNE};
 
@@ -234,6 +243,10 @@ class Compiler {
         }
       case CHAR_CLASS:
         return rune(re.runes, re.flags);
+      case SCRIPT:
+        return script(re.script, false);
+      case NOT_SCRIPT:
+        return script(re.script, true);
       case ANY_CHAR_NOT_NL:
         return rune(ANY_RUNE_NOT_NL, 0);
       case ANY_CHAR:

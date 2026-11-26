@@ -40,6 +40,8 @@ class Regexp {
     REPEAT, // Matches subs[0] [min, max] times; max=-1 => no limit.
     CONCAT, // Matches concatenation of subs[]
     ALTERNATE, // Matches union of subs[]
+    SCRIPT, // Match a Unicode script using Character.UnicodeScript.of
+    NOT_SCRIPT, // Don't match the given Character.UnicodeScript
 
     // Pseudo ops, used internally by Parser for parsing stack:
     LEFT_PAREN,
@@ -59,6 +61,7 @@ class Regexp {
   int[] runes; // matched runes, for LITERAL, CHAR_CLASS
   int min, max; // min, max for REPEAT
   int cap; // capturing index, for CAPTURE
+  Character.UnicodeScript script; // for SCRIPT
   String name; // capturing name, for CAPTURE
   Map<String, Integer> namedGroups = Collections.emptyMap(); // map of group name -> capturing index
   // Do update copy ctor when adding new fields!
@@ -76,6 +79,7 @@ class Regexp {
     this.min = that.min;
     this.max = that.max;
     this.cap = that.cap;
+    this.script = that.script;
     this.name = that.name;
     this.namedGroups = that.namedGroups;
   }
@@ -85,6 +89,7 @@ class Regexp {
     subs = EMPTY_SUBS;
     runes = null;
     cap = min = max = 0;
+    script = null;
     name = null;
     this.namedGroups = Collections.emptyMap();
   }
@@ -223,6 +228,12 @@ class Regexp {
         break;
       case NO_WORD_BOUNDARY:
         out.append("\\B");
+        break;
+      case SCRIPT:
+        out.append("\\p{").append(script.name()).append("}");
+        break;
+      case NOT_SCRIPT:
+        out.append("\\P{").append(script.name()).append("}");
         break;
       case CHAR_CLASS:
         if (runes.length % 2 != 0) {

@@ -148,19 +148,6 @@ public class UnicodeTablesGenerator {
       unicodeTables.addField(fieldSpec);
     }
 
-    // Emit script maps (e.g. Latin -> ranges of Latin codepoints).
-    for (Map.Entry<Integer, CodepointRange> script : scriptRanges.entrySet()) {
-      script.getValue().finish();
-
-      FieldSpec fieldSpec =
-          FieldSpec.builder(
-                  int[][].class, UScript.getName(script.getKey()), Modifier.STATIC, Modifier.FINAL)
-              .initializer("$N()", addMakeMethod(script.getValue()))
-              .build();
-
-      unicodeTables.addField(fieldSpec);
-    }
-
     for (Map.Entry<Byte, String> alias : aliases.entrySet()) {
       FieldSpec fieldSpec =
           FieldSpec.builder(int[][].class, alias.getValue(), Modifier.STATIC, Modifier.FINAL)
@@ -190,51 +177,6 @@ public class UnicodeTablesGenerator {
       unicodeTables.addField(
           FieldSpec.builder(RANGE_MAP_TYPE, "CATEGORIES", Modifier.STATIC, Modifier.FINAL)
               .initializer("Categories()")
-              .build());
-    }
-
-    // Add scripts map (e.g. "Katakana" -> Katakana).
-    {
-      MethodSpec.Builder scriptsMethod =
-          MethodSpec.methodBuilder("Scripts")
-              .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
-              .returns(RANGE_MAP_TYPE)
-              .addStatement("$T map = new $T()", RANGE_MAP_TYPE, RANGE_HASHMAP_TYPE);
-
-      for (int script : scriptRanges.keySet()) {
-        String scriptName = UScript.getName(script);
-        scriptsMethod.addStatement("map.put($S, $L)", scriptName, scriptName);
-      }
-      scriptsMethod.addStatement("return $T.unmodifiableMap(map)", Collections.class);
-
-      unicodeTables.addMethod(scriptsMethod.build());
-      unicodeTables.addField(
-          FieldSpec.builder(RANGE_MAP_TYPE, "SCRIPTS", Modifier.STATIC, Modifier.FINAL)
-              .initializer("Scripts()")
-              .build());
-    }
-
-    {
-      MethodSpec.Builder foldScriptSpec =
-          MethodSpec.methodBuilder("FoldScript")
-              .returns(RANGE_MAP_TYPE)
-              .addModifiers(Modifier.PRIVATE, Modifier.STATIC);
-      foldScriptSpec.addCode("$T map = new $T();", RANGE_MAP_TYPE, RANGE_HASHMAP_TYPE);
-
-      for (Integer script : scriptMap.keySet()) {
-        String name = UScript.getName(script);
-        if (addFoldExceptions("fold" + name, scriptMap.get(script))) {
-          foldScriptSpec.addCode("map.put($S, $L);", name, "fold" + name);
-        }
-      }
-
-      foldScriptSpec.addCode("return map;");
-      unicodeTables.addMethod(foldScriptSpec.build());
-
-      unicodeTables.addField(
-          FieldSpec.builder(RANGE_MAP_TYPE, "FOLD_SCRIPT")
-              .addModifiers(Modifier.STATIC, Modifier.FINAL)
-              .initializer("FoldScript()")
               .build());
     }
 

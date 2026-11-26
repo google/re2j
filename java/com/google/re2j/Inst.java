@@ -27,6 +27,8 @@ final class Inst {
   public static final int RUNE1 = 9;
   public static final int RUNE_ANY = 10;
   public static final int RUNE_ANY_NOT_NL = 11;
+  public static final int SCRIPT = 12;
+  public static final int NOT_SCRIPT = 13;
 
   int op;
   int out; // all but MATCH, FAIL
@@ -105,6 +107,10 @@ final class Inst {
         return "fail";
       case NOP:
         return "nop -> " + out;
+      case SCRIPT:
+        return "script " + Character.UnicodeScript.values()[arg].name() + " -> " + out;
+      case NOT_SCRIPT:
+        return "not_script " + Character.UnicodeScript.values()[arg].name() + " -> " + out;
       case RUNE:
         if (runes == null) {
           return "rune <null>"; // can't happen

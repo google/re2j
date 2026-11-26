@@ -86,6 +86,8 @@ public class ParserTest {
     OP_NAMES.put(Regexp.Op.REPEAT, "rep");
     OP_NAMES.put(Regexp.Op.CONCAT, "cat");
     OP_NAMES.put(Regexp.Op.ALTERNATE, "alt");
+    OP_NAMES.put(Regexp.Op.SCRIPT, "script");
+    OP_NAMES.put(Regexp.Op.NOT_SCRIPT, "not_script");
   }
 
   private static final int TEST_FLAGS = MATCH_NL | PERL_X | UNICODE_GROUPS;
@@ -170,15 +172,15 @@ public class ParserTest {
     //  { "\\C", "byte{}" },  // probably never
 
     // Unicode, negatives, and a double negative.
-    {"\\p{Braille}", "cc{0x2800-0x28ff}"},
-    {"\\P{Braille}", "cc{0x0-0x27ff 0x2900-0x10ffff}"},
-    {"\\p{^Braille}", "cc{0x0-0x27ff 0x2900-0x10ffff}"},
-    {"\\P{^Braille}", "cc{0x2800-0x28ff}"},
+    {"\\p{Braille}", "script{BRAILLE}"},
+    {"\\P{Braille}", "not_script{BRAILLE}"},
+    {"\\p{^Braille}", "not_script{BRAILLE}"},
+    {"\\P{^Braille}", "script{BRAILLE}"},
     {"\\pZ", "cc{0x20 0xa0 0x1680 0x180e 0x2000-0x200a 0x2028-0x2029 0x202f 0x205f 0x3000}"},
-    {"[\\p{Braille}]", "cc{0x2800-0x28ff}"},
-    {"[\\P{Braille}]", "cc{0x0-0x27ff 0x2900-0x10ffff}"},
-    {"[\\p{^Braille}]", "cc{0x0-0x27ff 0x2900-0x10ffff}"},
-    {"[\\P{^Braille}]", "cc{0x2800-0x28ff}"},
+    {"[\\p{Braille}]", "script{BRAILLE}"},
+    {"[\\P{Braille}]", "not_script{BRAILLE}"},
+    {"[\\p{^Braille}]", "not_script{BRAILLE}"},
+    {"[\\P{^Braille}]", "script{BRAILLE}"},
     {"[\\pZ]", "cc{0x20 0xa0 0x1680 0x180e 0x2000-0x200a 0x2028-0x2029 0x202f 0x205f 0x3000}"},
     {"\\p{Lu}", mkCharClass(IS_UPPER)},
     {"[\\p{Lu}]", mkCharClass(IS_UPPER)},
@@ -454,6 +456,12 @@ public class ParserTest {
               b.append(String.format("%#x-%#x", lo, hi));
             }
           }
+          break;
+        }
+      case SCRIPT:
+      case NOT_SCRIPT:
+        {
+          b.append(re.script.name());
           break;
         }
     }

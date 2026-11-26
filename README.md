@@ -34,6 +34,11 @@ code may run faster with RE2/J. In the worst case, the `java.util.regex`
 matcher may run forever, or exceed the available stack space and fail; this
 will never happen with RE2/J.
 
+**Note:** RE2/J emphasizes simplicity and small code size rather than maximum
+efficiency. If code size is not a concern, we recommend
+[SafeRE](https://github.com/safere/safere), a modern and highly-optimized Java
+library that is also ultimately derived from RE2.
+
 # Caveats
 
 This is not an official Google product (experimental or otherwise), it is just

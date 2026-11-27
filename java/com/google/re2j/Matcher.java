@@ -398,6 +398,10 @@ public final class Matcher {
     return matcherInput.asCharSequence().subSequence(start, end).toString();
   }
 
+  void appendTo(Appendable sb, int end) {
+    matcherInput.appendTo(sb, appendPos, end);
+  }
+
   /** Helper for Pattern: return input length. */
   int inputLength() {
     return inputLength;
@@ -480,7 +484,7 @@ public final class Matcher {
     int s = start();
     int e = end();
     if (appendPos < s) {
-      sb.append(substring(appendPos, s));
+      appendTo(sb, s);
     }
     appendPos = e;
     appendReplacementInternal(sb, replacement);
@@ -560,7 +564,7 @@ public final class Matcher {
    * @return the argument {@code sb}, for method chaining
    */
   public StringBuffer appendTail(StringBuffer sb) {
-    sb.append(substring(appendPos, inputLength));
+    appendTo(sb, inputLength);
     return sb;
   }
 
@@ -572,7 +576,7 @@ public final class Matcher {
    * @return the argument {@code sb}, for method chaining
    */
   public StringBuilder appendTail(StringBuilder sb) {
-    sb.append(substring(appendPos, inputLength));
+    appendTo(sb, inputLength);
     return sb;
   }
 

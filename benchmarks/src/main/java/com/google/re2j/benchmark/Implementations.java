@@ -18,6 +18,8 @@ public enum Implementations {
 
     public abstract String group();
 
+    public abstract String group(int group);
+
     public static class Re2Matcher extends Matcher {
       private final com.google.re2j.Matcher matcher;
 
@@ -38,6 +40,11 @@ public enum Implementations {
       @Override
       public String group() {
         return matcher.group();
+      }
+
+      @Override
+      public String group(int group) {
+        return matcher.group(group);
       }
     }
 
@@ -62,6 +69,11 @@ public enum Implementations {
       public String group() {
         return matcher.group();
       }
+
+      @Override
+      public String group(int group) {
+        return matcher.group(group);
+      }
     }
   }
 
@@ -70,6 +82,9 @@ public enum Implementations {
     // FLAG_CASE_INSENSITIVE is an implementation-agnostic bitmask flag
     // indicating that a pattern should be case-insensitive.
     public static final int FLAG_CASE_INSENSITIVE = 1;
+
+    // FLAG_RESOLVE_GROUPS_MATCH enable RE2J to resolve all groups during match operation.
+    public static final int FLAG_RESOLVE_GROUPS_MATCH = 32;
 
     public static Pattern compile(Implementations impl, String pattern) {
       return compile(impl, pattern, 0);
@@ -135,6 +150,9 @@ public enum Implementations {
         int re2PatternFlags = 0;
         if ((flags & FLAG_CASE_INSENSITIVE) > 0) {
           re2PatternFlags |= com.google.re2j.Pattern.CASE_INSENSITIVE;
+        }
+        if ((flags & FLAG_RESOLVE_GROUPS_MATCH) > 0) {
+          re2PatternFlags |= com.google.re2j.Pattern.RESOLVE_GROUPS_MATCH;
         }
         this.pattern = com.google.re2j.Pattern.compile(pattern, re2PatternFlags);
       }
